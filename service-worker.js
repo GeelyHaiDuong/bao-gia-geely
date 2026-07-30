@@ -1,4 +1,4 @@
-const VERSION = 'geely-pwa-v1.3.0';
+const VERSION = 'geely-pwa-v1.3.1';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
