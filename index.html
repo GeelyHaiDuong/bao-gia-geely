@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Ứng dụng báo giá, tính lăn bánh và khoản vay xe Geely Hải Dương.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Báo Giá Geely">
+  <title>Báo Giá Geely Hải Dương</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./assets/app.css">
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <noscript>
+    <div class="min-h-screen flex items-center justify-center p-6 text-center">
+      Ứng dụng cần JavaScript để hoạt động.
+    </div>
+  </noscript>
+  <div id="root">
+    <div class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div class="pwa-loader"></div>
+      <p class="mt-4 font-bold text-slate-700">Đang mở Báo Giá Geely…</p>
+      <p class="mt-1 text-sm text-slate-500">Lần đầu cần kết nối mạng để lưu bộ thư viện ngoại tuyến.</p>
+    </div>
+  </div>
+
+  <button id="pwa-install-button" type="button" hidden>Cài ứng dụng</button>
+  <div id="pwa-offline-badge" hidden>Đang dùng ngoại tuyến</div>
+  <div id="pwa-update-banner" hidden>
+    <span>Đã có phiên bản mới.</span>
+    <button id="pwa-update-button" type="button">Cập nhật</button>
+  </div>
+
+  <!-- Hai thư viện này được service worker lưu lại sau lần mở trực tuyến đầu tiên. -->
+  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="./assets/qrcode-browser.js"></script>
+  <script src="./assets/app.js"></script>
+  <script src="./assets/pwa.js"></script>
+  <script>
+    window.setTimeout(function () {
+      if (!window.React || !window.ReactDOM || !window.html2canvas) {
+        var root = document.getElementById('root');
+        if (root && root.textContent.indexOf('Đang mở') !== -1) {
+          root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f8fafc;font-family:system-ui"><div style="max-width:380px;background:white;border:1px solid #e2e8f0;border-radius:18px;padding:24px;text-align:center;box-shadow:0 15px 40px rgba(15,23,42,.08)"><h2 style="margin:0 0 10px;color:#0f172a">Chưa tải đủ thư viện</h2><p style="color:#64748b;line-height:1.5">Lần đầu mở ứng dụng cần kết nối Internet. Hãy kiểm tra mạng rồi tải lại trang. Sau khi cài thành công, ứng dụng có thể dùng ngoại tuyến.</p><button onclick="location.reload()" style="border:0;border-radius:12px;background:#2563eb;color:white;padding:12px 18px;font-weight:700">Tải lại</button></div></div>';
+        }
+      }
+    }, 8000);
+  </script>
+</body>
+</html>
