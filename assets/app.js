@@ -598,11 +598,14 @@ function GeelyQuotationApp() {
         catch (error) {
             console.error('Lỗi xuất ảnh báo giá:', error);
             const message = String((error === null || error === void 0 ? void 0 : error.message) || '');
-            if (/memory|canvas|size/i.test(message)) {
+            if (/oklch|oklab|color-mix|unsupported color function/i.test(message)) {
+                showToast('Lỗi màu giao diện cũ. Hãy tải lại bản V1.5 rồi thử lại.');
+            }
+            else if (/memory|canvas|size/i.test(message)) {
                 showToast('Điện thoại thiếu bộ nhớ để tạo ảnh. Hãy đóng bớt ứng dụng rồi thử lại.');
             }
             else {
-                showToast('Không thể tạo ảnh. Vào Cài đặt → Sửa xe → Chọn ảnh từ thiết bị rồi thử lại.');
+                showToast(`Không thể tạo ảnh: ${message || 'lỗi không xác định'}`);
             }
         }
         finally {
