@@ -1,4 +1,4 @@
-const VERSION = 'geely-pwa-v1.6.0';
+const VERSION = 'geely-pwa-v1.7.0';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -8,8 +8,9 @@ const LOCAL_ASSETS = [
   './offline.html',
   './manifest.webmanifest',
   './assets/app.css',
-  './assets/export-compat.css?v=160',
-  './assets/app.js?v=160',
+  './assets/export-compat.css?v=170',
+  './assets/app.js?v=170',
+  './assets/firebase-sync.js?v=170',
   './assets/qrcode-browser.js',
   './assets/pwa.js',
   './icons/icon-192.png',
@@ -21,7 +22,10 @@ const LOCAL_ASSETS = [
 const REMOTE_LIBRARIES = [
   'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', event => {
