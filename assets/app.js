@@ -161,6 +161,26 @@ const prepareImagesForExport = async (element) => {
     };
 };
 
+
+const waitForExportCanvases = async (element, timeoutMs = 6000) => {
+    const canvases = Array.from(element.querySelectorAll('canvas[data-export-canvas]'));
+    await Promise.all(canvases.map(canvas => {
+        if (canvas.dataset.exportState === 'ready') return Promise.resolve();
+        return new Promise(resolve => {
+            let finished = false;
+            const complete = () => {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                canvas.removeEventListener('export-canvas-ready', complete);
+                resolve();
+            };
+            const timer = window.setTimeout(complete, timeoutMs);
+            canvas.addEventListener('export-canvas-ready', complete, { once: true });
+        });
+    }));
+};
+
 const canvasToJpegBlob = (canvas, quality = 0.92) => new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
         if (blob) resolve(blob);
@@ -202,6 +222,153 @@ const QrCodeImage = ({ value, className = '' }) => {
     }
     return React.createElement("img", { src: src, alt: "Zalo QR", className: className });
 };
+
+const CAR_CANVAS_WIDTH = 1400;
+const CAR_CANVAS_HEIGHT = 512;
+const getCarImageContentBounds = (image) => {
+    const naturalWidth = image.naturalWidth || image.width || 1;
+    const naturalHeight = image.naturalHeight || image.height || 1;
+    const maxScanSide = 1000;
+    const scanScale = Math.min(1, maxScanSide / Math.max(naturalWidth, naturalHeight));
+    const scanWidth = Math.max(1, Math.round(naturalWidth * scanScale));
+    const scanHeight = Math.max(1, Math.round(naturalHeight * scanScale));
+    try {
+        const scratch = document.createElement('canvas');
+        scratch.width = scanWidth;
+        scratch.height = scanHeight;
+        const context = scratch.getContext('2d', { willReadFrequently: true });
+        if (!context)
+            throw new Error('Không tạo được canvas quét ảnh.');
+        context.clearRect(0, 0, scanWidth, scanHeight);
+        context.drawImage(image, 0, 0, scanWidth, scanHeight);
+        const pixels = context.getImageData(0, 0, scanWidth, scanHeight).data;
+        const step = Math.max(1, Math.floor(Math.max(scanWidth, scanHeight) / 700));
+        let minX = scanWidth;
+        let minY = scanHeight;
+        let maxX = -1;
+        let maxY = -1;
+        let visiblePixels = 0;
+        for (let y = 0; y < scanHeight; y += step) {
+            for (let x = 0; x < scanWidth; x += step) {
+                const index = (y * scanWidth + x) * 4;
+                const red = pixels[index];
+                const green = pixels[index + 1];
+                const blue = pixels[index + 2];
+                const alpha = pixels[index + 3];
+                const isTransparent = alpha < 18;
+                const isNearWhite = red > 247 && green > 247 && blue > 247;
+                if (!isTransparent && !isNearWhite) {
+                    visiblePixels += 1;
+                    if (x < minX)
+                        minX = x;
+                    if (x > maxX)
+                        maxX = x;
+                    if (y < minY)
+                        minY = y;
+                    if (y > maxY)
+                        maxY = y;
+                }
+            }
+        }
+        if (visiblePixels < 20 || maxX <= minX || maxY <= minY) {
+            return { sx: 0, sy: 0, sw: naturalWidth, sh: naturalHeight };
+        }
+        const marginX = Math.max(4, Math.round((maxX - minX) * 0.05));
+        const marginY = Math.max(4, Math.round((maxY - minY) * 0.08));
+        minX = Math.max(0, minX - marginX);
+        minY = Math.max(0, minY - marginY);
+        maxX = Math.min(scanWidth - 1, maxX + marginX);
+        maxY = Math.min(scanHeight - 1, maxY + marginY);
+        return {
+            sx: minX / scanScale,
+            sy: minY / scanScale,
+            sw: Math.max(1, (maxX - minX + 1) / scanScale),
+            sh: Math.max(1, (maxY - minY + 1) / scanScale)
+        };
+    }
+    catch (error) {
+        console.warn('Không thể tự căn viền ảnh xe, dùng toàn bộ ảnh:', error);
+        return { sx: 0, sy: 0, sw: naturalWidth, sh: naturalHeight };
+    }
+};
+const drawCarImageWithoutDistortion = (canvas, image) => {
+    const context = canvas.getContext('2d');
+    if (!context)
+        throw new Error('Trình duyệt không hỗ trợ canvas ảnh xe.');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    const { sx, sy, sw, sh } = getCarImageContentBounds(image);
+    const paddingX = 72;
+    const paddingY = 34;
+    const availableWidth = canvas.width - paddingX * 2;
+    const availableHeight = canvas.height - paddingY * 2;
+    const scale = Math.min(availableWidth / sw, availableHeight / sh);
+    const drawWidth = Math.max(1, Math.round(sw * scale));
+    const drawHeight = Math.max(1, Math.round(sh * scale));
+    const drawX = Math.round((canvas.width - drawWidth) / 2);
+    const drawY = Math.round((canvas.height - drawHeight) / 2);
+    context.drawImage(image, sx, sy, sw, sh, drawX, drawY, drawWidth, drawHeight);
+};
+const CarImageCanvas = ({ src, alt = 'Ảnh xe' }) => {
+    const canvasRef = useRef(null);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas)
+            return undefined;
+        let cancelled = false;
+        canvas.dataset.exportState = 'loading';
+        const markReady = () => {
+            if (cancelled)
+                return;
+            canvas.dataset.exportState = 'ready';
+            canvas.dispatchEvent(new Event('export-canvas-ready'));
+        };
+        const drawFallback = () => {
+            const context = canvas.getContext('2d');
+            if (context) {
+                context.fillStyle = '#f1f5f9';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = '#cbd5e1';
+                context.font = '700 32px Arial, sans-serif';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillText('CHƯA CÓ ẢNH XE', canvas.width / 2, canvas.height / 2);
+            }
+            markReady();
+        };
+        if (!src) {
+            drawFallback();
+            return () => { cancelled = true; };
+        }
+        const image = new Image();
+        if (/^https?:/i.test(src))
+            image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            if (cancelled)
+                return;
+            try {
+                drawCarImageWithoutDistortion(canvas, image);
+            }
+            catch (error) {
+                console.error('Không thể căn ảnh xe:', error);
+                drawFallback();
+                return;
+            }
+            markReady();
+        };
+        image.onerror = () => {
+            console.warn('Không thể tải ảnh xe vào canvas xuất báo giá.');
+            drawFallback();
+        };
+        image.src = src;
+        return () => { cancelled = true; };
+    }, [src]);
+    return React.createElement("canvas", { ref: canvasRef, width: CAR_CANVAS_WIDTH, height: CAR_CANVAS_HEIGHT, "data-export-canvas": "car-image", "aria-label": alt, role: "img", className: "block w-full h-full", style: { width: '100%', height: '100%' } });
+};
+
 const GeelyLogo = ({ className = "w-24 h-auto", color = "currentColor" }) => (React.createElement("svg", { viewBox: "0 0 200 100", className: className, xmlns: "http://www.w3.org/2000/svg", fill: color },
     React.createElement("path", { d: "M 12 18 Q 40 12 68 12 L 68 28 L 8 28 Q 8 22 12 18 Z" }),
     React.createElement("path", { d: "M 71 12 Q 100 10 129 12 L 129 28 L 71 28 Z" }),
@@ -544,6 +711,7 @@ function GeelyQuotationApp() {
             const preparedImages = await prepareImagesForExport(element);
             restorePreparedImages = preparedImages.restore;
             usedPlaceholder = preparedImages.usedPlaceholder;
+            await waitForExportCanvases(element);
             await new Promise(resolve => setTimeout(resolve, 120));
             const canvas = await window.html2canvas(element, {
                 scale: Math.min(2, window.devicePixelRatio || 2),
@@ -848,7 +1016,7 @@ function GeelyQuotationApp() {
                                 "M\u00E0u s\u1EAFc: ",
                                 carColor))),
                     React.createElement("div", { className: "w-full h-64 bg-slate-100 flex items-center justify-center mb-8 rounded-xl border border-slate-200 overflow-hidden relative shadow-inner" },
-                        car.image ? (React.createElement("img", { src: car.image, crossOrigin: "anonymous", className: "object-contain w-full h-full p-4 drop-shadow-xl", alt: car.name })) : (React.createElement(CarSilhouette, { className: "w-72 text-slate-300" })),
+                        car.image ? (React.createElement(CarImageCanvas, { src: car.image, alt: car.name })) : (React.createElement(CarSilhouette, { className: "w-72 text-slate-300" })),
                         React.createElement("div", { className: "absolute top-4 right-4 bg-white/95 backdrop-blur px-5 py-3 rounded-lg shadow-md border border-slate-200 text-center" },
                             React.createElement("p", { className: "text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1" }, "Gi\u00E1 Ni\u00EAm Y\u1EBFt"),
                             React.createElement("p", { className: "text-2xl font-black text-blue-900 leading-none" }, formatVND(calculations.price)))),
