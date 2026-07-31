@@ -78,16 +78,15 @@ const EXPORT_PLACEHOLDER_IMAGE = 'data:image/svg+xml;charset=utf-8,' + encodeURI
     <text x="600" y="710" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#64748b">ẢNH XE KHÔNG HỖ TRỢ XUẤT TỪ LINK NGOÀI</text>
   </svg>
 `);
-
 const blobToDataURL = (blob) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Không thể chuyển ảnh sang dữ liệu cục bộ.'));
     reader.onload = () => resolve(String(reader.result || ''));
     reader.readAsDataURL(blob);
 });
-
 const waitForImageReady = async (image) => {
-    if (!image) return;
+    if (!image)
+        return;
     if (!image.complete) {
         await new Promise(resolve => {
             image.addEventListener('load', resolve, { once: true });
@@ -95,37 +94,35 @@ const waitForImageReady = async (image) => {
         });
     }
     if (typeof image.decode === 'function') {
-        try { await image.decode(); } catch (error) {}
+        try {
+            await image.decode();
+        }
+        catch (error) { }
     }
 };
-
 const prepareImagesForExport = async (element) => {
     const restoreItems = [];
     let usedPlaceholder = false;
     const images = Array.from(element.querySelectorAll('img'));
-
     for (const image of images) {
         const originalSrc = image.getAttribute('src') || '';
         const originalCrossOrigin = image.getAttribute('crossorigin');
-        if (!originalSrc) continue;
-
+        if (!originalSrc)
+            continue;
         let absoluteUrl;
         try {
             absoluteUrl = new URL(originalSrc, window.location.href);
-        } catch (error) {
+        }
+        catch (error) {
             continue;
         }
-
         const isLocalData = ['data:', 'blob:'].includes(absoluteUrl.protocol);
         const isSameOrigin = absoluteUrl.origin === window.location.origin;
-
         if (isLocalData || isSameOrigin) {
             await waitForImageReady(image);
             continue;
         }
-
         restoreItems.push({ image, originalSrc, originalCrossOrigin });
-
         try {
             const response = await fetch(absoluteUrl.href, {
                 mode: 'cors',
@@ -140,7 +137,8 @@ const prepareImagesForExport = async (element) => {
             image.removeAttribute('crossorigin');
             image.src = localDataUrl;
             await waitForImageReady(image);
-        } catch (error) {
+        }
+        catch (error) {
             console.warn('Ảnh link ngoài không cho phép xuất canvas:', absoluteUrl.href, error);
             usedPlaceholder = true;
             image.removeAttribute('crossorigin');
@@ -148,28 +146,29 @@ const prepareImagesForExport = async (element) => {
             await waitForImageReady(image);
         }
     }
-
     return {
         usedPlaceholder,
         restore: () => {
             restoreItems.forEach(({ image, originalSrc, originalCrossOrigin }) => {
                 image.src = originalSrc;
-                if (originalCrossOrigin === null) image.removeAttribute('crossorigin');
-                else image.setAttribute('crossorigin', originalCrossOrigin);
+                if (originalCrossOrigin === null)
+                    image.removeAttribute('crossorigin');
+                else
+                    image.setAttribute('crossorigin', originalCrossOrigin);
             });
         }
     };
 };
-
-
 const waitForExportCanvases = async (element, timeoutMs = 6000) => {
     const canvases = Array.from(element.querySelectorAll('canvas[data-export-canvas]'));
     await Promise.all(canvases.map(canvas => {
-        if (canvas.dataset.exportState === 'ready') return Promise.resolve();
+        if (canvas.dataset.exportState === 'ready')
+            return Promise.resolve();
         return new Promise(resolve => {
             let finished = false;
             const complete = () => {
-                if (finished) return;
+                if (finished)
+                    return;
                 finished = true;
                 clearTimeout(timer);
                 canvas.removeEventListener('export-canvas-ready', complete);
@@ -180,14 +179,14 @@ const waitForExportCanvases = async (element, timeoutMs = 6000) => {
         });
     }));
 };
-
 const canvasToJpegBlob = (canvas, quality = 0.92) => new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
-        if (blob) resolve(blob);
-        else reject(new Error('Trình duyệt không thể tạo tệp ảnh.'));
+        if (blob)
+            resolve(blob);
+        else
+            reject(new Error('Trình duyệt không thể tạo tệp ảnh.'));
     }, 'image/jpeg', quality);
 });
-
 const safeFilePart = (value) => String(value || 'KhachHang')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -222,7 +221,6 @@ const QrCodeImage = ({ value, className = '' }) => {
     }
     return React.createElement("img", { src: src, alt: "Zalo QR", className: className });
 };
-
 const CAR_CANVAS_WIDTH = 1400;
 const CAR_CANVAS_HEIGHT = 512;
 const getCarImageContentBounds = (image) => {
@@ -366,9 +364,8 @@ const CarImageCanvas = ({ src, alt = 'Ảnh xe' }) => {
         image.src = src;
         return () => { cancelled = true; };
     }, [src]);
-    return React.createElement("canvas", { ref: canvasRef, width: CAR_CANVAS_WIDTH, height: CAR_CANVAS_HEIGHT, "data-export-canvas": "car-image", "aria-label": alt, role: "img", className: "block w-full h-full", style: { width: '100%', height: '100%' } });
+    return (React.createElement("canvas", { ref: canvasRef, width: CAR_CANVAS_WIDTH, height: CAR_CANVAS_HEIGHT, "data-export-canvas": "car-image", "aria-label": alt, role: "img", className: "block w-full h-full", style: { width: '100%', height: '100%' } }));
 };
-
 const GeelyLogo = ({ className = "w-24 h-auto", color = "currentColor" }) => (React.createElement("svg", { viewBox: "0 0 200 100", className: className, xmlns: "http://www.w3.org/2000/svg", fill: color },
     React.createElement("path", { d: "M 12 18 Q 40 12 68 12 L 68 28 L 8 28 Q 8 22 12 18 Z" }),
     React.createElement("path", { d: "M 71 12 Q 100 10 129 12 L 129 28 L 71 28 Z" }),
@@ -379,6 +376,36 @@ const GeelyLogo = ({ className = "w-24 h-auto", color = "currentColor" }) => (Re
     React.createElement("text", { x: "100", y: "88", fontFamily: "Arial, sans-serif", fontSize: "30", fontWeight: "900", letterSpacing: "6", textAnchor: "middle" }, "GEELY")));
 const CarSilhouette = ({ className }) => (React.createElement("svg", { className: className, viewBox: "0 0 240 100", fill: "currentColor", xmlns: "http://www.w3.org/2000/svg" },
     React.createElement("path", { d: "M222.5 45.3C218.8 41.5 197.4 32.8 178.6 30.2C159.8 27.6 132.5 24 105 24C78.4 24 63.8 29.5 56.5 35.8C52 39.7 41.2 46.1 30.5 48.2C16 51 5 57 5 65C5 67 6.5 69.5 10 70.8V75C10 83.3 16.7 90 25 90C33.3 90 40 83.3 40 75C40 73.2 39.7 71.5 39 70H181C180.3 71.5 180 73.2 180 75C180 83.3 186.7 90 195 90C203.3 90 210 83.3 210 75C210 71.2 208.6 67.8 206.3 65.2C216.5 64 235 60.5 235 52C235 48.5 228 47 222.5 45.3ZM25 80C22.2 80 20 77.8 20 75C20 72.2 22.2 70 25 70C27.8 70 30 72.2 30 75C30 77.8 27.8 80 25 80ZM195 80C192.2 80 190 77.8 190 75C190 72.2 192.2 70 195 70C197.8 70 200 72.2 200 75C200 77.8 197.8 80 195 80ZM183.4 46.2C172.5 44 145 42 120 42C95 42 74.8 44 65.5 46.2C64.6 46.4 63 46 64.2 44.5C70.5 36.8 92.5 33 120 33C148 33 168.2 38.5 174.5 42.5C175.7 43.3 175.5 45 174 45.8L183.4 46.2Z" })));
+const buildCloudPayload = ({ cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate }) => ({
+    cars: (Array.isArray(cars) ? cars : []).map(car => ({
+        id: String(car.id || `car_${Date.now()}`),
+        name: String(car.name || ''),
+        price: parseMoney(car.price),
+        seats: Number(car.seats) || 5
+    })),
+    promotions: (Array.isArray(promotions) ? promotions : []).map(promo => ({
+        id: String(promo.id || `promo_${Date.now()}`),
+        name: String(promo.name || ''),
+        value: parseMoney(promo.value)
+    })),
+    salesInfo: {
+        name: String((salesInfo === null || salesInfo === void 0 ? void 0 : salesInfo.name) || ''),
+        phone: String((salesInfo === null || salesInfo === void 0 ? void 0 : salesInfo.phone) || '')
+    },
+    serviceFeeAmount: parseMoney(serviceFeeAmount),
+    physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+});
+const serializeCloudPayload = payload => JSON.stringify(payload || {});
+const formatSyncTime = value => {
+    if (!value)
+        return '';
+    try {
+        return new Date(Number(value)).toLocaleString('vi-VN');
+    }
+    catch (error) {
+        return '';
+    }
+};
 function GeelyQuotationApp() {
     var _a;
     const [cars, setCars] = useState(() => getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS));
@@ -386,11 +413,36 @@ function GeelyQuotationApp() {
     const [salesInfo, setSalesInfo] = useState(() => getSavedData('geely_sales_info', { name: '', phone: '' }));
     const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000)));
     const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
+    const [firebaseState, setFirebaseState] = useState(() => {
+        var _a, _b;
+        return (((_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.getState) === null || _b === void 0 ? void 0 : _b.call(_a)) || {
+            sdk: 'loading', user: null, online: navigator.onLine,
+            message: 'Đang tải dịch vụ đồng bộ...', error: null
+        });
+    });
+    const [syncUser, setSyncUser] = useState(null);
+    const [syncStatus, setSyncStatus] = useState({
+        code: 'signed_out',
+        message: 'Đăng nhập Google để đồng bộ dữ liệu.',
+        updatedAtMs: 0
+    });
+    const latestDataRef = useRef({});
+    const pendingCloudDataRef = useRef(null);
+    const lastCloudPayloadRef = useRef('');
+    const syncReadyRef = useRef(false);
+    const syncApplyingRef = useRef(false);
+    const syncUnsubscribeRef = useRef(null);
+    const syncWriteTimerRef = useRef(null);
     useEffect(() => { saveData('geely_cars_v8', cars); }, [cars]);
     useEffect(() => { saveData('geely_promotions_v2', promotions); }, [promotions]);
     useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
     useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
     useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
+    useEffect(() => {
+        latestDataRef.current = {
+            cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+        };
+    }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate]);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [carColor, setCarColor] = useState('');
@@ -527,6 +579,262 @@ function GeelyQuotationApp() {
         };
     }, [calculations, loanParams]);
     const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
+    const getSyncKey = uid => `geely_sync_initialized_v1_${uid || 'unknown'}`;
+    const setSyncInitialized = uid => {
+        if (uid)
+            saveData(getSyncKey(uid), true);
+    };
+    const applyCloudData = cloudPayload => {
+        var _a;
+        if (!cloudPayload || typeof cloudPayload !== 'object')
+            return;
+        const local = latestDataRef.current || {};
+        const localImageMap = new Map((Array.isArray(local.cars) ? local.cars : []).map(car => [String(car.id), car.image || '']));
+        syncApplyingRef.current = true;
+        if (Array.isArray(cloudPayload.cars) && cloudPayload.cars.length) {
+            const mergedCars = cloudPayload.cars.map(car => ({
+                id: String(car.id || `car_${Date.now()}`),
+                name: String(car.name || ''),
+                price: parseMoney(car.price),
+                seats: Number(car.seats) || 5,
+                image: localImageMap.get(String(car.id)) || ''
+            }));
+            setCars(mergedCars);
+            if (!mergedCars.some(item => item.id === selectedCarId)) {
+                setSelectedCarId(((_a = mergedCars[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
+            }
+        }
+        if (Array.isArray(cloudPayload.promotions)) {
+            setPromotions(cloudPayload.promotions.map(promo => ({
+                id: String(promo.id || `promo_${Date.now()}`),
+                name: String(promo.name || ''),
+                value: parseMoney(promo.value)
+            })));
+        }
+        if (cloudPayload.salesInfo && typeof cloudPayload.salesInfo === 'object') {
+            setSalesInfo({
+                name: String(cloudPayload.salesInfo.name || ''),
+                phone: String(cloudPayload.salesInfo.phone || '')
+            });
+        }
+        if (cloudPayload.serviceFeeAmount !== undefined) {
+            setServiceFeeAmount(parseMoney(cloudPayload.serviceFeeAmount));
+        }
+        if (cloudPayload.physicalInsuranceRate !== undefined) {
+            setPhysicalInsuranceRate(Number(cloudPayload.physicalInsuranceRate) || 0);
+        }
+        window.setTimeout(() => { syncApplyingRef.current = false; }, 500);
+    };
+    const describeFirebaseError = error => {
+        const code = (error === null || error === void 0 ? void 0 : error.code) || '';
+        if (code.includes('unauthorized-domain')) {
+            return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
+        }
+        if (code.includes('popup-blocked')) {
+            return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở ứng dụng bằng Chrome hoặc Safari.';
+        }
+        if (code.includes('popup-closed-by-user')) {
+            return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+        }
+        if (code.includes('permission-denied')) {
+            return 'Firestore từ chối truy cập. Hãy kiểm tra lại Security Rules.';
+        }
+        if (!navigator.onLine) {
+            return 'Thiết bị đang ngoại tuyến. Hãy kết nối mạng rồi thử lại.';
+        }
+        return (error === null || error === void 0 ? void 0 : error.message) || 'Không thể kết nối Firebase.';
+    };
+    const handleFirebaseSignIn = async () => {
+        try {
+            setSyncStatus({ code: 'working', message: 'Đang mở đăng nhập Google...', updatedAtMs: 0 });
+            await window.GeelyFirebaseSync.signInGoogle();
+        }
+        catch (error) {
+            const message = describeFirebaseError(error);
+            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+            showToast(message);
+        }
+    };
+    const handleFirebaseSignOut = async () => {
+        try {
+            await window.GeelyFirebaseSync.signOut();
+            showToast('Đã đăng xuất tài khoản đồng bộ.');
+        }
+        catch (error) {
+            showToast(describeFirebaseError(error));
+        }
+    };
+    const handleUploadCurrentToCloud = async () => {
+        if (!syncUser)
+            return showToast('Vui lòng đăng nhập Google.');
+        const payload = buildCloudPayload(latestDataRef.current);
+        const serialized = serializeCloudPayload(payload);
+        try {
+            setSyncStatus({ code: 'working', message: 'Đang đưa dữ liệu lên Firebase...', updatedAtMs: 0 });
+            const result = await window.GeelyFirebaseSync.saveCloudData(payload);
+            lastCloudPayloadRef.current = serialized;
+            pendingCloudDataRef.current = payload;
+            syncReadyRef.current = true;
+            setSyncInitialized(syncUser.uid);
+            setSyncStatus({
+                code: navigator.onLine ? 'synced' : 'queued',
+                message: navigator.onLine ? 'Đã đồng bộ dữ liệu thiết bị lên Firebase.' : 'Đã xếp hàng đồng bộ khi có mạng.',
+                updatedAtMs: (result === null || result === void 0 ? void 0 : result.updatedAtMs) || Date.now()
+            });
+            showToast('Đã bật đồng bộ tự động.');
+        }
+        catch (error) {
+            const message = describeFirebaseError(error);
+            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+            showToast(message);
+        }
+    };
+    const handleDownloadCloudToDevice = () => {
+        if (!syncUser || !pendingCloudDataRef.current) {
+            return showToast('Chưa tìm thấy dữ liệu trên Firebase.');
+        }
+        const payload = pendingCloudDataRef.current;
+        lastCloudPayloadRef.current = serializeCloudPayload(payload);
+        applyCloudData(payload);
+        syncReadyRef.current = true;
+        setSyncInitialized(syncUser.uid);
+        setSyncStatus({ code: 'synced', message: 'Đã tải dữ liệu Firebase về thiết bị.', updatedAtMs: Date.now() });
+        showToast('Đã tải dữ liệu và giữ nguyên ảnh xe trên thiết bị này.');
+    };
+    const handleSyncNow = async () => {
+        if (!syncUser || !syncReadyRef.current) {
+            return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
+        }
+        await handleUploadCurrentToCloud();
+    };
+    useEffect(() => {
+        const service = window.GeelyFirebaseSync;
+        if (!service) {
+            setFirebaseState({ sdk: 'error', user: null, online: navigator.onLine, message: 'Thiếu mô-đun Firebase.', error: 'firebase-sync.js chưa được tải.' });
+            return undefined;
+        }
+        const unsubscribeState = service.onStateChange(nextState => setFirebaseState(nextState));
+        const unsubscribeAuth = service.onAuthStateChanged(user => setSyncUser(user));
+        return () => {
+            unsubscribeState === null || unsubscribeState === void 0 ? void 0 : unsubscribeState();
+            unsubscribeAuth === null || unsubscribeAuth === void 0 ? void 0 : unsubscribeAuth();
+        };
+    }, []);
+    useEffect(() => {
+        if (syncUnsubscribeRef.current) {
+            syncUnsubscribeRef.current();
+            syncUnsubscribeRef.current = null;
+        }
+        if (syncWriteTimerRef.current) {
+            clearTimeout(syncWriteTimerRef.current);
+            syncWriteTimerRef.current = null;
+        }
+        pendingCloudDataRef.current = null;
+        lastCloudPayloadRef.current = '';
+        syncReadyRef.current = false;
+        if (!syncUser) {
+            setSyncStatus({ code: 'signed_out', message: 'Đăng nhập Google để đồng bộ dữ liệu.', updatedAtMs: 0 });
+            return undefined;
+        }
+        let cancelled = false;
+        setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
+        window.GeelyFirebaseSync.watchCloudData(snapshot => {
+            var _a;
+            if (cancelled)
+                return;
+            if (!snapshot.exists || !((_a = snapshot.data) === null || _a === void 0 ? void 0 : _a.data)) {
+                pendingCloudDataRef.current = null;
+                syncReadyRef.current = false;
+                setSyncStatus({
+                    code: 'cloud_empty',
+                    message: 'Tài khoản này chưa có dữ liệu trên Firebase.',
+                    updatedAtMs: 0
+                });
+                return;
+            }
+            const wrapper = snapshot.data;
+            const cloudPayload = wrapper.data;
+            const serialized = serializeCloudPayload(cloudPayload);
+            pendingCloudDataRef.current = cloudPayload;
+            const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
+            if (!initialized) {
+                syncReadyRef.current = false;
+                setSyncStatus({
+                    code: 'choice_needed',
+                    message: 'Firebase đã có dữ liệu. Hãy chọn dữ liệu muốn dùng làm bản chính.',
+                    updatedAtMs: Number(wrapper.updatedAtMs) || 0
+                });
+                return;
+            }
+            syncReadyRef.current = true;
+            if (!snapshot.hasPendingWrites && serialized !== lastCloudPayloadRef.current) {
+                lastCloudPayloadRef.current = serialized;
+                applyCloudData(cloudPayload);
+            }
+            else if (!lastCloudPayloadRef.current) {
+                lastCloudPayloadRef.current = serialized;
+            }
+            setSyncStatus({
+                code: snapshot.hasPendingWrites ? 'queued' : (snapshot.fromCache && !navigator.onLine ? 'offline' : 'synced'),
+                message: snapshot.hasPendingWrites
+                    ? 'Thay đổi đang chờ gửi lên Firebase.'
+                    : (snapshot.fromCache && !navigator.onLine ? 'Đang dùng dữ liệu Firebase đã lưu ngoại tuyến.' : 'Dữ liệu đã đồng bộ.'),
+                updatedAtMs: Number(wrapper.updatedAtMs) || Date.now()
+            });
+        }, error => {
+            if (cancelled)
+                return;
+            const message = describeFirebaseError(error);
+            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+        }).then(unsubscribe => {
+            if (cancelled)
+                unsubscribe === null || unsubscribe === void 0 ? void 0 : unsubscribe();
+            else
+                syncUnsubscribeRef.current = unsubscribe;
+        }).catch(error => {
+            if (cancelled)
+                return;
+            const message = describeFirebaseError(error);
+            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+        });
+        return () => {
+            var _a;
+            cancelled = true;
+            (_a = syncUnsubscribeRef.current) === null || _a === void 0 ? void 0 : _a.call(syncUnsubscribeRef);
+            syncUnsubscribeRef.current = null;
+        };
+    }, [syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid]);
+    useEffect(() => {
+        if (!syncUser || !syncReadyRef.current || syncApplyingRef.current)
+            return undefined;
+        const payload = buildCloudPayload({
+            cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+        });
+        const serialized = serializeCloudPayload(payload);
+        if (serialized === lastCloudPayloadRef.current)
+            return undefined;
+        if (syncWriteTimerRef.current)
+            clearTimeout(syncWriteTimerRef.current);
+        setSyncStatus(current => ({ ...current, code: navigator.onLine ? 'pending' : 'queued', message: navigator.onLine ? 'Có thay đổi, đang chờ đồng bộ...' : 'Thay đổi sẽ đồng bộ khi có mạng.' }));
+        syncWriteTimerRef.current = window.setTimeout(async () => {
+            try {
+                const result = await window.GeelyFirebaseSync.saveCloudData(payload);
+                lastCloudPayloadRef.current = serialized;
+                setSyncStatus({
+                    code: navigator.onLine ? 'synced' : 'queued',
+                    message: navigator.onLine ? 'Dữ liệu đã đồng bộ.' : 'Đã lưu ngoại tuyến, sẽ gửi khi có mạng.',
+                    updatedAtMs: (result === null || result === void 0 ? void 0 : result.updatedAtMs) || Date.now()
+                });
+            }
+            catch (error) {
+                setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
+            }
+        }, 1400);
+        return () => {
+            if (syncWriteTimerRef.current)
+                clearTimeout(syncWriteTimerRef.current);
+        };
+    }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid]);
     const handleDiscountChange = (e) => {
         const value = parseMoney(e.target.value);
         setDiscount(value ? formatNumber(value) : '');
@@ -732,13 +1040,13 @@ function GeelyQuotationApp() {
                         await navigator.share({
                             files: [file],
                             title: 'Báo giá Geely',
-                            text: `Báo giá ${car?.name || 'Geely'}`
+                            text: `Báo giá ${(car === null || car === void 0 ? void 0 : car.name) || 'Geely'}`
                         });
                         completedByShare = true;
                     }
                 }
                 catch (shareError) {
-                    if (shareError && shareError.name === 'AbortError') {
+                    if ((shareError === null || shareError === void 0 ? void 0 : shareError.name) === 'AbortError') {
                         showToast('Bạn đã đóng bảng chia sẻ.');
                         return;
                     }
@@ -900,6 +1208,45 @@ function GeelyQuotationApp() {
             React.createElement("button", { onClick: handleExportExcel, className: "w-full mt-4 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors" }, "T\u1EA3i B\u1EA3ng L\u00E3i Xu\u1ED1ng Excel (CSV)")));
     };
     const renderSettings = () => (React.createElement("div", { className: "space-y-4 pb-20" },
+        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+            React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
+                React.createElement("div", null,
+                    React.createElement("h3", { className: "font-black text-gray-800" }, "\u2601\uFE0F \u0110\u1ED3ng B\u1ED9 Firebase"),
+                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 xe, gi\u00E1, khuy\u1EBFn m\u00E3i, th\u00F4ng tin b\u00E1n h\u00E0ng v\u00E0 c\u00E1c kho\u1EA3n ph\u00ED.")),
+                React.createElement("span", { className: `shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
+                        ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
+                            ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-600'}` }, syncStatus.code === 'synced' ? 'ĐÃ ĐỒNG BỘ' :
+                    syncStatus.code === 'offline' ? 'NGOẠI TUYẾN' :
+                        ['pending', 'queued'].includes(syncStatus.code) ? 'ĐANG CHỜ' :
+                            syncStatus.code === 'working' ? 'ĐANG XỬ LÝ' :
+                                syncStatus.code === 'error' ? 'CÓ LỖI' :
+                                    syncUser ? 'CHƯA THIẾT LẬP' : 'CHƯA ĐĂNG NHẬP')),
+            React.createElement("div", { className: "p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3" },
+                React.createElement("p", { className: "text-sm font-semibold text-slate-700" }, syncStatus.message || firebaseState.message),
+                syncStatus.updatedAtMs > 0 && (React.createElement("p", { className: "text-[11px] text-slate-500 mt-1" },
+                    "C\u1EADp nh\u1EADt g\u1EA7n nh\u1EA5t: ",
+                    formatSyncTime(syncStatus.updatedAtMs))),
+                !firebaseState.online && React.createElement("p", { className: "text-[11px] font-bold text-orange-600 mt-1" }, "Thi\u1EBFt b\u1ECB \u0111ang kh\u00F4ng c\u00F3 m\u1EA1ng."),
+                firebaseState.sdk === 'error' && (React.createElement("p", { className: "text-[11px] text-red-600 mt-1" }, firebaseState.error || 'Không tải được thư viện Firebase.'))),
+            !syncUser ? (React.createElement("div", { className: "space-y-2" },
+                React.createElement("button", { type: "button", onClick: handleFirebaseSignIn, disabled: firebaseState.sdk === 'loading', className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm disabled:opacity-50" }, firebaseState.sdk === 'loading' ? 'Đang tải Firebase...' : 'Đăng nhập bằng Google'),
+                firebaseState.sdk === 'error' && (React.createElement("button", { type: "button", onClick: () => { var _a, _b; return (_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.retry) === null || _b === void 0 ? void 0 : _b.call(_a).catch(() => { }); }, className: "w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm" }, "Th\u1EED t\u1EA3i l\u1EA1i Firebase")),
+                React.createElement("p", { className: "text-[11px] text-gray-500 text-center" }, "H\u00E3y \u0111\u0103ng nh\u1EADp c\u00F9ng m\u1ED9t t\u00E0i kho\u1EA3n Google tr\u00EAn \u0111i\u1EC7n tho\u1EA1i v\u00E0 m\u00E1y t\u00EDnh."))) : (React.createElement("div", { className: "space-y-3" },
+                React.createElement("div", { className: "flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl" },
+                    React.createElement("div", { className: "min-w-0" },
+                        React.createElement("p", { className: "font-bold text-blue-900 truncate" }, syncUser.displayName || 'Tài khoản Google'),
+                        React.createElement("p", { className: "text-xs text-blue-700 truncate" }, syncUser.email)),
+                    React.createElement("button", { type: "button", onClick: handleFirebaseSignOut, className: "shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs" }, "\u0110\u0103ng xu\u1EA5t")),
+                syncStatus.code === 'choice_needed' && (React.createElement("div", { className: "space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl" },
+                    React.createElement("p", { className: "text-xs font-bold text-yellow-900" }, "Hai n\u01A1i \u0111ang c\u00F3 d\u1EEF li\u1EC7u. H\u00E3y ch\u1ECDn b\u1EA3n ch\u00EDnh cho l\u1EA7n thi\u1EBFt l\u1EADp \u0111\u1EA7u ti\u00EAn:"),
+                    React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u thi\u1EBFt b\u1ECB n\u00E0y l\u00EAn Firebase"),
+                    React.createElement("button", { type: "button", onClick: handleDownloadCloudToDevice, className: "w-full py-2.5 bg-white text-yellow-800 border-2 border-yellow-500 rounded-lg font-bold text-sm" }, "T\u1EA3i d\u1EEF li\u1EC7u Firebase v\u1EC1 thi\u1EBFt b\u1ECB n\u00E0y"))),
+                syncStatus.code === 'cloud_empty' && (React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u hi\u1EC7n t\u1EA1i l\u00EAn Firebase")),
+                !['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (React.createElement("button", { type: "button", onClick: handleSyncNow, className: "w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm" }, "\u0110\u1ED3ng b\u1ED9 ngay")))),
+            React.createElement("div", { className: "mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed" },
+                React.createElement("b", null, "\u1EA2nh xe kh\u00F4ng \u0111\u01B0\u1EE3c \u0111\u01B0a l\u00EAn Firebase."),
+                " M\u1ED7i thi\u1EBFt b\u1ECB gi\u1EEF \u1EA3nh ri\u00EAng; khi t\u1EA3i d\u1EEF li\u1EC7u t\u1EEB \u0111\u00E1m m\u00E2y, \u1EA3nh \u0111ang c\u00F3 tr\u00EAn thi\u1EBFt b\u1ECB s\u1EBD \u0111\u01B0\u1EE3c gi\u1EEF l\u1EA1i theo m\u00E3 d\u00F2ng xe.")),
         React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
             React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDC68\u200D\uD83D\uDCBC Th\u00F4ng Tin B\u00E1n H\u00E0ng (In tr\u00EAn B\u00E1o gi\u00E1)"),
             React.createElement("input", { type: "text", placeholder: "T\u00EAn (VD: Tu\u1EA5n Geely)", value: salesInfo.name, onChange: e => setSalesInfo({ ...salesInfo, name: e.target.value }), className: "w-full px-3 py-2 mb-2 bg-gray-50 border rounded-lg text-sm" }),
@@ -1102,7 +1449,7 @@ function GeelyQuotationApp() {
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 1.7"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "flex p-1 bg-gray-200 rounded-lg shadow-inner mb-4" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}` }, "Nh\u1EADp TT"),

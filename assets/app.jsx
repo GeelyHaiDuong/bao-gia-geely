@@ -421,6 +421,38 @@ const normalizePhoneForZalo = (phone) => {
           </svg>
         );
 
+
+        const buildCloudPayload = ({ cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate }) => ({
+          cars: (Array.isArray(cars) ? cars : []).map(car => ({
+            id: String(car.id || `car_${Date.now()}`),
+            name: String(car.name || ''),
+            price: parseMoney(car.price),
+            seats: Number(car.seats) || 5
+          })),
+          promotions: (Array.isArray(promotions) ? promotions : []).map(promo => ({
+            id: String(promo.id || `promo_${Date.now()}`),
+            name: String(promo.name || ''),
+            value: parseMoney(promo.value)
+          })),
+          salesInfo: {
+            name: String(salesInfo?.name || ''),
+            phone: String(salesInfo?.phone || '')
+          },
+          serviceFeeAmount: parseMoney(serviceFeeAmount),
+          physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+        });
+
+        const serializeCloudPayload = payload => JSON.stringify(payload || {});
+
+        const formatSyncTime = value => {
+          if (!value) return '';
+          try {
+            return new Date(Number(value)).toLocaleString('vi-VN');
+          } catch (error) {
+            return '';
+          }
+        };
+
         function GeelyQuotationApp() {
           const [cars, setCars] = useState(() => getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS));
           const [promotions, setPromotions] = useState(() => getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS));
@@ -428,11 +460,39 @@ const normalizePhoneForZalo = (phone) => {
           const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000))); 
           const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
 
+
+          const [firebaseState, setFirebaseState] = useState(() => (
+            window.GeelyFirebaseSync?.getState?.() || {
+              sdk: 'loading', user: null, online: navigator.onLine,
+              message: 'Đang tải dịch vụ đồng bộ...', error: null
+            }
+          ));
+          const [syncUser, setSyncUser] = useState(null);
+          const [syncStatus, setSyncStatus] = useState({
+            code: 'signed_out',
+            message: 'Đăng nhập Google để đồng bộ dữ liệu.',
+            updatedAtMs: 0
+          });
+          const latestDataRef = useRef({});
+          const pendingCloudDataRef = useRef(null);
+          const lastCloudPayloadRef = useRef('');
+          const syncReadyRef = useRef(false);
+          const syncApplyingRef = useRef(false);
+          const syncUnsubscribeRef = useRef(null);
+          const syncWriteTimerRef = useRef(null);
+
           useEffect(() => { saveData('geely_cars_v8', cars); }, [cars]);
           useEffect(() => { saveData('geely_promotions_v2', promotions); }, [promotions]);
           useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
           useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
           useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
+
+
+          useEffect(() => {
+            latestDataRef.current = {
+              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+            };
+          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate]);
 
           const [customerName, setCustomerName] = useState('');
           const [customerPhone, setCustomerPhone] = useState('');
@@ -595,6 +655,283 @@ const normalizePhoneForZalo = (phone) => {
           }, [calculations, loanParams]);
 
           const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
+
+
+          const getSyncKey = uid => `geely_sync_initialized_v1_${uid || 'unknown'}`;
+
+          const setSyncInitialized = uid => {
+            if (uid) saveData(getSyncKey(uid), true);
+          };
+
+          const applyCloudData = cloudPayload => {
+            if (!cloudPayload || typeof cloudPayload !== 'object') return;
+
+            const local = latestDataRef.current || {};
+            const localImageMap = new Map(
+              (Array.isArray(local.cars) ? local.cars : []).map(car => [String(car.id), car.image || ''])
+            );
+
+            syncApplyingRef.current = true;
+
+            if (Array.isArray(cloudPayload.cars) && cloudPayload.cars.length) {
+              const mergedCars = cloudPayload.cars.map(car => ({
+                id: String(car.id || `car_${Date.now()}`),
+                name: String(car.name || ''),
+                price: parseMoney(car.price),
+                seats: Number(car.seats) || 5,
+                image: localImageMap.get(String(car.id)) || ''
+              }));
+              setCars(mergedCars);
+              if (!mergedCars.some(item => item.id === selectedCarId)) {
+                setSelectedCarId(mergedCars[0]?.id || '');
+              }
+            }
+
+            if (Array.isArray(cloudPayload.promotions)) {
+              setPromotions(cloudPayload.promotions.map(promo => ({
+                id: String(promo.id || `promo_${Date.now()}`),
+                name: String(promo.name || ''),
+                value: parseMoney(promo.value)
+              })));
+            }
+
+            if (cloudPayload.salesInfo && typeof cloudPayload.salesInfo === 'object') {
+              setSalesInfo({
+                name: String(cloudPayload.salesInfo.name || ''),
+                phone: String(cloudPayload.salesInfo.phone || '')
+              });
+            }
+
+            if (cloudPayload.serviceFeeAmount !== undefined) {
+              setServiceFeeAmount(parseMoney(cloudPayload.serviceFeeAmount));
+            }
+
+            if (cloudPayload.physicalInsuranceRate !== undefined) {
+              setPhysicalInsuranceRate(Number(cloudPayload.physicalInsuranceRate) || 0);
+            }
+
+            window.setTimeout(() => { syncApplyingRef.current = false; }, 500);
+          };
+
+          const describeFirebaseError = error => {
+            const code = error?.code || '';
+            if (code.includes('unauthorized-domain')) {
+              return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
+            }
+            if (code.includes('popup-blocked')) {
+              return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở ứng dụng bằng Chrome hoặc Safari.';
+            }
+            if (code.includes('popup-closed-by-user')) {
+              return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+            }
+            if (code.includes('permission-denied')) {
+              return 'Firestore từ chối truy cập. Hãy kiểm tra lại Security Rules.';
+            }
+            if (!navigator.onLine) {
+              return 'Thiết bị đang ngoại tuyến. Hãy kết nối mạng rồi thử lại.';
+            }
+            return error?.message || 'Không thể kết nối Firebase.';
+          };
+
+          const handleFirebaseSignIn = async () => {
+            try {
+              setSyncStatus({ code: 'working', message: 'Đang mở đăng nhập Google...', updatedAtMs: 0 });
+              await window.GeelyFirebaseSync.signInGoogle();
+            } catch (error) {
+              const message = describeFirebaseError(error);
+              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+              showToast(message);
+            }
+          };
+
+          const handleFirebaseSignOut = async () => {
+            try {
+              await window.GeelyFirebaseSync.signOut();
+              showToast('Đã đăng xuất tài khoản đồng bộ.');
+            } catch (error) {
+              showToast(describeFirebaseError(error));
+            }
+          };
+
+          const handleUploadCurrentToCloud = async () => {
+            if (!syncUser) return showToast('Vui lòng đăng nhập Google.');
+            const payload = buildCloudPayload(latestDataRef.current);
+            const serialized = serializeCloudPayload(payload);
+
+            try {
+              setSyncStatus({ code: 'working', message: 'Đang đưa dữ liệu lên Firebase...', updatedAtMs: 0 });
+              const result = await window.GeelyFirebaseSync.saveCloudData(payload);
+              lastCloudPayloadRef.current = serialized;
+              pendingCloudDataRef.current = payload;
+              syncReadyRef.current = true;
+              setSyncInitialized(syncUser.uid);
+              setSyncStatus({
+                code: navigator.onLine ? 'synced' : 'queued',
+                message: navigator.onLine ? 'Đã đồng bộ dữ liệu thiết bị lên Firebase.' : 'Đã xếp hàng đồng bộ khi có mạng.',
+                updatedAtMs: result?.updatedAtMs || Date.now()
+              });
+              showToast('Đã bật đồng bộ tự động.');
+            } catch (error) {
+              const message = describeFirebaseError(error);
+              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+              showToast(message);
+            }
+          };
+
+          const handleDownloadCloudToDevice = () => {
+            if (!syncUser || !pendingCloudDataRef.current) {
+              return showToast('Chưa tìm thấy dữ liệu trên Firebase.');
+            }
+
+            const payload = pendingCloudDataRef.current;
+            lastCloudPayloadRef.current = serializeCloudPayload(payload);
+            applyCloudData(payload);
+            syncReadyRef.current = true;
+            setSyncInitialized(syncUser.uid);
+            setSyncStatus({ code: 'synced', message: 'Đã tải dữ liệu Firebase về thiết bị.', updatedAtMs: Date.now() });
+            showToast('Đã tải dữ liệu và giữ nguyên ảnh xe trên thiết bị này.');
+          };
+
+          const handleSyncNow = async () => {
+            if (!syncUser || !syncReadyRef.current) {
+              return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
+            }
+            await handleUploadCurrentToCloud();
+          };
+
+          useEffect(() => {
+            const service = window.GeelyFirebaseSync;
+            if (!service) {
+              setFirebaseState({ sdk: 'error', user: null, online: navigator.onLine, message: 'Thiếu mô-đun Firebase.', error: 'firebase-sync.js chưa được tải.' });
+              return undefined;
+            }
+
+            const unsubscribeState = service.onStateChange(nextState => setFirebaseState(nextState));
+            const unsubscribeAuth = service.onAuthStateChanged(user => setSyncUser(user));
+            return () => {
+              unsubscribeState?.();
+              unsubscribeAuth?.();
+            };
+          }, []);
+
+          useEffect(() => {
+            if (syncUnsubscribeRef.current) {
+              syncUnsubscribeRef.current();
+              syncUnsubscribeRef.current = null;
+            }
+            if (syncWriteTimerRef.current) {
+              clearTimeout(syncWriteTimerRef.current);
+              syncWriteTimerRef.current = null;
+            }
+
+            pendingCloudDataRef.current = null;
+            lastCloudPayloadRef.current = '';
+            syncReadyRef.current = false;
+
+            if (!syncUser) {
+              setSyncStatus({ code: 'signed_out', message: 'Đăng nhập Google để đồng bộ dữ liệu.', updatedAtMs: 0 });
+              return undefined;
+            }
+
+            let cancelled = false;
+            setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
+
+            window.GeelyFirebaseSync.watchCloudData(snapshot => {
+              if (cancelled) return;
+
+              if (!snapshot.exists || !snapshot.data?.data) {
+                pendingCloudDataRef.current = null;
+                syncReadyRef.current = false;
+                setSyncStatus({
+                  code: 'cloud_empty',
+                  message: 'Tài khoản này chưa có dữ liệu trên Firebase.',
+                  updatedAtMs: 0
+                });
+                return;
+              }
+
+              const wrapper = snapshot.data;
+              const cloudPayload = wrapper.data;
+              const serialized = serializeCloudPayload(cloudPayload);
+              pendingCloudDataRef.current = cloudPayload;
+
+              const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
+              if (!initialized) {
+                syncReadyRef.current = false;
+                setSyncStatus({
+                  code: 'choice_needed',
+                  message: 'Firebase đã có dữ liệu. Hãy chọn dữ liệu muốn dùng làm bản chính.',
+                  updatedAtMs: Number(wrapper.updatedAtMs) || 0
+                });
+                return;
+              }
+
+              syncReadyRef.current = true;
+
+              if (!snapshot.hasPendingWrites && serialized !== lastCloudPayloadRef.current) {
+                lastCloudPayloadRef.current = serialized;
+                applyCloudData(cloudPayload);
+              } else if (!lastCloudPayloadRef.current) {
+                lastCloudPayloadRef.current = serialized;
+              }
+
+              setSyncStatus({
+                code: snapshot.hasPendingWrites ? 'queued' : (snapshot.fromCache && !navigator.onLine ? 'offline' : 'synced'),
+                message: snapshot.hasPendingWrites
+                  ? 'Thay đổi đang chờ gửi lên Firebase.'
+                  : (snapshot.fromCache && !navigator.onLine ? 'Đang dùng dữ liệu Firebase đã lưu ngoại tuyến.' : 'Dữ liệu đã đồng bộ.'),
+                updatedAtMs: Number(wrapper.updatedAtMs) || Date.now()
+              });
+            }, error => {
+              if (cancelled) return;
+              const message = describeFirebaseError(error);
+              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+            }).then(unsubscribe => {
+              if (cancelled) unsubscribe?.();
+              else syncUnsubscribeRef.current = unsubscribe;
+            }).catch(error => {
+              if (cancelled) return;
+              const message = describeFirebaseError(error);
+              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
+            });
+
+            return () => {
+              cancelled = true;
+              syncUnsubscribeRef.current?.();
+              syncUnsubscribeRef.current = null;
+            };
+          }, [syncUser?.uid]);
+
+          useEffect(() => {
+            if (!syncUser || !syncReadyRef.current || syncApplyingRef.current) return undefined;
+
+            const payload = buildCloudPayload({
+              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+            });
+            const serialized = serializeCloudPayload(payload);
+            if (serialized === lastCloudPayloadRef.current) return undefined;
+
+            if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current);
+            setSyncStatus(current => ({ ...current, code: navigator.onLine ? 'pending' : 'queued', message: navigator.onLine ? 'Có thay đổi, đang chờ đồng bộ...' : 'Thay đổi sẽ đồng bộ khi có mạng.' }));
+
+            syncWriteTimerRef.current = window.setTimeout(async () => {
+              try {
+                const result = await window.GeelyFirebaseSync.saveCloudData(payload);
+                lastCloudPayloadRef.current = serialized;
+                setSyncStatus({
+                  code: navigator.onLine ? 'synced' : 'queued',
+                  message: navigator.onLine ? 'Dữ liệu đã đồng bộ.' : 'Đã lưu ngoại tuyến, sẽ gửi khi có mạng.',
+                  updatedAtMs: result?.updatedAtMs || Date.now()
+                });
+              } catch (error) {
+                setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
+              }
+            }, 1400);
+
+            return () => {
+              if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current);
+            };
+          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser?.uid]);
           
           const handleDiscountChange = (e) => {
             const value = parseMoney(e.target.value);
@@ -1045,6 +1382,85 @@ const normalizePhoneForZalo = (phone) => {
           const renderSettings = () => (
             <div className="space-y-4 pb-20">
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="font-black text-gray-800">☁️ Đồng Bộ Firebase</h3>
+                    <p className="text-xs text-gray-500 mt-1">Đồng bộ xe, giá, khuyến mãi, thông tin bán hàng và các khoản phí.</p>
+                  </div>
+                  <span className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${
+                    ['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
+                    ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
+                    ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {syncStatus.code === 'synced' ? 'ĐÃ ĐỒNG BỘ' :
+                     syncStatus.code === 'offline' ? 'NGOẠI TUYẾN' :
+                     ['pending', 'queued'].includes(syncStatus.code) ? 'ĐANG CHỜ' :
+                     syncStatus.code === 'working' ? 'ĐANG XỬ LÝ' :
+                     syncStatus.code === 'error' ? 'CÓ LỖI' :
+                     syncUser ? 'CHƯA THIẾT LẬP' : 'CHƯA ĐĂNG NHẬP'}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
+                  <p className="text-sm font-semibold text-slate-700">{syncStatus.message || firebaseState.message}</p>
+                  {syncStatus.updatedAtMs > 0 && (
+                    <p className="text-[11px] text-slate-500 mt-1">Cập nhật gần nhất: {formatSyncTime(syncStatus.updatedAtMs)}</p>
+                  )}
+                  {!firebaseState.online && <p className="text-[11px] font-bold text-orange-600 mt-1">Thiết bị đang không có mạng.</p>}
+                  {firebaseState.sdk === 'error' && (
+                    <p className="text-[11px] text-red-600 mt-1">{firebaseState.error || 'Không tải được thư viện Firebase.'}</p>
+                  )}
+                </div>
+
+                {!syncUser ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleFirebaseSignIn}
+                      disabled={firebaseState.sdk === 'loading'}
+                      className="w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm disabled:opacity-50"
+                    >
+                      {firebaseState.sdk === 'loading' ? 'Đang tải Firebase...' : 'Đăng nhập bằng Google'}
+                    </button>
+                    {firebaseState.sdk === 'error' && (
+                      <button type="button" onClick={() => window.GeelyFirebaseSync?.retry?.().catch(() => {})} className="w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm">Thử tải lại Firebase</button>
+                    )}
+                    <p className="text-[11px] text-gray-500 text-center">Hãy đăng nhập cùng một tài khoản Google trên điện thoại và máy tính.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                      <div className="min-w-0">
+                        <p className="font-bold text-blue-900 truncate">{syncUser.displayName || 'Tài khoản Google'}</p>
+                        <p className="text-xs text-blue-700 truncate">{syncUser.email}</p>
+                      </div>
+                      <button type="button" onClick={handleFirebaseSignOut} className="shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs">Đăng xuất</button>
+                    </div>
+
+                    {syncStatus.code === 'choice_needed' && (
+                      <div className="space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+                        <p className="text-xs font-bold text-yellow-900">Hai nơi đang có dữ liệu. Hãy chọn bản chính cho lần thiết lập đầu tiên:</p>
+                        <button type="button" onClick={handleUploadCurrentToCloud} className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm">Đưa dữ liệu thiết bị này lên Firebase</button>
+                        <button type="button" onClick={handleDownloadCloudToDevice} className="w-full py-2.5 bg-white text-yellow-800 border-2 border-yellow-500 rounded-lg font-bold text-sm">Tải dữ liệu Firebase về thiết bị này</button>
+                      </div>
+                    )}
+
+                    {syncStatus.code === 'cloud_empty' && (
+                      <button type="button" onClick={handleUploadCurrentToCloud} className="w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm">Đưa dữ liệu hiện tại lên Firebase</button>
+                    )}
+
+                    {!['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (
+                      <button type="button" onClick={handleSyncNow} className="w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm">Đồng bộ ngay</button>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed">
+                  <b>Ảnh xe không được đưa lên Firebase.</b> Mỗi thiết bị giữ ảnh riêng; khi tải dữ liệu từ đám mây, ảnh đang có trên thiết bị sẽ được giữ lại theo mã dòng xe.
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-800 mb-3">👨‍💼 Thông Tin Bán Hàng (In trên Báo giá)</h3>
                 <input type="text" placeholder="Tên (VD: Tuấn Geely)" value={salesInfo.name} onChange={e => setSalesInfo({...salesInfo, name: e.target.value})} className="w-full px-3 py-2 mb-2 bg-gray-50 border rounded-lg text-sm" />
                 <input type="tel" placeholder="Số điện thoại" value={salesInfo.phone} onChange={e => setSalesInfo({...salesInfo, phone: e.target.value})} className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" />
@@ -1323,7 +1739,7 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.7</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
