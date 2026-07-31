@@ -80,7 +80,109 @@ const { useState, useMemo, useEffect, useRef } = React;
         };
 
 
-        const normalizePhoneForZalo = (phone) => {
+        const EXPORT_PLACEHOLDER_IMAGE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+    <rect width="1200" height="800" fill="#f1f5f9"/>
+    <path d="M215 505c18-73 68-123 148-145l85-23c38-71 99-108 184-108h115c88 0 159 44 211 132l76 26c48 17 78 54 78 99v41H1060c-10 70-69 124-142 124s-132-54-142-124H431c-10 70-69 124-142 124s-132-54-142-124H95v-31c0-55 42-99 120-111zm74 70a54 54 0 1 0 0-108 54 54 0 0 0 0 108zm629 0a54 54 0 1 0 0-108 54 54 0 0 0 0 108zM490 337h381c-36-45-78-67-126-67H633c-64 0-112 22-143 67z" fill="#cbd5e1"/>
+    <text x="600" y="710" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#64748b">ẢNH XE KHÔNG HỖ TRỢ XUẤT TỪ LINK NGOÀI</text>
+  </svg>
+`);
+
+const blobToDataURL = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Không thể chuyển ảnh sang dữ liệu cục bộ.'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(blob);
+});
+
+const waitForImageReady = async (image) => {
+    if (!image) return;
+    if (!image.complete) {
+        await new Promise(resolve => {
+            image.addEventListener('load', resolve, { once: true });
+            image.addEventListener('error', resolve, { once: true });
+        });
+    }
+    if (typeof image.decode === 'function') {
+        try { await image.decode(); } catch (error) {}
+    }
+};
+
+const prepareImagesForExport = async (element) => {
+    const restoreItems = [];
+    let usedPlaceholder = false;
+    const images = Array.from(element.querySelectorAll('img'));
+
+    for (const image of images) {
+        const originalSrc = image.getAttribute('src') || '';
+        const originalCrossOrigin = image.getAttribute('crossorigin');
+        if (!originalSrc) continue;
+
+        let absoluteUrl;
+        try {
+            absoluteUrl = new URL(originalSrc, window.location.href);
+        } catch (error) {
+            continue;
+        }
+
+        const isLocalData = ['data:', 'blob:'].includes(absoluteUrl.protocol);
+        const isSameOrigin = absoluteUrl.origin === window.location.origin;
+
+        if (isLocalData || isSameOrigin) {
+            await waitForImageReady(image);
+            continue;
+        }
+
+        restoreItems.push({ image, originalSrc, originalCrossOrigin });
+
+        try {
+            const response = await fetch(absoluteUrl.href, {
+                mode: 'cors',
+                credentials: 'omit',
+                cache: 'no-store'
+            });
+            if (!response.ok || response.type === 'opaque') {
+                throw new Error(`HTTP ${response.status || 'CORS'}`);
+            }
+            const blob = await response.blob();
+            const localDataUrl = await blobToDataURL(blob);
+            image.removeAttribute('crossorigin');
+            image.src = localDataUrl;
+            await waitForImageReady(image);
+        } catch (error) {
+            console.warn('Ảnh link ngoài không cho phép xuất canvas:', absoluteUrl.href, error);
+            usedPlaceholder = true;
+            image.removeAttribute('crossorigin');
+            image.src = EXPORT_PLACEHOLDER_IMAGE;
+            await waitForImageReady(image);
+        }
+    }
+
+    return {
+        usedPlaceholder,
+        restore: () => {
+            restoreItems.forEach(({ image, originalSrc, originalCrossOrigin }) => {
+                image.src = originalSrc;
+                if (originalCrossOrigin === null) image.removeAttribute('crossorigin');
+                else image.setAttribute('crossorigin', originalCrossOrigin);
+            });
+        }
+    };
+};
+
+const canvasToJpegBlob = (canvas, quality = 0.92) => new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('Trình duyệt không thể tạo tệp ảnh.'));
+    }, 'image/jpeg', quality);
+});
+
+const safeFilePart = (value) => String(value || 'KhachHang')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'KhachHang';
+const normalizePhoneForZalo = (phone) => {
           const digits = String(phone || '').replace(/\D/g, '');
           if (!digits) return '0961018288';
           if (digits.startsWith('84')) return `0${digits.slice(2)}`;
@@ -489,10 +591,13 @@ const { useState, useMemo, useEffect, useRef } = React;
           const handleExportImage = async () => {
             const element = captureRef.current;
             if (!element) return showToast('Không tìm thấy nội dung báo giá.');
+            if (!window.html2canvas) return showToast('Thiếu thư viện tạo ảnh. Hãy tải lại ứng dụng khi có mạng.');
 
             const originalTransform = element.style.transform;
+            let restorePreparedImages = () => {};
+            let usedPlaceholder = false;
             setIsExporting(true);
-            showToast('Đang tạo ảnh Báo giá chuẩn form...');
+            showToast('Đang tạo ảnh báo giá...');
 
             try {
               element.style.transform = 'none';
@@ -501,34 +606,73 @@ const { useState, useMemo, useEffect, useRef } = React;
                 await document.fonts.ready;
               }
 
-              const images = Array.from(element.querySelectorAll('img'));
-              await Promise.all(images.map((img) => {
-                if (img.complete) return Promise.resolve();
-                return new Promise((resolve) => {
-                  img.addEventListener('load', resolve, { once: true });
-                  img.addEventListener('error', resolve, { once: true });
-                });
-              }));
+              const preparedImages = await prepareImagesForExport(element);
+              restorePreparedImages = preparedImages.restore;
+              usedPlaceholder = preparedImages.usedPlaceholder;
 
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 120));
 
-              const canvas = await window.html2canvas(element, { 
-                scale: 2, 
-                useCORS: true, 
+              const canvas = await window.html2canvas(element, {
+                scale: Math.min(2, window.devicePixelRatio || 2),
+                useCORS: true,
+                allowTaint: false,
+                imageTimeout: 12000,
                 backgroundColor: '#ffffff',
-                logging: false
+                logging: false,
+                removeContainer: true
               });
 
-              const image = canvas.toDataURL('image/jpeg', 0.92);
-              const link = document.createElement('a');
-              link.download = `BaoGia_Geely_${customerName || 'KhachHang'}.jpg`;
-              link.href = image;
-              link.click();
-              showToast('Đã tải ảnh báo giá thành công!');
+              const blob = await canvasToJpegBlob(canvas, 0.92);
+              const fileName = `BaoGia_Geely_${safeFilePart(customerName)}_${Date.now()}.jpg`;
+              let completedByShare = false;
+
+              if (navigator.share && typeof File !== 'undefined') {
+                try {
+                  const file = new File([blob], fileName, { type: 'image/jpeg' });
+                  if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                      files: [file],
+                      title: 'Báo giá Geely',
+                      text: `Báo giá ${car?.name || 'Geely'}`
+                    });
+                    completedByShare = true;
+                  }
+                } catch (shareError) {
+                  if (shareError?.name === 'AbortError') {
+                    showToast('Bạn đã đóng bảng chia sẻ.');
+                    return;
+                  }
+                  console.warn('Không thể mở bảng chia sẻ, chuyển sang tải tệp:', shareError);
+                }
+              }
+
+              if (!completedByShare) {
+                const objectUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = objectUrl;
+                link.rel = 'noopener';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+              }
+
+              if (usedPlaceholder) {
+                showToast('Đã tạo ảnh, nhưng ảnh xe từ link ngoài bị thay bằng ảnh dự phòng. Hãy chọn ảnh từ thiết bị để xuất đầy đủ.');
+              } else {
+                showToast(completedByShare ? 'Đã mở bảng lưu/chia sẻ ảnh!' : 'Đã tải ảnh báo giá!');
+              }
             } catch (error) {
-              console.error(error);
-              showToast('Có lỗi xảy ra khi tạo ảnh. Hãy kiểm tra link ảnh xe hoặc kết nối mạng.');
+              console.error('Lỗi xuất ảnh báo giá:', error);
+              const message = String(error?.message || '');
+              if (/memory|canvas|size/i.test(message)) {
+                showToast('Điện thoại thiếu bộ nhớ để tạo ảnh. Hãy đóng bớt ứng dụng rồi thử lại.');
+              } else {
+                showToast('Không thể tạo ảnh. Vào Cài đặt → Sửa xe → Chọn ảnh từ thiết bị rồi thử lại.');
+              }
             } finally {
+              try { restorePreparedImages(); } catch (error) {}
               element.style.transform = originalTransform;
               setIsExporting(false);
             }
@@ -1009,7 +1153,7 @@ const { useState, useMemo, useEffect, useRef } = React;
               {activeTab === 'preview' && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20 flex justify-center pb-safe">
                   <div className="max-w-md w-full grid grid-cols-1">
-                    <button onClick={handleExportImage} disabled={isExporting} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:bg-blue-700 transition-colors">{isExporting ? 'Đang tạo ảnh...' : 'Lưu Ảnh Báo Giá (Bản Nét)'}</button>
+                    <button onClick={handleExportImage} disabled={isExporting} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:bg-blue-700 transition-colors">{isExporting ? 'Đang tạo ảnh...' : 'Lưu / Chia sẻ Ảnh Báo Giá'}</button>
                   </div>
                 </div>
               )}
