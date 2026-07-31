@@ -1,4 +1,4 @@
-const VERSION = 'geely-pwa-v1.5.0';
+const VERSION = 'geely-pwa-v1.6.0';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -8,8 +8,8 @@ const LOCAL_ASSETS = [
   './offline.html',
   './manifest.webmanifest',
   './assets/app.css',
-  './assets/export-compat.css?v=150',
-  './assets/app.js',
+  './assets/export-compat.css?v=160',
+  './assets/app.js?v=160',
   './assets/qrcode-browser.js',
   './assets/pwa.js',
   './icons/icon-192.png',
