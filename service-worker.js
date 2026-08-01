@@ -1,4 +1,4 @@
-const VERSION = 'geely-pwa-v2.3.0';
+const VERSION = 'geely-pwa-v2.4.0';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -43,9 +43,9 @@ const CAR_COLOR_IMAGES = [
 
 const CORE_ASSETS = [
   './','./index.html','./offline.html','./manifest.webmanifest',
-  './assets/app.css','./assets/export-compat.css?v=230','./assets/app.js?v=230',
-  './assets/idb-store.js?v=230','./assets/firebase-sync.js?v=230',
-  './assets/qrcode-browser.js','./assets/pwa.js?v=230',
+  './assets/app.css','./assets/export-compat.css?v=240','./assets/app.js?v=240',
+  './assets/idb-store.js?v=240','./assets/firebase-sync.js?v=240',
+  './assets/qrcode-browser.js','./assets/pwa.js?v=240',
   './assets/vendor/react.production.min.js','./assets/vendor/scheduler.production.min.js',
   './assets/vendor/react-dom.production.min.js',
   './icons/icon-192.png','./icons/icon-512.png','./icons/maskable-512.png','./icons/apple-touch-icon.png',
