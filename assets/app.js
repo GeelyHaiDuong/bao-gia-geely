@@ -1555,7 +1555,7 @@ function GeelyQuotationApp() {
         if (!calculations || !car)
             return showToast('Chưa có dữ liệu báo giá.');
         setIsExporting(true);
-        showToast('Đang tạo ảnh Zalo...');
+        showToast('Đang tạo ảnh Zalo đầy đủ...');
         const loadCanvasImage = source => new Promise((resolve, reject) => {
             if (!source)
                 return reject(new Error('Thiếu nguồn ảnh.'));
@@ -1585,46 +1585,56 @@ function GeelyQuotationApp() {
                 ctx.stroke();
             }
         };
+        const fontString = options => `${options.weight || 600} ${options.size || 28}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
         const drawText = (ctx, text, x, y, options = {}) => {
             ctx.save();
-            ctx.font = `${options.weight || 600} ${options.size || 28}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+            ctx.font = fontString(options);
             ctx.fillStyle = options.color || '#0f172a';
             ctx.textAlign = options.align || 'left';
             ctx.textBaseline = options.baseline || 'alphabetic';
-            ctx.fillText(String(text || ''), x, y, options.maxWidth || undefined);
+            ctx.fillText(String(text ?? ''), x, y, options.maxWidth || undefined);
             ctx.restore();
         };
-        const drawWrapped = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
+        const wrapLines = (ctx, text, maxWidth, options = {}) => {
             ctx.save();
-            ctx.font = `${options.weight || 500} ${options.size || 24}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+            ctx.font = fontString(options);
+            const paragraphs = String(text ?? '').split(/\n/);
+            const lines = [];
+            paragraphs.forEach((paragraph, paragraphIndex) => {
+                const words = paragraph.split(/\s+/).filter(Boolean);
+                let line = '';
+                words.forEach(word => {
+                    const test = line ? `${line} ${word}` : word;
+                    if (ctx.measureText(test).width > maxWidth && line) {
+                        lines.push(line);
+                        line = word;
+                    }
+                    else
+                        line = test;
+                });
+                if (line)
+                    lines.push(line);
+                if (!words.length)
+                    lines.push('');
+                if (paragraphIndex < paragraphs.length - 1)
+                    lines.push('');
+            });
+            ctx.restore();
+            return lines;
+        };
+        const drawWrapped = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
+            const lines = wrapLines(ctx, text, maxWidth, options);
+            ctx.save();
+            ctx.font = fontString(options);
             ctx.fillStyle = options.color || '#334155';
             ctx.textAlign = options.align || 'left';
             ctx.textBaseline = 'top';
-            const words = String(text || '').split(/\s+/).filter(Boolean);
-            let line = '';
-            let currentY = y;
-            words.forEach(word => {
-                const test = line ? `${line} ${word}` : word;
-                if (ctx.measureText(test).width > maxWidth && line) {
-                    ctx.fillText(line, x, currentY);
-                    line = word;
-                    currentY += lineHeight;
-                }
-                else
-                    line = test;
-            });
-            if (line)
-                ctx.fillText(line, x, currentY);
+            lines.forEach((line, index) => ctx.fillText(line, x, y + index * lineHeight));
             ctx.restore();
-            return currentY + lineHeight;
+            return y + lines.length * lineHeight;
         };
         const drawContainedImage = (ctx, image, x, y, width, height) => {
             try {
-                const temp = document.createElement('canvas');
-                temp.width = Math.max(1, image.naturalWidth || image.width || 1200);
-                temp.height = Math.max(1, image.naturalHeight || image.height || 800);
-                const tempCtx = temp.getContext('2d', { willReadFrequently: true });
-                tempCtx.drawImage(image, 0, 0, temp.width, temp.height);
                 const { sx, sy, sw, sh } = getCarImageContentBounds(image);
                 const scale = Math.min(width / sw, height / sh);
                 const drawWidth = sw * scale;
@@ -1640,109 +1650,206 @@ function GeelyQuotationApp() {
                 ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
             }
         };
+        const drawSectionHeader = (ctx, title, y, rightText = '') => {
+            roundedRect(ctx, 50, y, 980, 58, 10, '#eef2f7', '#d7dee8');
+            drawText(ctx, title, 72, y + 38, { size: 21, weight: 900, color: '#172033' });
+            if (rightText)
+                drawText(ctx, rightText, 1008, y + 37, { size: 15, weight: 700, color: '#64748b', align: 'right', maxWidth: 360 });
+            return y + 58;
+        };
+        const drawTableRow = (ctx, label, value, y, options = {}) => {
+            const lineHeight = 26;
+            const labelLines = wrapLines(ctx, label, 650, { size: options.size || 20, weight: options.bold ? 800 : 600 });
+            const height = Math.max(options.minHeight || 58, labelLines.length * lineHeight + 24);
+            if (options.fill) {
+                ctx.fillStyle = options.fill;
+                ctx.fillRect(50, y, 980, height);
+            }
+            ctx.strokeStyle = options.border || '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(50, y + height);
+            ctx.lineTo(1030, y + height);
+            ctx.stroke();
+            drawWrapped(ctx, label, 72, y + 14, 650, lineHeight, { size: options.size || 20, weight: options.bold ? 800 : 600, color: options.labelColor || '#334155' });
+            drawText(ctx, value, 1008, y + Math.min(height - 18, 38), { size: options.valueSize || 21, weight: options.valueWeight || 800, color: options.valueColor || '#0f172a', align: 'right', maxWidth: 300 });
+            return y + height;
+        };
+        const drawBulletBlock = (ctx, heading, items, y, options = {}) => {
+            if (!items.length)
+                return y;
+            const lineHeight = 25;
+            const lines = [];
+            items.forEach(item => wrapLines(ctx, `• ${item}`, 890, { size: 18, weight: 600 }).forEach(line => lines.push(line)));
+            const height = 56 + lines.length * lineHeight + 16;
+            roundedRect(ctx, 50, y, 980, height, 12, options.fill || '#f8fafc', options.border || '#e2e8f0');
+            drawText(ctx, heading, 72, y + 35, { size: 19, weight: 900, color: options.headingColor || '#0f2d64' });
+            let lineY = y + 55;
+            lines.forEach(line => { drawText(ctx, line, 78, lineY, { size: 18, weight: 600, color: '#475569', baseline: 'top', maxWidth: 900 }); lineY += lineHeight; });
+            return y + height + 12;
+        };
         try {
             if (document.fonts?.ready)
                 await document.fonts.ready;
             const directItems = calculations.selectedPromotions.filter(item => item.deductFromPrice).map(item => item.name);
             if (parseMoney(discount) > 0)
-                directItems.push(`Giảm thêm ${formatVND(parseMoney(discount))}`);
-            const giftItems = calculations.giftPromotions.map(item => item.name);
-            const hasPromotionSummary = directItems.length > 0 || giftItems.length > 0;
+                directItems.push(`Giảm tiền mặt bổ sung: ${formatVND(parseMoney(discount))}`);
+            const giftItems = calculations.giftPromotions.map(item => `${item.name}${item.value > 0 ? ` (giá trị ${formatVND(item.value)})` : ''}`);
+            const feeRows = [
+                [`Lệ phí trước bạ (${formatPercentValue(calculations.taxRate)}% · ${ENGINE_TYPES[calculations.engineType]})`, formatVND(calculations.taxFee)],
+                ['Phí cấp biển số', formatVND(calculations.plateFee)],
+                ['Phí đăng kiểm', formatVND(calculations.inspectionFee)],
+                [`Phí bảo trì đường bộ (${calculations.roadFeeYears} năm)`, formatVND(calculations.roadFee)],
+                ['Bảo hiểm TNDS (bắt buộc)', formatVND(calculations.civilInsurance)]
+            ];
+            if (includePhysicalInsurance)
+                feeRows.push([`Bảo hiểm vật chất (${physicalInsuranceRate}%)`, formatVND(calculations.physicalInsuranceFee)]);
+            if (includeServiceFee)
+                feeRows.push(['Phí dịch vụ đăng ký', formatVND(calculations.serviceFee)]);
+            const estimatedHeight = 2250 + (directItems.length + giftItems.length) * 38 + (loanCalculations?.loanAmount > 0 ? 330 : 0);
             const canvas = document.createElement('canvas');
             canvas.width = 1080;
-            canvas.height = hasPromotionSummary ? 1500 : 1350;
+            canvas.height = Math.max(2350, estimatedHeight);
             const ctx = canvas.getContext('2d');
             if (!ctx)
                 throw new Error('Trình duyệt không hỗ trợ canvas.');
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let y = 0;
             // Header
             ctx.fillStyle = '#0f2d64';
-            ctx.fillRect(0, 0, 1080, 165);
-            drawText(ctx, 'GEELY', 60, 82, { size: 52, weight: 900, color: '#ffffff' });
-            drawText(ctx, 'HẢI DƯƠNG', 60, 128, { size: 28, weight: 800, color: '#dbeafe' });
-            drawText(ctx, currentQuoteId, 1020, 72, { size: 24, weight: 800, color: '#ffffff', align: 'right' });
-            drawText(ctx, quoteData.date, 1020, 112, { size: 21, weight: 600, color: '#dbeafe', align: 'right' });
-            // Customer and car heading
-            drawText(ctx, 'BÁO GIÁ DÀNH CHO', 540, 213, { size: 20, weight: 800, color: '#2563eb', align: 'center' });
-            drawText(ctx, customerName || 'QUÝ KHÁCH HÀNG', 540, 258, { size: 34, weight: 900, color: '#0f172a', align: 'center', maxWidth: 940 });
+            ctx.fillRect(0, 0, 1080, 160);
+            drawText(ctx, 'GEELY', 55, 76, { size: 49, weight: 900, color: '#ffffff' });
+            drawText(ctx, 'HẢI DƯƠNG · ĐẠI LÝ 3S CHÍNH HÃNG', 55, 119, { size: 22, weight: 800, color: '#dbeafe' });
+            drawText(ctx, `Mã: ${currentQuoteId}`, 1025, 58, { size: 21, weight: 800, color: '#ffffff', align: 'right' });
+            drawText(ctx, `Ngày lập: ${quoteData.date}`, 1025, 94, { size: 18, weight: 600, color: '#dbeafe', align: 'right' });
+            drawText(ctx, `Hiệu lực đến: ${quoteData.validUntil}`, 1025, 126, { size: 18, weight: 700, color: '#fecaca', align: 'right' });
+            y = 195;
+            drawText(ctx, 'BÁO GIÁ LĂN BÁNH XE Ô TÔ', 540, y, { size: 35, weight: 900, color: '#172033', align: 'center' });
+            y += 38;
+            // Customer and car information
+            const cardY = y + 22;
+            roundedRect(ctx, 50, cardY, 475, 150, 18, '#f8fafc', '#d7dee8');
+            drawText(ctx, 'THÔNG TIN KHÁCH HÀNG', 72, cardY + 35, { size: 16, weight: 900, color: '#64748b' });
+            drawWrapped(ctx, customerName || 'Khách hàng cá nhân/Doanh nghiệp', 72, cardY + 55, 425, 29, { size: 23, weight: 900, color: '#172033' });
             if (customerPhone)
-                drawText(ctx, customerPhone, 540, 292, { size: 21, weight: 600, color: '#64748b', align: 'center' });
-            // Car box
-            roundedRect(ctx, 50, 320, 980, 425, 28, '#f8fafc', '#dbe3ef');
+                drawText(ctx, `SĐT: ${customerPhone}`, 72, cardY + 130, { size: 18, weight: 650, color: '#475569' });
+            roundedRect(ctx, 555, cardY, 475, 150, 18, '#f8fbff', '#bfdbfe');
+            drawText(ctx, 'THÔNG TIN DÒNG XE', 577, cardY + 35, { size: 16, weight: 900, color: '#2563eb' });
+            drawWrapped(ctx, car.name, 577, cardY + 55, 425, 29, { size: 22, weight: 900, color: '#173a85' });
+            drawText(ctx, `Động cơ: ${ENGINE_TYPES[car.engineType] || 'Xăng'}`, 577, cardY + 113, { size: 17, weight: 650, color: '#475569' });
+            drawText(ctx, `Màu sắc: ${carColor || 'Chưa chọn'}`, 577, cardY + 138, { size: 17, weight: 650, color: '#475569' });
+            y = cardY + 180;
+            // Car image
+            roundedRect(ctx, 50, y, 980, 410, 22, '#f1f5f9', '#d7dee8');
             let carImageDrawn = false;
             try {
                 const image = await loadCanvasImage(resolvedCarImage);
-                drawContainedImage(ctx, image, 95, 365, 890, 320);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(72, y + 18, 936, 374);
+                drawContainedImage(ctx, image, 92, y + 35, 896, 335);
                 carImageDrawn = true;
             }
             catch (error) { }
-            if (!carImageDrawn) {
-                drawText(ctx, 'CHƯA CÓ ẢNH XE', 540, 540, { size: 34, weight: 800, color: '#cbd5e1', align: 'center' });
+            if (!carImageDrawn)
+                drawText(ctx, 'CHƯA CÓ ẢNH XE', 540, y + 215, { size: 33, weight: 800, color: '#cbd5e1', align: 'center' });
+            roundedRect(ctx, 755, y + 24, 245, 94, 14, 'rgba(255,255,255,.96)', '#d7dee8');
+            drawText(ctx, 'GIÁ NIÊM YẾT', 878, y + 57, { size: 15, weight: 900, color: '#64748b', align: 'center' });
+            drawText(ctx, formatVND(calculations.price), 878, y + 94, { size: 25, weight: 900, color: '#173a85', align: 'center', maxWidth: 220 });
+            y += 440;
+            // Vehicle value section
+            y = drawSectionHeader(ctx, '1. CHI TIẾT GIÁ TRỊ XE', y);
+            y = drawTableRow(ctx, 'Giá xe niêm yết', formatVND(calculations.price), y);
+            if (calculations.discountAmount > 0) {
+                y = drawTableRow(ctx, 'Giảm giá trực tiếp', `-${formatVND(calculations.discountAmount)}`, y, { fill: '#fff1f2', labelColor: '#be123c', valueColor: '#be123c', bold: true });
+                y = drawBulletBlock(ctx, 'CHI TIẾT GIẢM GIÁ', directItems, y, { fill: '#fff7f7', border: '#fecdd3', headingColor: '#be123c' });
             }
-            roundedRect(ctx, 76, 342, 500, carColor ? 142 : 118, 16, 'rgba(255,255,255,0.94)', '#dbe3ef');
-            drawWrapped(ctx, car.name, 98, 358, 455, 29, { size: 24, weight: 900, color: '#0f2d64' });
-            drawText(ctx, `Động cơ: ${ENGINE_TYPES[car.engineType] || 'Xăng'} · Trước bạ ${formatPercentValue(calculations.taxRate)}%`, 98, 423, { size: 18, weight: 700, color: '#2563eb' });
-            drawText(ctx, `Đăng ký: ${location.name}`, 98, 452, { size: 17, weight: 600, color: '#475569' });
-            if (carColor)
-                drawText(ctx, `Màu: ${carColor}`, 98, 480, { size: 17, weight: 600, color: '#475569' });
-            // Price boxes
-            roundedRect(ctx, 50, 770, 475, 132, 22, '#ffffff', '#dbe3ef');
-            drawText(ctx, 'GIÁ NIÊM YẾT', 78, 812, { size: 19, weight: 800, color: '#64748b' });
-            drawText(ctx, formatVND(calculations.price), 78, 866, { size: 31, weight: 900, color: '#0f172a', maxWidth: 420 });
-            roundedRect(ctx, 555, 770, 475, 132, 22, '#fff1f2', '#fecdd3');
-            drawText(ctx, 'GIẢM TRỰC TIẾP', 583, 812, { size: 19, weight: 800, color: '#e11d48' });
-            drawText(ctx, calculations.discountAmount > 0 ? `-${formatVND(calculations.discountAmount)}` : formatVND(0), 583, 866, { size: 31, weight: 900, color: '#be123c', maxWidth: 420 });
-            // Promotions summary
-            let summaryY = 935;
-            if (hasPromotionSummary) {
-                roundedRect(ctx, 50, 925, 980, 145, 20, '#f8fafc', '#e2e8f0');
-                drawText(ctx, 'ƯU ĐÃI', 78, 963, { size: 20, weight: 900, color: '#0f2d64' });
-                const summary = [...directItems.slice(0, 2), ...giftItems.slice(0, 3)].map(item => `• ${item}`).join('   ');
-                drawWrapped(ctx, summary, 78, 982, 920, 29, { size: 20, weight: 600, color: '#334155' });
-                summaryY = 1095;
+            if (giftItems.length)
+                y = drawBulletBlock(ctx, 'QUÀ TẶNG & QUYỀN LỢI', giftItems, y, { fill: '#f0fdf4', border: '#bbf7d0', headingColor: '#15803d' });
+            y = drawTableRow(ctx, 'Giá xe dự kiến sau giảm trừ', formatVND(calculations.price - calculations.discountAmount), y, { fill: '#eff6ff', labelColor: '#173a85', valueColor: '#173a85', bold: true, valueSize: 24, minHeight: 68 });
+            y += 18;
+            // Registration fees
+            const effectiveLabel = calculations.effectiveDate ? `Áp dụng ${new Date(`${calculations.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN')}` : '';
+            y = drawSectionHeader(ctx, `2. CHI PHÍ ĐĂNG KÝ · ${location.name}`, y, effectiveLabel);
+            feeRows.forEach(([label, value]) => { y = drawTableRow(ctx, label, value, y); });
+            y += 22;
+            // Grand total
+            roundedRect(ctx, 50, y, 980, 125, 20, '#17243b', null);
+            drawText(ctx, 'TỔNG THANH TOÁN THỰC TẾ', 78, y + 49, { size: 21, weight: 900, color: '#ffffff' });
+            drawText(ctx, formatVND(calculations.finalAmount), 1002, y + 82, { size: 38, weight: 900, color: '#fde047', align: 'right', maxWidth: 540 });
+            y += 150;
+            // Loan summary
+            if (loanCalculations?.loanAmount > 0) {
+                y = drawSectionHeader(ctx, '3. PHƯƠNG ÁN VAY NGÂN HÀNG · DƯ NỢ GIẢM DẦN', y);
+                const loanBoxHeight = 270;
+                roundedRect(ctx, 50, y, 980, loanBoxHeight, 16, '#fffbeb', '#fde68a');
+                const leftX = 76, rightX = 570;
+                const lineGap = 39;
+                let loanY = y + 42;
+                drawText(ctx, 'Số tiền vay', leftX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.loanAmount), 490, loanY, { size: 21, weight: 900, color: '#b45309', align: 'right' });
+                drawText(ctx, 'Vốn khách cần chuẩn bị', rightX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.upfrontPayment), 1004, loanY, { size: 21, weight: 900, color: '#b45309', align: 'right' });
+                loanY += lineGap;
+                drawText(ctx, 'Thời gian vay', leftX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, `${normalizedLoanParams.loanTermYears} năm (${loanCalculations.months} tháng)`, 490, loanY, { size: 19, weight: 850, color: '#172033', align: 'right' });
+                drawText(ctx, 'Gốc cố định/tháng', rightX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.monthlyPrincipal), 1004, loanY, { size: 19, weight: 850, color: '#172033', align: 'right' });
+                loanY += lineGap;
+                drawText(ctx, 'Lãi suất ưu đãi', leftX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, `${normalizedLoanParams.fixedInterestRate}%/năm · ${loanCalculations.fixedTermMonths} tháng`, 490, loanY, { size: 19, weight: 850, color: '#172033', align: 'right' });
+                drawText(ctx, 'Lãi suất thả nổi', rightX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, `${normalizedLoanParams.floatingInterestRate}%/năm`, 1004, loanY, { size: 19, weight: 850, color: '#172033', align: 'right' });
+                loanY += lineGap;
+                drawText(ctx, 'Gốc + lãi tháng đầu', leftX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.firstMonthTotal), 490, loanY, { size: 19, weight: 900, color: '#15803d', align: 'right' });
+                drawText(ctx, 'Tổng lãi dự kiến', rightX, loanY, { size: 18, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.totalInterest), 1004, loanY, { size: 19, weight: 900, color: '#be123c', align: 'right' });
+                loanY += lineGap;
+                if (loanCalculations.firstFloatingMonth) {
+                    drawText(ctx, `Tháng ${loanCalculations.firstFloatingMonth.month} bắt đầu thả nổi`, leftX, loanY, { size: 17, weight: 700, color: '#64748b' });
+                    drawText(ctx, formatVND(loanCalculations.firstFloatingMonth.totalPayment), 490, loanY, { size: 18, weight: 850, color: '#c2410c', align: 'right' });
+                }
+                drawText(ctx, 'Tổng trả ngân hàng', rightX, loanY, { size: 17, weight: 700, color: '#64748b' });
+                drawText(ctx, formatVND(loanCalculations.totalBankPayment), 1004, loanY, { size: 18, weight: 850, color: '#172033', align: 'right' });
+                y += loanBoxHeight + 25;
             }
-            // Total / upfront
-            roundedRect(ctx, 50, summaryY, 980, 135, 24, '#0f2d64', null);
-            drawText(ctx, 'TỔNG THANH TOÁN DỰ KIẾN', 82, summaryY + 45, { size: 19, weight: 800, color: '#bfdbfe' });
-            drawText(ctx, formatVND(calculations.finalAmount), 82, summaryY + 100, { size: 38, weight: 900, color: '#fde047', maxWidth: 560 });
-            if (loanCalculations) {
-                ctx.strokeStyle = '#31548b';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(690, summaryY + 25);
-                ctx.lineTo(690, summaryY + 110);
-                ctx.stroke();
-                drawText(ctx, 'TRẢ TRƯỚC DỰ KIẾN', 1000, summaryY + 46, { size: 17, weight: 700, color: '#bfdbfe', align: 'right' });
-                drawText(ctx, formatVND(loanCalculations.upfrontPayment), 1000, summaryY + 88, { size: 28, weight: 900, color: '#ffffff', align: 'right', maxWidth: 285 });
-                drawText(ctx, `Vay ${formatVND(loanCalculations.loanAmount)} · ${loanCalculations.loanPercent.toFixed(1)}%`, 1000, summaryY + 113, { size: 15, weight: 600, color: '#bfdbfe', align: 'right', maxWidth: 285 });
-            }
-            // Footer
-            const footerY = summaryY + 165;
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
+            // Notes and sales contact
+            ctx.strokeStyle = '#17243b';
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(50, footerY);
-            ctx.lineTo(1030, footerY);
+            ctx.moveTo(50, y);
+            ctx.lineTo(1030, y);
             ctx.stroke();
-            drawText(ctx, 'TƯ VẤN BÁN HÀNG', 62, footerY + 42, { size: 17, weight: 800, color: '#64748b' });
-            drawText(ctx, salesInfo.name || 'NGUYỄN HOÀNG TÙNG', 62, footerY + 82, { size: 29, weight: 900, color: '#0f172a', maxWidth: 600 });
-            drawText(ctx, salesInfo.phone || '0961 018 288', 62, footerY + 118, { size: 26, weight: 900, color: '#dc2626' });
+            y += 30;
+            const noteText = '* Chi phí thuế, phí mang tính tham khảo và có thể thay đổi theo quy định tại thời điểm xuất hóa đơn, đăng ký xe.\n* Báo giá không thay thế Hợp đồng mua bán chính thức. Khoản vay phụ thuộc phê duyệt của ngân hàng.';
+            drawWrapped(ctx, noteText, 55, y, 650, 25, { size: 16, weight: 550, color: '#64748b' });
+            roundedRect(ctx, 730, y - 5, 300, 190, 16, '#f8fafc', '#d7dee8');
+            drawText(ctx, 'ĐẠI DIỆN BÁN HÀNG', 880, y + 25, { size: 15, weight: 900, color: '#64748b', align: 'center' });
+            drawText(ctx, salesInfo.name || 'NGUYỄN HOÀNG TÙNG', 880, y + 58, { size: 21, weight: 900, color: '#172033', align: 'center', maxWidth: 260 });
+            drawText(ctx, salesInfo.phone || '0961 018 288', 835, y + 88, { size: 20, weight: 900, color: '#2563eb', align: 'center', maxWidth: 170 });
             try {
                 const qrDataUrl = window.GeelyQR?.toDataURL?.(`https://zalo.me/${normalizePhoneForZalo(salesInfo.phone)}`, 220);
                 const qrImage = await loadCanvasImage(qrDataUrl);
-                ctx.drawImage(qrImage, 858, footerY + 14, 150, 150);
-                drawText(ctx, 'QUÉT ZALO', 933, footerY + 176, { size: 15, weight: 900, color: '#0f2d64', align: 'center' });
+                ctx.drawImage(qrImage, 930, y + 72, 82, 82);
+                drawText(ctx, 'QUÉT ZALO', 971, y + 173, { size: 12, weight: 900, color: '#0f2d64', align: 'center' });
             }
             catch (error) { }
-            const blob = await canvasToJpegBlob(canvas, 0.93);
-            const fileName = `BaoGia_Zalo_${safeFilePart(customerName)}_${Date.now()}.jpg`;
+            y += 205;
+            // Crop unused canvas area.
+            const finalHeight = Math.min(canvas.height, Math.max(1200, Math.ceil(y + 25)));
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = canvas.width;
+            finalCanvas.height = finalHeight;
+            finalCanvas.getContext('2d').drawImage(canvas, 0, 0, canvas.width, finalHeight, 0, 0, canvas.width, finalHeight);
+            const blob = await canvasToJpegBlob(finalCanvas, 0.93);
+            const fileName = `BaoGia_Zalo_DayDu_${safeFilePart(customerName)}_${Date.now()}.jpg`;
             let shared = false;
             if (navigator.share && typeof File !== 'undefined') {
                 try {
                     const file = new File([blob], fileName, { type: 'image/jpeg' });
                     if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-                        await navigator.share({ files: [file], title: 'Báo giá Geely', text: `Báo giá ${car.name}` });
+                        await navigator.share({ files: [file], title: 'Báo giá Geely đầy đủ', text: `Báo giá ${car.name}` });
                         shared = true;
                     }
                 }
@@ -1762,7 +1869,7 @@ function GeelyQuotationApp() {
                 link.remove();
                 window.setTimeout(() => URL.revokeObjectURL(url), 15000);
             }
-            showToast(shared ? 'Đã mở bảng chia sẻ ảnh Zalo!' : 'Đã tải ảnh Zalo!');
+            showToast(shared ? 'Đã mở bảng chia sẻ ảnh Zalo đầy đủ!' : 'Đã tải ảnh Zalo đầy đủ!');
         }
         catch (error) {
             console.error('Lỗi tạo ảnh Zalo:', error);
@@ -1879,6 +1986,8 @@ function GeelyQuotationApp() {
         if (!element)
             return showToast('Hãy mở tab Báo Giá trước.');
         await waitForExportCanvases(element);
+        if (document.fonts?.ready)
+            await document.fonts.ready;
         const clone = element.cloneNode(true);
         const sourceCanvases = Array.from(element.querySelectorAll('canvas'));
         const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
@@ -1893,17 +2002,64 @@ function GeelyQuotationApp() {
             image.style.objectFit = 'contain';
             canvas.replaceWith(image);
         });
+        clone.classList.add('print-a4-compact');
         clone.style.transform = 'none';
+        clone.style.transformOrigin = 'top left';
         clone.style.width = '800px';
+        clone.style.maxWidth = 'none';
         clone.style.boxShadow = 'none';
         clone.style.border = '0';
+        clone.style.margin = '0';
         const printWindow = window.open('', '_blank');
         if (!printWindow)
             return showToast('Trình duyệt đã chặn cửa sổ in.');
         const appCssUrl = new URL('./assets/app.css', window.location.href).href;
         const exportCssUrl = new URL('./assets/export-compat.css', window.location.href).href;
-        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${currentQuoteId}</title><link rel="stylesheet" href="${appCssUrl}"><link rel="stylesheet" href="${exportCssUrl}"><style>@page{size:A4;margin:8mm}body{margin:0;background:white}.print-wrap{width:194mm;margin:0 auto}.print-wrap>#quote-capture-area{width:100%!important;transform:none!important;padding:8mm!important;box-sizing:border-box!important}@media print{button{display:none!important}}</style></head><body><div class="print-wrap">${clone.outerHTML}</div><script>window.onload=()=>setTimeout(()=>window.print(),700)<\/script></body></html>`);
+        const safeTitle = String(currentQuoteId || 'BaoGiaGeely').replace(/[<>"']/g, '');
+        printWindow.document.write(`<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title>
+<link rel="stylesheet" href="${appCssUrl}"><link rel="stylesheet" href="${exportCssUrl}">
+<style>
+@page{size:A4 portrait;margin:5mm}
+html,body{margin:0!important;padding:0!important;background:#fff!important;width:100%;height:287mm;min-height:0!important;overflow:hidden!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#print-page{position:relative;width:200mm;height:287mm;margin:0 auto;overflow:hidden;background:#fff}
+#print-stage{position:absolute;left:0;top:0;transform-origin:top left}
+.print-a4-compact{width:800px!important;padding:18px 26px!important;box-sizing:border-box!important;background:#fff!important}
+.print-a4-compact .mb-8{margin-bottom:12px!important}.print-a4-compact .mb-5{margin-bottom:9px!important}.print-a4-compact .mt-12{margin-top:14px!important}.print-a4-compact .mt-4{margin-top:8px!important}
+.print-a4-compact .p-5{padding:12px!important}.print-a4-compact .p-4{padding:9px!important}.print-a4-compact .p-3{padding:7px!important}.print-a4-compact .p-2\\.5{padding:6px!important}
+.print-a4-compact .pb-5{padding-bottom:10px!important}.print-a4-compact .pt-6{padding-top:10px!important}.print-a4-compact .space-y-1\\.5>:not([hidden])~:not([hidden]){margin-top:3px!important}
+.print-a4-compact .h-64{height:170px!important}.print-a4-compact .text-3xl{font-size:23px!important;line-height:1.15!important}.print-a4-compact .text-2xl{font-size:19px!important;line-height:1.15!important}.print-a4-compact .text-xl{font-size:17px!important}.print-a4-compact .text-lg{font-size:15px!important}
+.print-a4-compact table{margin-bottom:10px!important;font-size:12px!important;line-height:1.25!important}.print-a4-compact table td{padding-top:5px!important;padding-bottom:5px!important}
+.print-a4-compact .rounded-xl{border-radius:8px!important}.print-a4-compact .shadow-lg,.print-a4-compact .shadow-md,.print-a4-compact .shadow-inner{box-shadow:none!important}
+@media print{#print-page{break-after:avoid!important;page-break-after:avoid!important}button{display:none!important}}
+</style></head>
+<body><div id="print-page"><div id="print-stage">${clone.outerHTML}</div></div>
+<script>
+(async function(){
+  const waitImages=()=>Promise.all(Array.from(document.images).map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve})));
+  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready}catch(e){}}
+  await waitImages();
+  await new Promise(resolve=>setTimeout(resolve,250));
+  const page=document.getElementById('print-page');
+  const stage=document.getElementById('print-stage');
+  const content=document.getElementById('quote-capture-area');
+  const pageWidth=page.clientWidth;
+  const pageHeight=page.clientHeight;
+  const contentWidth=Math.max(1,content.scrollWidth,content.offsetWidth);
+  const contentHeight=Math.max(1,content.scrollHeight,content.offsetHeight);
+  const scale=Math.min(1,pageWidth/contentWidth,pageHeight/contentHeight);
+  stage.style.width=contentWidth+'px';
+  stage.style.height=contentHeight+'px';
+  stage.style.transform='scale('+scale+')';
+  stage.style.left=Math.max(0,(pageWidth-contentWidth*scale)/2)+'px';
+  stage.style.top='0px';
+  document.title='${safeTitle}';
+  setTimeout(()=>window.print(),350);
+})();
+window.onafterprint=()=>setTimeout(()=>window.close(),150);
+<\/script></body></html>`);
         printWindow.document.close();
+        showToast('Đã tạo bản A4 thu gọn trong một trang.');
     };
     const renderInputForm = () => (React.createElement("div", { className: "space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20" },
         React.createElement("div", { className: "grid grid-cols-2 gap-3" },
@@ -2542,7 +2698,7 @@ function GeelyQuotationApp() {
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.3"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.4"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),
