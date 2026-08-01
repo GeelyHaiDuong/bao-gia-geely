@@ -53,6 +53,17 @@
       ]
     },
     {
+      "name": "Lịch sử báo giá",
+      "short_name": "Lịch sử",
+      "url": "./?tab=history",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Cài đặt xe",
       "short_name": "Cài đặt",
       "url": "./?tab=settings",

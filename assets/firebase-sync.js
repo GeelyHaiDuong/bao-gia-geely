@@ -19,14 +19,9 @@
 
   const listeners = new Set();
   const state = {
-    sdk: 'loading',
-    user: null,
-    online: navigator.onLine,
-    persistence: 'unknown',
-    message: 'Đang tải dịch vụ đồng bộ...',
-    error: null
+    sdk: 'loading', user: null, online: navigator.onLine,
+    persistence: 'unknown', message: 'Đang tải dịch vụ đồng bộ...', error: null
   };
-
   let auth = null;
   let db = null;
   let initPromise = null;
@@ -40,16 +35,10 @@
 
   const emit = () => {
     const snapshot = { ...state };
-    listeners.forEach(listener => {
-      try { listener(snapshot); } catch (error) { console.warn('Lỗi listener Firebase:', error); }
-    });
+    listeners.forEach(listener => { try { listener(snapshot); } catch (error) {} });
     window.dispatchEvent(new CustomEvent('geely-firebase-state', { detail: snapshot }));
   };
-
-  const setState = patch => {
-    Object.assign(state, patch);
-    emit();
-  };
+  const setState = patch => { Object.assign(state, patch); emit(); };
 
   const loadScript = src => new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[data-firebase-sdk="${src}"]`);
@@ -59,164 +48,179 @@
       existing.addEventListener('error', () => reject(new Error(`Không tải được ${src}`)), { once: true });
       return;
     }
-
     const script = document.createElement('script');
     script.src = src;
     script.async = false;
-    script.defer = true;
     script.dataset.firebaseSdk = src;
-    script.addEventListener('load', () => {
-      script.dataset.loaded = 'true';
-      resolve();
-    }, { once: true });
-    script.addEventListener('error', () => reject(new Error(`Không tải được ${src}`)), { once: true });
+    script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
+    script.onerror = () => reject(new Error(`Không tải được ${src}`));
     document.head.appendChild(script);
   });
 
   const initialize = async () => {
     if (initPromise) return initPromise;
-
     initPromise = (async () => {
       try {
         for (const url of SDK_URLS) await loadScript(url);
-
         if (!window.firebase) throw new Error('Firebase SDK chưa sẵn sàng.');
-
-        const app = window.firebase.apps?.length
-          ? window.firebase.app()
-          : window.firebase.initializeApp(FIREBASE_CONFIG);
-
+        const app = window.firebase.apps?.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
         auth = app.auth();
         db = app.firestore();
-
         await auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
-
         try {
           await db.enablePersistence({ synchronizeTabs: true });
           state.persistence = 'enabled';
         } catch (error) {
           state.persistence = error?.code === 'failed-precondition' ? 'another-tab' : 'unsupported';
-          console.warn('Không thể bật bộ nhớ Firestore ngoại tuyến:', error);
         }
-
-        auth.onAuthStateChanged(user => {
-          setState({
-            user: publicUser(user),
-            message: user ? 'Đã đăng nhập Firebase.' : 'Chưa đăng nhập.',
-            error: null
-          });
-        });
-
+        auth.onAuthStateChanged(user => setState({
+          user: publicUser(user), message: user ? 'Đã đăng nhập Firebase.' : 'Chưa đăng nhập.', error: null
+        }));
         setState({ sdk: 'ready', message: 'Firebase đã sẵn sàng.', error: null });
         return true;
       } catch (error) {
-        console.error('Không thể khởi tạo Firebase:', error);
         initPromise = null;
-        setState({
-          sdk: 'error',
-          message: 'Không tải được Firebase. Ứng dụng vẫn dùng được ngoại tuyến.',
-          error: error?.message || String(error)
-        });
+        setState({ sdk: 'error', message: 'Không tải được Firebase. Ứng dụng vẫn dùng được ngoại tuyến.', error: error?.message || String(error) });
         throw error;
       }
     })();
-
     return initPromise;
   };
 
-  const requireReady = async () => {
-    await initialize();
-    if (!auth || !db) throw new Error('Firebase chưa sẵn sàng.');
-    return { auth, db };
-  };
-
   const requireUser = async () => {
-    const services = await requireReady();
-    const user = services.auth.currentUser;
+    await initialize();
+    const user = auth?.currentUser;
     if (!user) throw new Error('Bạn cần đăng nhập Google trước.');
-    return { ...services, user };
+    return { user, db };
   };
 
-  const getDocumentRef = async () => {
-    const { db: firestore, user } = await requireUser();
-    return firestore.doc(`users/${user.uid}/appData/current`);
-  };
+  const serverMeta = user => ({
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAtMs: Date.now(),
+    updatedBy: { uid: user.uid, email: user.email || '', device: navigator.userAgent.slice(0, 180) }
+  });
+
+  const normalizeSnapshot = snapshot => ({
+    exists: snapshot.exists,
+    id: snapshot.id,
+    data: snapshot.exists ? snapshot.data() : null,
+    fromCache: snapshot.metadata.fromCache,
+    hasPendingWrites: snapshot.metadata.hasPendingWrites
+  });
+
+  const getWorkspaceRefs = (firestore, uid) => ({
+    settings: firestore.doc(`users/${uid}/settings/main`),
+    cars: firestore.collection(`users/${uid}/cars`),
+    promotions: firestore.collection(`users/${uid}/promotions`),
+    quotations: firestore.collection(`users/${uid}/quotations`),
+    legacy: firestore.doc(`users/${uid}/appData/current`)
+  });
 
   const api = {
-    version: '1.7.0',
-    config: { projectId: FIREBASE_CONFIG.projectId },
-    ready: () => initialize(),
-    retry: () => initialize(),
+    version: '1.8.0',
+    ready: initialize,
+    retry: initialize,
     getState: () => ({ ...state }),
-    onStateChange(callback) {
-      listeners.add(callback);
-      callback({ ...state });
-      return () => listeners.delete(callback);
-    },
+    onStateChange(callback) { listeners.add(callback); callback({ ...state }); return () => listeners.delete(callback); },
     onAuthStateChanged(callback) {
       let unsubscribe = () => {};
-      initialize()
-        .then(() => { unsubscribe = auth.onAuthStateChanged(user => callback(publicUser(user))); })
-        .catch(() => callback(null));
+      initialize().then(() => { unsubscribe = auth.onAuthStateChanged(user => callback(publicUser(user))); }).catch(() => callback(null));
       return () => unsubscribe();
     },
     async signInGoogle() {
-      const { auth: firebaseAuth } = await requireReady();
+      await initialize();
       const provider = new window.firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await firebaseAuth.signInWithPopup(provider);
+      const result = await auth.signInWithPopup(provider);
       return publicUser(result.user);
     },
-    async signOut() {
-      const { auth: firebaseAuth } = await requireReady();
-      await firebaseAuth.signOut();
-    },
-    async getCloudData() {
-      const ref = await getDocumentRef();
-      const snapshot = await ref.get();
+    async signOut() { await initialize(); await auth.signOut(); },
+
+    async getWorkspace() {
+      const { user, db: firestore } = await requireUser();
+      const refs = getWorkspaceRefs(firestore, user.uid);
+      const [settingsSnap, carsSnap, promosSnap, quotesSnap, legacySnap] = await Promise.all([
+        refs.settings.get(), refs.cars.get(), refs.promotions.get(), refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).get(), refs.legacy.get()
+      ]);
       return {
-        exists: snapshot.exists,
-        data: snapshot.exists ? snapshot.data() : null,
-        fromCache: snapshot.metadata.fromCache
+        settings: settingsSnap.exists ? settingsSnap.data() : null,
+        cars: carsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        promotions: promosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        quotations: quotesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        legacy: legacySnap.exists ? legacySnap.data()?.data || null : null,
+        empty: !settingsSnap.exists && carsSnap.empty && promosSnap.empty && quotesSnap.empty && !legacySnap.exists
       };
     },
-    async saveCloudData(payload) {
-      const { user } = await requireUser();
-      const ref = await getDocumentRef();
-      const updatedAtMs = Date.now();
-      await ref.set({
-        schemaVersion: 1,
-        data: payload,
-        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAtMs,
-        updatedBy: {
-          uid: user.uid,
-          email: user.email || '',
-          displayName: user.displayName || '',
-          device: navigator.userAgent.slice(0, 240)
-        }
-      });
-      return { updatedAtMs };
+
+    async bootstrapWorkspace({ settings, cars, promotions, quotations = [] }) {
+      const { user, db: firestore } = await requireUser();
+      const refs = getWorkspaceRefs(firestore, user.uid);
+      const batch = firestore.batch();
+      batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 2 }, { merge: true });
+      (cars || []).forEach(car => batch.set(refs.cars.doc(String(car.id)), { ...car, id: String(car.id), ...serverMeta(user) }, { merge: true }));
+      (promotions || []).forEach(promo => batch.set(refs.promotions.doc(String(promo.id)), { ...promo, id: String(promo.id), ...serverMeta(user) }, { merge: true }));
+      (quotations || []).forEach(quote => batch.set(refs.quotations.doc(String(quote.id)), { ...quote, id: String(quote.id), ...serverMeta(user) }, { merge: true }));
+      await batch.commit();
+      return { updatedAtMs: Date.now() };
     },
-    async watchCloudData(callback, onError) {
-      const ref = await getDocumentRef();
-      return ref.onSnapshot({ includeMetadataChanges: true }, snapshot => {
-        callback({
-          exists: snapshot.exists,
-          data: snapshot.exists ? snapshot.data() : null,
-          fromCache: snapshot.metadata.fromCache,
-          hasPendingWrites: snapshot.metadata.hasPendingWrites
-        });
-      }, error => {
-        console.error('Lỗi theo dõi dữ liệu Firebase:', error);
-        if (onError) onError(error);
+
+    async saveSettings(settings) {
+      const { user, db: firestore } = await requireUser();
+      const ref = getWorkspaceRefs(firestore, user.uid).settings;
+      await ref.set({ ...settings, ...serverMeta(user), schemaVersion: 2 }, { merge: true });
+      return { updatedAtMs: Date.now() };
+    },
+    async saveCar(car) {
+      const { user, db: firestore } = await requireUser();
+      const ref = getWorkspaceRefs(firestore, user.uid).cars.doc(String(car.id));
+      const clean = { ...car }; delete clean.image; delete clean.localImage;
+      await ref.set({ ...clean, id: String(car.id), ...serverMeta(user) }, { merge: true });
+      return { updatedAtMs: Date.now() };
+    },
+    async deleteCar(id) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).cars.doc(String(id)).delete();
+    },
+    async savePromotion(promo) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).promotions.doc(String(promo.id)).set({ ...promo, id: String(promo.id), ...serverMeta(user) }, { merge: true });
+      return { updatedAtMs: Date.now() };
+    },
+    async deletePromotion(id) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).promotions.doc(String(id)).delete();
+    },
+    async saveQuotation(quotation) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).quotations.doc(String(quotation.id)).set({ ...quotation, id: String(quotation.id), ...serverMeta(user) }, { merge: true });
+      return { updatedAtMs: Date.now() };
+    },
+    async deleteQuotation(id) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).quotations.doc(String(id)).delete();
+    },
+
+    async watchWorkspace(callback, onError) {
+      const { user, db: firestore } = await requireUser();
+      const refs = getWorkspaceRefs(firestore, user.uid);
+      const emitCollection = (type, snapshot) => callback({
+        type,
+        items: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        fromCache: snapshot.metadata.fromCache,
+        hasPendingWrites: snapshot.metadata.hasPendingWrites
       });
+      const unsubscribers = [
+        refs.settings.onSnapshot({ includeMetadataChanges: true }, snap => callback({ type: 'settings', ...normalizeSnapshot(snap) }), onError),
+        refs.cars.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('cars', snap), onError),
+        refs.promotions.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('promotions', snap), onError),
+        refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('quotations', snap), onError)
+      ];
+      return () => unsubscribers.forEach(unsubscribe => unsubscribe?.());
     }
   };
 
   window.addEventListener('online', () => setState({ online: true }));
   window.addEventListener('offline', () => setState({ online: false }));
-
   window.GeelyFirebaseSync = api;
   emit();
   initialize().catch(() => {});

@@ -1,31 +1,34 @@
+// @ts-nocheck
+const React = window.React;
+const ReactDOM = window.ReactDOM;
 const { useState, useMemo, useEffect, useRef } = React;
 
         const DEFAULT_CAR_MODELS = [
-          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, image: '' },
-          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, image: '' },
-          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, image: '' },
-          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, image: '' },
-          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, image: '' },
-          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, image: '' },
-          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, image: '' },
-          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, image: '' },
-          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, image: '' },
-          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, image: '' },
-          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, image: '' },
-          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, image: '' },
-          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, image: '' },
+          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, imagePath: './assets/cars/ex2_pro.svg' },
+          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, imagePath: './assets/cars/ex2_max.svg' },
+          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, imagePath: './assets/cars/ex5_pro.svg' },
+          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, imagePath: './assets/cars/ex5_max.svg' },
+          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, imagePath: './assets/cars/ex5_emi_pro.svg' },
+          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, imagePath: './assets/cars/ex5_emi_max.svg' },
+          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, imagePath: './assets/cars/monjaro_premium.svg' },
+          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, imagePath: './assets/cars/monjaro_flagship.svg' },
+          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, imagePath: './assets/cars/coolray_exec_26.svg' },
+          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, imagePath: './assets/cars/coolray_prem_26.svg' },
+          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, imagePath: './assets/cars/coolray_flag_26.svg' },
+          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, imagePath: './assets/cars/okavango_exec.svg' },
+          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, imagePath: './assets/cars/okavango_prem.svg' },
         ];
 
         const DEFAULT_PROMOTIONS = [
-          { id: 'p1', name: '01 sạc cầm tay', value: 0 },
-          { id: 'p2', name: '01 gói cứu hộ miễn phí 5 năm', value: 0 },
-          { id: 'p3', name: '01 gói bảo dưỡng miễn phí 5 năm', value: 0 },
-          { id: 'p4', name: '10 triệu tiền mặt', value: 10000000 },
-          { id: 'p5', name: '06 năm bảo dưỡng miễn phí', value: 0 },
-          { id: 'p6', name: '01 năm bảo hiểm thân vỏ', value: 0 },
-          { id: 'p7', name: '06 năm cứu hộ miễn phí', value: 0 },
-          { id: 'p8', name: '01 bộ thảm sàn chính hãng', value: 0 },
-          { id: 'p9', name: '01 bộ sạc 7 kw (quy đổi 5tr TM)', value: 5000000 },
+          { id: 'p1', name: '01 sạc cầm tay', value: 0, type: 'gift', deductFromPrice: false },
+          { id: 'p2', name: '01 gói cứu hộ miễn phí 5 năm', value: 0, type: 'service', deductFromPrice: false },
+          { id: 'p3', name: '01 gói bảo dưỡng miễn phí 5 năm', value: 0, type: 'maintenance', deductFromPrice: false },
+          { id: 'p4', name: '10 triệu tiền mặt', value: 10000000, type: 'cash', deductFromPrice: true },
+          { id: 'p5', name: '06 năm bảo dưỡng miễn phí', value: 0, type: 'maintenance', deductFromPrice: false },
+          { id: 'p6', name: '01 năm bảo hiểm thân vỏ', value: 0, type: 'insurance', deductFromPrice: false },
+          { id: 'p7', name: '06 năm cứu hộ miễn phí', value: 0, type: 'service', deductFromPrice: false },
+          { id: 'p8', name: '01 bộ thảm sàn chính hãng', value: 0, type: 'accessory', deductFromPrice: false },
+          { id: 'p9', name: '01 bộ sạc 7 kW', value: 5000000, type: 'gift', deductFromPrice: false },
         ];
 
         const LOCATIONS = [
@@ -42,6 +45,46 @@ const { useState, useMemo, useEffect, useRef } = React;
           inspection: 340000, 
           civilInsurance5Seats: 480700, 
           civilInsurance7Seats: 873400, 
+        };
+
+        const PROMOTION_TYPES = {
+          cash: 'Giảm tiền mặt', registration: 'Hỗ trợ trước bạ', gift: 'Quà tặng',
+          accessory: 'Phụ kiện', insurance: 'Bảo hiểm', maintenance: 'Bảo dưỡng', service: 'Dịch vụ'
+        };
+        const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
+        const DEFAULT_PROMOTION_META = Object.fromEntries(DEFAULT_PROMOTIONS.map(item => [item.id, {
+          type: item.type, deductFromPrice: item.deductFromPrice
+        }]));
+
+        const normalizeCar = car => {
+          const id = String(car?.id || `car_${Date.now()}`);
+          return {
+            id,
+            name: String(car?.name || ''),
+            price: Number(car?.price) || 0,
+            seats: Number(car?.seats) || 5,
+            imagePath: String(car?.imagePath || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
+            image: String(car?.image || '')
+          };
+        };
+        const normalizePromotion = promo => {
+          const id = String(promo?.id || `promo_${Date.now()}`);
+          const defaultMeta = DEFAULT_PROMOTION_META[id];
+          const fallbackDeduct = defaultMeta ? defaultMeta.deductFromPrice : ((Number(promo?.value) || 0) > 0);
+          return {
+            id,
+            name: String(promo?.name || ''),
+            value: Number(promo?.value) || 0,
+            type: String(promo?.type || defaultMeta?.type || (fallbackDeduct ? 'cash' : 'gift')),
+            deductFromPrice: promo?.deductFromPrice !== undefined ? Boolean(promo.deductFromPrice) : Boolean(fallbackDeduct)
+          };
+        };
+
+        const createQuoteId = () => {
+          const now = new Date();
+          const date = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+          const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+          return `BG-HD-${date}-${suffix}`;
         };
 
         const getSavedData = (key, defaultData) => {
@@ -454,11 +497,18 @@ const normalizePhoneForZalo = (phone) => {
         };
 
         function GeelyQuotationApp() {
-          const [cars, setCars] = useState(() => getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS));
-          const [promotions, setPromotions] = useState(() => getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS));
+          const [cars, setCars] = useState(() => (getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS) || []).map(normalizeCar));
+          const [promotions, setPromotions] = useState(() => (getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS) || []).map(normalizePromotion));
           const [salesInfo, setSalesInfo] = useState(() => getSavedData('geely_sales_info', { name: '', phone: '' }));
           const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000))); 
           const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
+
+          const [carImageMap, setCarImageMap] = useState({});
+          const [quotations, setQuotations] = useState([]);
+          const [currentQuoteId, setCurrentQuoteId] = useState(() => createQuoteId());
+          const [quoteStatus, setQuoteStatus] = useState('draft');
+          const [quoteNotes, setQuoteNotes] = useState('');
+          const [historySearch, setHistorySearch] = useState('');
 
 
           const [firebaseState, setFirebaseState] = useState(() => (
@@ -474,25 +524,54 @@ const normalizePhoneForZalo = (phone) => {
             updatedAtMs: 0
           });
           const latestDataRef = useRef({});
-          const pendingCloudDataRef = useRef(null);
-          const lastCloudPayloadRef = useRef('');
+          const pendingWorkspaceRef = useRef(null);
           const syncReadyRef = useRef(false);
           const syncApplyingRef = useRef(false);
           const syncUnsubscribeRef = useRef(null);
           const syncWriteTimerRef = useRef(null);
+          const settingsHashRef = useRef('');
+          const cloudCarsHashRef = useRef('');
+          const cloudPromosHashRef = useRef('');
 
-          useEffect(() => { saveData('geely_cars_v8', cars); }, [cars]);
+          useEffect(() => { saveData('geely_cars_v8', cars.map(({ image, ...car }) => car)); }, [cars]);
           useEffect(() => { saveData('geely_promotions_v2', promotions); }, [promotions]);
           useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
           useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
           useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
 
+          useEffect(() => {
+            let cancelled = false;
+            (async () => {
+              if (!window.GeelyIDB) return;
+              const map = {};
+              const migratedCars = [];
+              for (const item of cars) {
+                try {
+                  if (item.image && item.image.startsWith('data:image/')) {
+                    await window.GeelyIDB.saveCarImage(item.id, item.image);
+                    migratedCars.push(item.id);
+                  }
+                  const localImage = await window.GeelyIDB.getCarImage(item.id);
+                  if (localImage) map[item.id] = localImage;
+                } catch (error) { console.warn('Không đọc được ảnh IndexedDB:', error); }
+              }
+              if (!cancelled) {
+                setCarImageMap(map);
+                if (migratedCars.length) setCars(current => current.map(({ image, ...car }) => car));
+              }
+              try {
+                const localQuotes = await window.GeelyIDB.listQuotations();
+                if (!cancelled && localQuotes.length) setQuotations(localQuotes);
+              } catch (error) { console.warn('Không đọc được lịch sử báo giá:', error); }
+            })();
+            return () => { cancelled = true; };
+          }, []);
 
           useEffect(() => {
             latestDataRef.current = {
-              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations
             };
-          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate]);
+          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations]);
 
           const [customerName, setCustomerName] = useState('');
           const [customerPhone, setCustomerPhone] = useState('');
@@ -512,7 +591,7 @@ const normalizePhoneForZalo = (phone) => {
           const [activeTab, setActiveTab] = useState(() => {
             try {
               const requestedTab = new URLSearchParams(window.location.search).get('tab');
-              return ['input', 'loan', 'preview', 'settings'].includes(requestedTab) ? requestedTab : 'input';
+              return ['input', 'loan', 'preview', 'history', 'settings'].includes(requestedTab) ? requestedTab : 'input';
             } catch (error) {
               return 'input';
             }
@@ -523,11 +602,14 @@ const normalizePhoneForZalo = (phone) => {
           const [newCarPrice, setNewCarPrice] = useState('');
           const [newCarSeats, setNewCarSeats] = useState(5);
           const [newCarImage, setNewCarImage] = useState('');
+          const [newCarImagePath, setNewCarImagePath] = useState('');
           const [editingCarId, setEditingCarId] = useState(null);
           const [isProcessingCarImage, setIsProcessingCarImage] = useState(false);
           
           const [newPromoName, setNewPromoName] = useState('');
           const [newPromoValue, setNewPromoValue] = useState('');
+          const [newPromoType, setNewPromoType] = useState('gift');
+          const [newPromoDeduct, setNewPromoDeduct] = useState(false);
 
           const [loanParams, setLoanParams] = useState({
             downPaymentPercent: 20, loanTermYears: 5, fixedInterestRate: 8.0, fixedTermMonths: 12, floatingInterestRate: 11.5 
@@ -582,11 +664,11 @@ const normalizePhoneForZalo = (phone) => {
             const today = new Date();
             const dateStr = today.toLocaleDateString('vi-VN');
             const validDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN');
-            const randomCode = Math.floor(10000 + Math.random() * 90000);
-            return { date: dateStr, validUntil: validDate, code: `BG-HD${randomCode}` };
-          }, []);
+            return { date: dateStr, validUntil: validDate, code: currentQuoteId };
+          }, [currentQuoteId]);
 
           const car = useMemo(() => cars.find(c => c.id === selectedCarId) || cars[0], [selectedCarId, cars]);
+          const resolvedCarImage = car ? (carImageMap[car.id] || car.imagePath || car.image || '') : '';
           const location = useMemo(() => LOCATIONS.find(l => l.id === selectedLocationId) || LOCATIONS[0], [selectedLocationId]);
 
           const calculations = useMemo(() => {
@@ -610,11 +692,11 @@ const normalizePhoneForZalo = (phone) => {
             const physicalInsuranceFee = includePhysicalInsurance ? price * (physicalInsuranceRate / 100) : 0;
             const serviceFee = includeServiceFee ? parseMoney(serviceFeeAmount) : 0;
             
-            const promoValue = selectedPromoIds.reduce((sum, id) => {
-              const p = promotions.find(promo => promo.id === id);
-              return sum + (p ? parseMoney(p.value) : 0);
-            }, 0);
-            
+            const selectedPromotions = selectedPromoIds.map(id => promotions.find(promo => promo.id === id)).filter(Boolean);
+            const promoValue = selectedPromotions
+              .filter(promo => promo.deductFromPrice)
+              .reduce((sum, promo) => sum + parseMoney(promo.value), 0);
+            const giftPromotions = selectedPromotions.filter(promo => !promo.deductFromPrice);
             const manualDiscount = parseMoney(discount);
             const discountAmount = promoValue + manualDiscount;
 
@@ -623,7 +705,7 @@ const normalizePhoneForZalo = (phone) => {
 
             return {
               price, taxFee, plateFee, inspectionFee, roadFee, civilInsurance,
-              physicalInsuranceFee, serviceFee, discountAmount, totalRollingCost, finalAmount, roadFeeYears
+              physicalInsuranceFee, serviceFee, discountAmount, promoValue, giftPromotions, selectedPromotions, totalRollingCost, finalAmount, roadFeeYears
             };
           }, [car, location, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
 
@@ -657,79 +739,61 @@ const normalizePhoneForZalo = (phone) => {
           const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
 
 
-          const getSyncKey = uid => `geely_sync_initialized_v1_${uid || 'unknown'}`;
+          const getSyncKey = uid => `geely_sync_initialized_v2_${uid || 'unknown'}`;
+          const setSyncInitialized = uid => { if (uid) saveData(getSyncKey(uid), true); };
 
-          const setSyncInitialized = uid => {
-            if (uid) saveData(getSyncKey(uid), true);
-          };
+          const settingsPayload = () => ({
+            salesInfo: { name: String(salesInfo?.name || ''), phone: String(salesInfo?.phone || '') },
+            serviceFeeAmount: parseMoney(serviceFeeAmount),
+            physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+          });
+          const cloudCar = item => ({
+            id: String(item.id), name: String(item.name || ''), price: parseMoney(item.price),
+            seats: Number(item.seats) || 5, imagePath: String(item.imagePath || '')
+          });
+          const cloudPromo = item => ({
+            id: String(item.id), name: String(item.name || ''), value: parseMoney(item.value),
+            type: String(item.type || 'gift'), deductFromPrice: Boolean(item.deductFromPrice)
+          });
 
-          const applyCloudData = cloudPayload => {
-            if (!cloudPayload || typeof cloudPayload !== 'object') return;
-
-            const local = latestDataRef.current || {};
-            const localImageMap = new Map(
-              (Array.isArray(local.cars) ? local.cars : []).map(car => [String(car.id), car.image || ''])
-            );
-
+          const applyWorkspace = workspace => {
+            if (!workspace) return;
             syncApplyingRef.current = true;
-
-            if (Array.isArray(cloudPayload.cars) && cloudPayload.cars.length) {
-              const mergedCars = cloudPayload.cars.map(car => ({
-                id: String(car.id || `car_${Date.now()}`),
-                name: String(car.name || ''),
-                price: parseMoney(car.price),
-                seats: Number(car.seats) || 5,
-                image: localImageMap.get(String(car.id)) || ''
-              }));
-              setCars(mergedCars);
-              if (!mergedCars.some(item => item.id === selectedCarId)) {
-                setSelectedCarId(mergedCars[0]?.id || '');
-              }
-            }
-
-            if (Array.isArray(cloudPayload.promotions)) {
-              setPromotions(cloudPayload.promotions.map(promo => ({
-                id: String(promo.id || `promo_${Date.now()}`),
-                name: String(promo.name || ''),
-                value: parseMoney(promo.value)
-              })));
-            }
-
-            if (cloudPayload.salesInfo && typeof cloudPayload.salesInfo === 'object') {
-              setSalesInfo({
-                name: String(cloudPayload.salesInfo.name || ''),
-                phone: String(cloudPayload.salesInfo.phone || '')
+            if (workspace.settings) {
+              if (workspace.settings.salesInfo) setSalesInfo({
+                name: String(workspace.settings.salesInfo.name || ''),
+                phone: String(workspace.settings.salesInfo.phone || '')
               });
+              if (workspace.settings.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(workspace.settings.serviceFeeAmount));
+              if (workspace.settings.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(workspace.settings.physicalInsuranceRate) || 0);
             }
-
-            if (cloudPayload.serviceFeeAmount !== undefined) {
-              setServiceFeeAmount(parseMoney(cloudPayload.serviceFeeAmount));
+            const cloudCars = workspace.cars?.length ? workspace.cars : workspace.legacy?.cars;
+            if (Array.isArray(cloudCars) && cloudCars.length) {
+              const nextCars = cloudCars.map(normalizeCar).map(item => ({ ...item, image: '' }));
+              setCars(nextCars);
+              if (!nextCars.some(item => item.id === selectedCarId)) setSelectedCarId(nextCars[0]?.id || '');
             }
-
-            if (cloudPayload.physicalInsuranceRate !== undefined) {
-              setPhysicalInsuranceRate(Number(cloudPayload.physicalInsuranceRate) || 0);
+            const cloudPromos = workspace.promotions?.length ? workspace.promotions : workspace.legacy?.promotions;
+            if (Array.isArray(cloudPromos)) setPromotions(cloudPromos.map(normalizePromotion));
+            if (Array.isArray(workspace.quotations)) {
+              setQuotations(workspace.quotations);
+              workspace.quotations.forEach(item => window.GeelyIDB?.saveQuotation(item).catch(() => {}));
             }
-
-            window.setTimeout(() => { syncApplyingRef.current = false; }, 500);
+            if (workspace.legacy && !workspace.settings) {
+              if (workspace.legacy.salesInfo) setSalesInfo(workspace.legacy.salesInfo);
+              if (workspace.legacy.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(workspace.legacy.serviceFeeAmount));
+              if (workspace.legacy.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(workspace.legacy.physicalInsuranceRate) || 0);
+            }
+            window.setTimeout(() => { syncApplyingRef.current = false; }, 600);
           };
 
           const describeFirebaseError = error => {
             const code = error?.code || '';
-            if (code.includes('unauthorized-domain')) {
-              return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
-            }
-            if (code.includes('popup-blocked')) {
-              return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở ứng dụng bằng Chrome hoặc Safari.';
-            }
-            if (code.includes('popup-closed-by-user')) {
-              return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-            }
-            if (code.includes('permission-denied')) {
-              return 'Firestore từ chối truy cập. Hãy kiểm tra lại Security Rules.';
-            }
-            if (!navigator.onLine) {
-              return 'Thiết bị đang ngoại tuyến. Hãy kết nối mạng rồi thử lại.';
-            }
+            if (code.includes('unauthorized-domain')) return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
+            if (code.includes('popup-blocked')) return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở bằng Chrome hoặc Safari.';
+            if (code.includes('popup-closed-by-user')) return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.8.';
+            if (!navigator.onLine) return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
             return error?.message || 'Không thể kết nối Firebase.';
           };
 
@@ -739,200 +803,124 @@ const normalizePhoneForZalo = (phone) => {
               await window.GeelyFirebaseSync.signInGoogle();
             } catch (error) {
               const message = describeFirebaseError(error);
-              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-              showToast(message);
+              setSyncStatus({ code: 'error', message, updatedAtMs: 0 }); showToast(message);
             }
           };
-
           const handleFirebaseSignOut = async () => {
-            try {
-              await window.GeelyFirebaseSync.signOut();
-              showToast('Đã đăng xuất tài khoản đồng bộ.');
-            } catch (error) {
-              showToast(describeFirebaseError(error));
-            }
+            try { await window.GeelyFirebaseSync.signOut(); showToast('Đã đăng xuất tài khoản đồng bộ.'); }
+            catch (error) { showToast(describeFirebaseError(error)); }
           };
 
           const handleUploadCurrentToCloud = async () => {
             if (!syncUser) return showToast('Vui lòng đăng nhập Google.');
-            const payload = buildCloudPayload(latestDataRef.current);
-            const serialized = serializeCloudPayload(payload);
-
             try {
               setSyncStatus({ code: 'working', message: 'Đang đưa dữ liệu lên Firebase...', updatedAtMs: 0 });
-              const result = await window.GeelyFirebaseSync.saveCloudData(payload);
-              lastCloudPayloadRef.current = serialized;
-              pendingCloudDataRef.current = payload;
-              syncReadyRef.current = true;
-              setSyncInitialized(syncUser.uid);
-              setSyncStatus({
-                code: navigator.onLine ? 'synced' : 'queued',
-                message: navigator.onLine ? 'Đã đồng bộ dữ liệu thiết bị lên Firebase.' : 'Đã xếp hàng đồng bộ khi có mạng.',
-                updatedAtMs: result?.updatedAtMs || Date.now()
+              await window.GeelyFirebaseSync.bootstrapWorkspace({
+                settings: settingsPayload(), cars: cars.map(cloudCar), promotions: promotions.map(cloudPromo), quotations
               });
-              showToast('Đã bật đồng bộ tự động.');
-            } catch (error) {
-              const message = describeFirebaseError(error);
-              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-              showToast(message);
-            }
+              syncReadyRef.current = true; setSyncInitialized(syncUser.uid);
+              setSyncStatus({ code: navigator.onLine ? 'synced' : 'queued', message: 'Đã bật đồng bộ từng mục.', updatedAtMs: Date.now() });
+              showToast('Đã đồng bộ dữ liệu lên Firebase.');
+            } catch (error) { const message = describeFirebaseError(error); setSyncStatus({ code: 'error', message, updatedAtMs: 0 }); showToast(message); }
           };
 
           const handleDownloadCloudToDevice = () => {
-            if (!syncUser || !pendingCloudDataRef.current) {
-              return showToast('Chưa tìm thấy dữ liệu trên Firebase.');
-            }
-
-            const payload = pendingCloudDataRef.current;
-            lastCloudPayloadRef.current = serializeCloudPayload(payload);
-            applyCloudData(payload);
-            syncReadyRef.current = true;
-            setSyncInitialized(syncUser.uid);
+            if (!pendingWorkspaceRef.current) return showToast('Chưa tìm thấy dữ liệu trên Firebase.');
+            applyWorkspace(pendingWorkspaceRef.current);
+            syncReadyRef.current = true; setSyncInitialized(syncUser?.uid);
             setSyncStatus({ code: 'synced', message: 'Đã tải dữ liệu Firebase về thiết bị.', updatedAtMs: Date.now() });
-            showToast('Đã tải dữ liệu và giữ nguyên ảnh xe trên thiết bị này.');
+            showToast('Đã tải dữ liệu; ảnh cục bộ vẫn được giữ theo mã xe.');
           };
 
           const handleSyncNow = async () => {
-            if (!syncUser || !syncReadyRef.current) {
-              return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
-            }
-            await handleUploadCurrentToCloud();
+            if (!syncUser || !syncReadyRef.current) return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
+            try {
+              await window.GeelyFirebaseSync.saveSettings(settingsPayload());
+              await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
+              await Promise.all(promotions.map(item => window.GeelyFirebaseSync.savePromotion(cloudPromo(item))));
+              setSyncStatus({ code: 'synced', message: 'Đã đồng bộ thủ công.', updatedAtMs: Date.now() });
+              showToast('Đồng bộ hoàn tất.');
+            } catch (error) { showToast(describeFirebaseError(error)); }
           };
 
           useEffect(() => {
             const service = window.GeelyFirebaseSync;
-            if (!service) {
-              setFirebaseState({ sdk: 'error', user: null, online: navigator.onLine, message: 'Thiếu mô-đun Firebase.', error: 'firebase-sync.js chưa được tải.' });
-              return undefined;
-            }
-
+            if (!service) return undefined;
             const unsubscribeState = service.onStateChange(nextState => setFirebaseState(nextState));
             const unsubscribeAuth = service.onAuthStateChanged(user => setSyncUser(user));
-            return () => {
-              unsubscribeState?.();
-              unsubscribeAuth?.();
-            };
+            return () => { unsubscribeState?.(); unsubscribeAuth?.(); };
           }, []);
 
           useEffect(() => {
-            if (syncUnsubscribeRef.current) {
-              syncUnsubscribeRef.current();
-              syncUnsubscribeRef.current = null;
-            }
-            if (syncWriteTimerRef.current) {
-              clearTimeout(syncWriteTimerRef.current);
-              syncWriteTimerRef.current = null;
-            }
-
-            pendingCloudDataRef.current = null;
-            lastCloudPayloadRef.current = '';
-            syncReadyRef.current = false;
-
+            syncUnsubscribeRef.current?.(); syncUnsubscribeRef.current = null;
+            syncReadyRef.current = false; pendingWorkspaceRef.current = null;
             if (!syncUser) {
               setSyncStatus({ code: 'signed_out', message: 'Đăng nhập Google để đồng bộ dữ liệu.', updatedAtMs: 0 });
               return undefined;
             }
-
             let cancelled = false;
             setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
-
-            window.GeelyFirebaseSync.watchCloudData(snapshot => {
-              if (cancelled) return;
-
-              if (!snapshot.exists || !snapshot.data?.data) {
-                pendingCloudDataRef.current = null;
-                syncReadyRef.current = false;
-                setSyncStatus({
-                  code: 'cloud_empty',
-                  message: 'Tài khoản này chưa có dữ liệu trên Firebase.',
-                  updatedAtMs: 0
-                });
-                return;
+            (async () => {
+              try {
+                const workspace = await window.GeelyFirebaseSync.getWorkspace();
+                if (cancelled) return;
+                pendingWorkspaceRef.current = workspace;
+                const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
+                if (workspace.empty) {
+                  setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.8.', updatedAtMs: 0 });
+                } else if (!initialized) {
+                  setSyncStatus({ code: 'choice_needed', message: 'Hãy chọn dữ liệu ban đầu dùng làm bản chính.', updatedAtMs: 0 });
+                } else {
+                  applyWorkspace(workspace); syncReadyRef.current = true;
+                  setSyncStatus({ code: 'synced', message: 'Dữ liệu đã đồng bộ theo từng mục.', updatedAtMs: Date.now() });
+                }
+                const unsubscribe = await window.GeelyFirebaseSync.watchWorkspace(event => {
+                  if (cancelled || !syncReadyRef.current || event.hasPendingWrites) return;
+                  syncApplyingRef.current = true;
+                  if (event.type === 'settings' && event.data) {
+                    const data = event.data;
+                    if (data.salesInfo) setSalesInfo(data.salesInfo);
+                    if (data.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(data.serviceFeeAmount));
+                    if (data.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(data.physicalInsuranceRate) || 0);
+                  } else if (event.type === 'cars') {
+                    const next = event.items.map(normalizeCar);
+                    setCars(next);
+                    cloudCarsHashRef.current = JSON.stringify(next.map(cloudCar));
+                  } else if (event.type === 'promotions') {
+                    const next = event.items.map(normalizePromotion);
+                    setPromotions(next);
+                    cloudPromosHashRef.current = JSON.stringify(next.map(cloudPromo));
+                  } else if (event.type === 'quotations') {
+                    setQuotations(event.items);
+                    event.items.forEach(item => window.GeelyIDB?.saveQuotation(item).catch(() => {}));
+                  }
+                  window.setTimeout(() => { syncApplyingRef.current = false; }, 400);
+                  setSyncStatus({ code: event.fromCache && !navigator.onLine ? 'offline' : 'synced', message: 'Dữ liệu đã đồng bộ.', updatedAtMs: Date.now() });
+                }, error => setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 }));
+                if (cancelled) unsubscribe?.(); else syncUnsubscribeRef.current = unsubscribe;
+              } catch (error) {
+                if (!cancelled) setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
               }
-
-              const wrapper = snapshot.data;
-              const cloudPayload = wrapper.data;
-              const serialized = serializeCloudPayload(cloudPayload);
-              pendingCloudDataRef.current = cloudPayload;
-
-              const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
-              if (!initialized) {
-                syncReadyRef.current = false;
-                setSyncStatus({
-                  code: 'choice_needed',
-                  message: 'Firebase đã có dữ liệu. Hãy chọn dữ liệu muốn dùng làm bản chính.',
-                  updatedAtMs: Number(wrapper.updatedAtMs) || 0
-                });
-                return;
-              }
-
-              syncReadyRef.current = true;
-
-              if (!snapshot.hasPendingWrites && serialized !== lastCloudPayloadRef.current) {
-                lastCloudPayloadRef.current = serialized;
-                applyCloudData(cloudPayload);
-              } else if (!lastCloudPayloadRef.current) {
-                lastCloudPayloadRef.current = serialized;
-              }
-
-              setSyncStatus({
-                code: snapshot.hasPendingWrites ? 'queued' : (snapshot.fromCache && !navigator.onLine ? 'offline' : 'synced'),
-                message: snapshot.hasPendingWrites
-                  ? 'Thay đổi đang chờ gửi lên Firebase.'
-                  : (snapshot.fromCache && !navigator.onLine ? 'Đang dùng dữ liệu Firebase đã lưu ngoại tuyến.' : 'Dữ liệu đã đồng bộ.'),
-                updatedAtMs: Number(wrapper.updatedAtMs) || Date.now()
-              });
-            }, error => {
-              if (cancelled) return;
-              const message = describeFirebaseError(error);
-              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-            }).then(unsubscribe => {
-              if (cancelled) unsubscribe?.();
-              else syncUnsubscribeRef.current = unsubscribe;
-            }).catch(error => {
-              if (cancelled) return;
-              const message = describeFirebaseError(error);
-              setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-            });
-
-            return () => {
-              cancelled = true;
-              syncUnsubscribeRef.current?.();
-              syncUnsubscribeRef.current = null;
-            };
+            })();
+            return () => { cancelled = true; syncUnsubscribeRef.current?.(); syncUnsubscribeRef.current = null; };
           }, [syncUser?.uid]);
 
           useEffect(() => {
             if (!syncUser || !syncReadyRef.current || syncApplyingRef.current) return undefined;
-
-            const payload = buildCloudPayload({
-              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
-            });
-            const serialized = serializeCloudPayload(payload);
-            if (serialized === lastCloudPayloadRef.current) return undefined;
-
             if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current);
-            setSyncStatus(current => ({ ...current, code: navigator.onLine ? 'pending' : 'queued', message: navigator.onLine ? 'Có thay đổi, đang chờ đồng bộ...' : 'Thay đổi sẽ đồng bộ khi có mạng.' }));
-
+            const payload = settingsPayload();
+            const hash = JSON.stringify(payload);
+            if (hash === settingsHashRef.current) return undefined;
             syncWriteTimerRef.current = window.setTimeout(async () => {
               try {
-                const result = await window.GeelyFirebaseSync.saveCloudData(payload);
-                lastCloudPayloadRef.current = serialized;
-                setSyncStatus({
-                  code: navigator.onLine ? 'synced' : 'queued',
-                  message: navigator.onLine ? 'Dữ liệu đã đồng bộ.' : 'Đã lưu ngoại tuyến, sẽ gửi khi có mạng.',
-                  updatedAtMs: result?.updatedAtMs || Date.now()
-                });
-              } catch (error) {
-                setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
-              }
-            }, 1400);
+                await window.GeelyFirebaseSync.saveSettings(payload);
+                settingsHashRef.current = hash;
+                setSyncStatus({ code: navigator.onLine ? 'synced' : 'queued', message: navigator.onLine ? 'Cài đặt đã đồng bộ.' : 'Thay đổi đang chờ gửi.', updatedAtMs: Date.now() });
+              } catch (error) { setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 }); }
+            }, 1200);
+            return () => { if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current); };
+          }, [salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser?.uid]);
 
-            return () => {
-              if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current);
-            };
-          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser?.uid]);
-          
           const handleDiscountChange = (e) => {
             const value = parseMoney(e.target.value);
             setDiscount(value ? formatNumber(value) : '');
@@ -978,6 +966,7 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarPrice('');
             setNewCarSeats(5);
             setNewCarImage('');
+            setNewCarImagePath('');
           };
 
           const optimizeCarImage = (file) => new Promise((resolve, reject) => {
@@ -1050,159 +1039,349 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarName(carToEdit.name || '');
             setNewCarPrice(formatNumber(carToEdit.price));
             setNewCarSeats(Number(carToEdit.seats) || 5);
-            setNewCarImage(carToEdit.image || '');
+            setNewCarImage(carImageMap[carToEdit.id] || '');
+            setNewCarImagePath(carToEdit.imagePath || '');
 
             setTimeout(() => {
               document.getElementById('car-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 50);
           };
 
-          const handleSaveCar = () => {
+          const handleSaveCar = async () => {
             if (!newCarName.trim() || !newCarPrice) return showToast('Nhập tên và giá xe!');
             const price = parseMoney(newCarPrice);
             if (!Number.isFinite(price) || price <= 0) return showToast('Giá xe không hợp lệ!');
-
+            const id = editingCarId || ('car_' + Date.now());
             const carData = {
-              name: newCarName.trim(),
-              price,
-              seats: Number(newCarSeats) || 5,
-              image: newCarImage.trim()
+              id, name: newCarName.trim(), price, seats: Number(newCarSeats) || 5,
+              imagePath: newCarImagePath.trim()
             };
-
-            if (editingCarId) {
-              setCars(currentCars => currentCars.map(item => (
-                item.id === editingCarId ? { ...item, ...carData } : item
-              )));
-              showToast('Đã cập nhật thông tin xe!');
-            } else {
-              setCars(currentCars => [...currentCars, {
-                id: 'car_' + Date.now(),
-                ...carData
-              }]);
-              showToast('Thêm xe thành công!');
-            }
-
-            resetCarEditor();
+            try {
+              if (newCarImage?.startsWith('data:image/')) {
+                await window.GeelyIDB?.saveCarImage(id, newCarImage);
+                setCarImageMap(current => ({ ...current, [id]: newCarImage }));
+              } else if (!newCarImage && editingCarId && !newCarImagePath) {
+                await window.GeelyIDB?.deleteCarImage(id);
+                setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
+              }
+              setCars(currentCars => editingCarId
+                ? currentCars.map(item => item.id === id ? { ...item, ...carData, image: '' } : item)
+                : [...currentCars, carData]);
+              if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.saveCar(cloudCar(carData));
+              showToast(editingCarId ? 'Đã cập nhật thông tin xe!' : 'Thêm xe thành công!');
+              resetCarEditor();
+            } catch (error) { showToast(error?.message || 'Không thể lưu xe.'); }
           };
 
-          const handleDeleteCar = (id) => {
+          const handleDeleteCar = async (id) => {
             if(cars.length <= 1) return showToast('Phải giữ ít nhất 1 xe!');
             const updated = cars.filter(c => c.id !== id);
             setCars(updated);
             if (selectedCarId === id) setSelectedCarId(updated[0].id);
             if (editingCarId === id) resetCarEditor();
+            await window.GeelyIDB?.deleteCarImage(id).catch(() => {});
+            setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
+            if (syncUser && syncReadyRef.current) window.GeelyFirebaseSync.deleteCar(id).catch(() => {});
             showToast('Đã xóa xe!');
           };
 
-          const handleAddPromo = () => {
+          const handleAddPromo = async () => {
             if (!newPromoName.trim()) return showToast('Nhập tên khuyến mãi!');
-            const value = parseMoney(newPromoValue);
-            setPromotions([...promotions, {
-              id: 'promo_' + Date.now(),
-              name: newPromoName.trim(),
-              value
-            }]);
-            setNewPromoName('');
-            setNewPromoValue('');
+            const promo = normalizePromotion({
+              id: 'promo_' + Date.now(), name: newPromoName.trim(), value: parseMoney(newPromoValue),
+              type: newPromoType, deductFromPrice: newPromoDeduct
+            });
+            setPromotions(current => [...current, promo]);
+            setNewPromoName(''); setNewPromoValue(''); setNewPromoType('gift'); setNewPromoDeduct(false);
+            if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.savePromotion(cloudPromo(promo)).catch(() => {});
             showToast('Thêm khuyến mãi thành công!');
           };
           
-          const handleDeletePromo = (id) => {
-            setPromotions(promotions.filter(p => p.id !== id));
-            setSelectedPromoIds(selectedPromoIds.filter(promoId => promoId !== id));
+          const handleDeletePromo = async (id) => {
+            setPromotions(current => current.filter(p => p.id !== id));
+            setSelectedPromoIds(current => current.filter(promoId => promoId !== id));
+            if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.deletePromotion(id).catch(() => {});
           };
 
           const handleExportImage = async () => {
-            const element = captureRef.current;
-            if (!element) return showToast('Không tìm thấy nội dung báo giá.');
-            if (!window.html2canvas) return showToast('Thiếu thư viện tạo ảnh. Hãy tải lại ứng dụng khi có mạng.');
-
-            const originalTransform = element.style.transform;
-            let restorePreparedImages = () => {};
-            let usedPlaceholder = false;
+            if (!calculations || !car) return showToast('Chưa có dữ liệu báo giá.');
             setIsExporting(true);
-            showToast('Đang tạo ảnh báo giá...');
+            showToast('Đang tạo ảnh Zalo...');
+
+            const loadCanvasImage = source => new Promise((resolve, reject) => {
+              if (!source) return reject(new Error('Thiếu nguồn ảnh.'));
+              const image = new Image();
+              if (/^https?:/i.test(source)) image.crossOrigin = 'anonymous';
+              image.onload = () => resolve(image);
+              image.onerror = () => reject(new Error('Không tải được ảnh.'));
+              image.src = source;
+            });
+            const roundedRect = (ctx, x, y, width, height, radius, fill, stroke) => {
+              const r = Math.min(radius, width / 2, height / 2);
+              ctx.beginPath();
+              ctx.moveTo(x + r, y);
+              ctx.arcTo(x + width, y, x + width, y + height, r);
+              ctx.arcTo(x + width, y + height, x, y + height, r);
+              ctx.arcTo(x, y + height, x, y, r);
+              ctx.arcTo(x, y, x + width, y, r);
+              ctx.closePath();
+              if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+              if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+            };
+            const drawText = (ctx, text, x, y, options = {}) => {
+              ctx.save();
+              ctx.font = `${options.weight || 600} ${options.size || 28}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+              ctx.fillStyle = options.color || '#0f172a';
+              ctx.textAlign = options.align || 'left';
+              ctx.textBaseline = options.baseline || 'alphabetic';
+              ctx.fillText(String(text || ''), x, y, options.maxWidth || undefined);
+              ctx.restore();
+            };
+            const drawWrapped = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
+              ctx.save();
+              ctx.font = `${options.weight || 500} ${options.size || 24}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+              ctx.fillStyle = options.color || '#334155';
+              ctx.textAlign = options.align || 'left';
+              ctx.textBaseline = 'top';
+              const words = String(text || '').split(/\s+/).filter(Boolean);
+              let line = '';
+              let currentY = y;
+              words.forEach(word => {
+                const test = line ? `${line} ${word}` : word;
+                if (ctx.measureText(test).width > maxWidth && line) {
+                  ctx.fillText(line, x, currentY);
+                  line = word;
+                  currentY += lineHeight;
+                } else line = test;
+              });
+              if (line) ctx.fillText(line, x, currentY);
+              ctx.restore();
+              return currentY + lineHeight;
+            };
+            const drawContainedImage = (ctx, image, x, y, width, height) => {
+              try {
+                const temp = document.createElement('canvas');
+                temp.width = Math.max(1, image.naturalWidth || image.width || 1200);
+                temp.height = Math.max(1, image.naturalHeight || image.height || 800);
+                const tempCtx = temp.getContext('2d', { willReadFrequently: true });
+                tempCtx.drawImage(image, 0, 0, temp.width, temp.height);
+                const { sx, sy, sw, sh } = getCarImageContentBounds(image);
+                const scale = Math.min(width / sw, height / sh);
+                const drawWidth = sw * scale;
+                const drawHeight = sh * scale;
+                ctx.drawImage(image, sx, sy, sw, sh, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+              } catch (error) {
+                const iw = image.naturalWidth || image.width || 1;
+                const ih = image.naturalHeight || image.height || 1;
+                const scale = Math.min(width / iw, height / ih);
+                const drawWidth = iw * scale;
+                const drawHeight = ih * scale;
+                ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+              }
+            };
 
             try {
-              element.style.transform = 'none';
+              if (document.fonts?.ready) await document.fonts.ready;
+              const directItems = calculations.selectedPromotions.filter(item => item.deductFromPrice).map(item => item.name);
+              if (parseMoney(discount) > 0) directItems.push(`Giảm thêm ${formatVND(parseMoney(discount))}`);
+              const giftItems = calculations.giftPromotions.map(item => item.name);
+              const hasPromotionSummary = directItems.length > 0 || giftItems.length > 0;
+              const canvas = document.createElement('canvas');
+              canvas.width = 1080;
+              canvas.height = hasPromotionSummary ? 1500 : 1350;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) throw new Error('Trình duyệt không hỗ trợ canvas.');
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-              if (document.fonts?.ready) {
-                await document.fonts.ready;
+              // Header
+              ctx.fillStyle = '#0f2d64';
+              ctx.fillRect(0, 0, 1080, 165);
+              drawText(ctx, 'GEELY', 60, 82, { size: 52, weight: 900, color: '#ffffff' });
+              drawText(ctx, 'HẢI DƯƠNG', 60, 128, { size: 28, weight: 800, color: '#dbeafe' });
+              drawText(ctx, currentQuoteId, 1020, 72, { size: 24, weight: 800, color: '#ffffff', align: 'right' });
+              drawText(ctx, quoteData.date, 1020, 112, { size: 21, weight: 600, color: '#dbeafe', align: 'right' });
+
+              // Customer and car heading
+              drawText(ctx, 'BÁO GIÁ DÀNH CHO', 540, 213, { size: 20, weight: 800, color: '#2563eb', align: 'center' });
+              drawText(ctx, customerName || 'QUÝ KHÁCH HÀNG', 540, 258, { size: 34, weight: 900, color: '#0f172a', align: 'center', maxWidth: 940 });
+              if (customerPhone) drawText(ctx, customerPhone, 540, 292, { size: 21, weight: 600, color: '#64748b', align: 'center' });
+
+              // Car box
+              roundedRect(ctx, 50, 320, 980, 425, 28, '#f8fafc', '#dbe3ef');
+              let carImageDrawn = false;
+              try {
+                const image = await loadCanvasImage(resolvedCarImage);
+                drawContainedImage(ctx, image, 95, 365, 890, 320);
+                carImageDrawn = true;
+              } catch (error) {}
+              if (!carImageDrawn) {
+                drawText(ctx, 'CHƯA CÓ ẢNH XE', 540, 540, { size: 34, weight: 800, color: '#cbd5e1', align: 'center' });
+              }
+              roundedRect(ctx, 76, 342, 460, carColor ? 98 : 72, 16, 'rgba(255,255,255,0.94)', '#dbe3ef');
+              drawWrapped(ctx, car.name, 98, 358, 420, 29, { size: 24, weight: 900, color: '#0f2d64' });
+              if (carColor) drawText(ctx, `Màu: ${carColor}`, 98, 423, { size: 19, weight: 600, color: '#475569' });
+
+              // Price boxes
+              roundedRect(ctx, 50, 770, 475, 132, 22, '#ffffff', '#dbe3ef');
+              drawText(ctx, 'GIÁ NIÊM YẾT', 78, 812, { size: 19, weight: 800, color: '#64748b' });
+              drawText(ctx, formatVND(calculations.price), 78, 866, { size: 31, weight: 900, color: '#0f172a', maxWidth: 420 });
+              roundedRect(ctx, 555, 770, 475, 132, 22, '#fff1f2', '#fecdd3');
+              drawText(ctx, 'GIẢM TRỰC TIẾP', 583, 812, { size: 19, weight: 800, color: '#e11d48' });
+              drawText(ctx, calculations.discountAmount > 0 ? `-${formatVND(calculations.discountAmount)}` : formatVND(0), 583, 866, { size: 31, weight: 900, color: '#be123c', maxWidth: 420 });
+
+              // Promotions summary
+              let summaryY = 935;
+              if (hasPromotionSummary) {
+                roundedRect(ctx, 50, 925, 980, 145, 20, '#f8fafc', '#e2e8f0');
+                drawText(ctx, 'ƯU ĐÃI', 78, 963, { size: 20, weight: 900, color: '#0f2d64' });
+                const summary = [...directItems.slice(0, 2), ...giftItems.slice(0, 3)].map(item => `• ${item}`).join('   ');
+                drawWrapped(ctx, summary, 78, 982, 920, 29, { size: 20, weight: 600, color: '#334155' });
+                summaryY = 1095;
               }
 
-              const preparedImages = await prepareImagesForExport(element);
-              restorePreparedImages = preparedImages.restore;
-              usedPlaceholder = preparedImages.usedPlaceholder;
+              // Total / upfront
+              roundedRect(ctx, 50, summaryY, 980, 135, 24, '#0f2d64', null);
+              drawText(ctx, 'TỔNG THANH TOÁN DỰ KIẾN', 82, summaryY + 45, { size: 19, weight: 800, color: '#bfdbfe' });
+              drawText(ctx, formatVND(calculations.finalAmount), 82, summaryY + 100, { size: 38, weight: 900, color: '#fde047', maxWidth: 560 });
+              if (loanCalculations) {
+                ctx.strokeStyle = '#31548b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(690, summaryY + 25); ctx.lineTo(690, summaryY + 110); ctx.stroke();
+                drawText(ctx, 'TRẢ TRƯỚC DỰ KIẾN', 1000, summaryY + 46, { size: 17, weight: 700, color: '#bfdbfe', align: 'right' });
+                drawText(ctx, formatVND(loanCalculations.upfrontPayment), 1000, summaryY + 88, { size: 28, weight: 900, color: '#ffffff', align: 'right', maxWidth: 285 });
+                drawText(ctx, `Tỷ lệ ${loanParams.downPaymentPercent}%`, 1000, summaryY + 113, { size: 16, weight: 600, color: '#bfdbfe', align: 'right' });
+              }
 
-              await waitForExportCanvases(element);
-              await new Promise(resolve => setTimeout(resolve, 120));
+              // Footer
+              const footerY = summaryY + 165;
+              ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(50, footerY); ctx.lineTo(1030, footerY); ctx.stroke();
+              drawText(ctx, 'TƯ VẤN BÁN HÀNG', 62, footerY + 42, { size: 17, weight: 800, color: '#64748b' });
+              drawText(ctx, salesInfo.name || 'NGUYỄN HOÀNG TÙNG', 62, footerY + 82, { size: 29, weight: 900, color: '#0f172a', maxWidth: 600 });
+              drawText(ctx, salesInfo.phone || '0961 018 288', 62, footerY + 118, { size: 26, weight: 900, color: '#dc2626' });
+              try {
+                const qrDataUrl = window.GeelyQR?.toDataURL?.(`https://zalo.me/${normalizePhoneForZalo(salesInfo.phone)}`, 220);
+                const qrImage = await loadCanvasImage(qrDataUrl);
+                ctx.drawImage(qrImage, 858, footerY + 14, 150, 150);
+                drawText(ctx, 'QUÉT ZALO', 933, footerY + 176, { size: 15, weight: 900, color: '#0f2d64', align: 'center' });
+              } catch (error) {}
 
-              const canvas = await window.html2canvas(element, {
-                scale: Math.min(2, window.devicePixelRatio || 2),
-                useCORS: true,
-                allowTaint: false,
-                imageTimeout: 12000,
-                backgroundColor: '#ffffff',
-                logging: false,
-                removeContainer: true
-              });
-
-              const blob = await canvasToJpegBlob(canvas, 0.92);
-              const fileName = `BaoGia_Geely_${safeFilePart(customerName)}_${Date.now()}.jpg`;
-              let completedByShare = false;
-
+              const blob = await canvasToJpegBlob(canvas, 0.93);
+              const fileName = `BaoGia_Zalo_${safeFilePart(customerName)}_${Date.now()}.jpg`;
+              let shared = false;
               if (navigator.share && typeof File !== 'undefined') {
                 try {
                   const file = new File([blob], fileName, { type: 'image/jpeg' });
                   if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                      files: [file],
-                      title: 'Báo giá Geely',
-                      text: `Báo giá ${car?.name || 'Geely'}`
-                    });
-                    completedByShare = true;
+                    await navigator.share({ files: [file], title: 'Báo giá Geely', text: `Báo giá ${car.name}` });
+                    shared = true;
                   }
-                } catch (shareError) {
-                  if (shareError?.name === 'AbortError') {
-                    showToast('Bạn đã đóng bảng chia sẻ.');
-                    return;
-                  }
-                  console.warn('Không thể mở bảng chia sẻ, chuyển sang tải tệp:', shareError);
+                } catch (error) {
+                  if (error?.name === 'AbortError') return showToast('Bạn đã đóng bảng chia sẻ.');
                 }
               }
-
-              if (!completedByShare) {
-                const objectUrl = URL.createObjectURL(blob);
+              if (!shared) {
+                const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.download = fileName;
-                link.href = objectUrl;
-                link.rel = 'noopener';
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+                link.href = url; link.download = fileName; link.rel = 'noopener';
+                document.body.appendChild(link); link.click(); link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(url), 15000);
               }
-
-              if (usedPlaceholder) {
-                showToast('Đã tạo ảnh, nhưng ảnh xe từ link ngoài bị thay bằng ảnh dự phòng. Hãy chọn ảnh từ thiết bị để xuất đầy đủ.');
-              } else {
-                showToast(completedByShare ? 'Đã mở bảng lưu/chia sẻ ảnh!' : 'Đã tải ảnh báo giá!');
-              }
+              showToast(shared ? 'Đã mở bảng chia sẻ ảnh Zalo!' : 'Đã tải ảnh Zalo!');
             } catch (error) {
-              console.error('Lỗi xuất ảnh báo giá:', error);
-              const message = String(error?.message || '');
-              if (/oklch|oklab|color-mix|unsupported color function/i.test(message)) {
-                showToast('Lỗi màu giao diện cũ. Hãy tải lại bản V1.5 rồi thử lại.');
-              } else if (/memory|canvas|size/i.test(message)) {
-                showToast('Điện thoại thiếu bộ nhớ để tạo ảnh. Hãy đóng bớt ứng dụng rồi thử lại.');
-              } else {
-                showToast(`Không thể tạo ảnh: ${message || 'lỗi không xác định'}`);
-              }
+              console.error('Lỗi tạo ảnh Zalo:', error);
+              showToast(`Không thể tạo ảnh Zalo: ${error?.message || 'lỗi không xác định'}`);
             } finally {
-              try { restorePreparedImages(); } catch (error) {}
-              element.style.transform = originalTransform;
               setIsExporting(false);
             }
+          };
+
+          const buildQuotationRecord = () => {
+            const existing = quotations.find(item => item.id === currentQuoteId);
+            return {
+              id: currentQuoteId,
+              createdAtMs: existing?.createdAtMs || Date.now(),
+              updatedAtMs: Date.now(),
+              status: quoteStatus,
+              notes: quoteNotes,
+              customerName, customerPhone, carColor,
+              carId: selectedCarId,
+              carName: car?.name || '',
+              selectedLocationId, selectedPromoIds,
+              discount: parseMoney(discount), includePhysicalInsurance, includeServiceFee,
+              plateColor, roadFeeYears, tndsOption,
+              loanParams: { ...loanParams },
+              totalAmount: calculations?.finalAmount || 0,
+              upfrontPayment: loanCalculations?.upfrontPayment || 0
+            };
+          };
+
+          const handleSaveQuotation = async () => {
+            if (!customerName.trim() && !customerPhone.trim()) return showToast('Hãy nhập tên hoặc số điện thoại khách hàng.');
+            const record = buildQuotationRecord();
+            setQuotations(current => [record, ...current.filter(item => item.id !== record.id)]);
+            await window.GeelyIDB?.saveQuotation(record).catch(() => {});
+            if (syncUser && syncReadyRef.current) {
+              try { await window.GeelyFirebaseSync.saveQuotation(record); }
+              catch (error) { showToast('Đã lưu trên máy, nhưng chưa đồng bộ Firebase.'); return; }
+            }
+            showToast('Đã lưu báo giá vào lịch sử.');
+          };
+
+          const handleLoadQuotation = record => {
+            setCurrentQuoteId(record.id || createQuoteId());
+            setQuoteStatus(record.status || 'draft');
+            setQuoteNotes(record.notes || '');
+            setCustomerName(record.customerName || '');
+            setCustomerPhone(record.customerPhone || '');
+            setCarColor(record.carColor || '');
+            if (record.carId && cars.some(item => item.id === record.carId)) setSelectedCarId(record.carId);
+            setSelectedLocationId(record.selectedLocationId || LOCATIONS[0].id);
+            setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
+            setDiscount(record.discount ? formatNumber(record.discount) : '');
+            setIncludePhysicalInsurance(record.includePhysicalInsurance !== false);
+            setIncludeServiceFee(record.includeServiceFee !== false);
+            setPlateColor(record.plateColor || 'white');
+            setRoadFeeYears(Number(record.roadFeeYears) || 1);
+            setTndsOption(record.tndsOption || 'auto');
+            if (record.loanParams) setLoanParams(current => ({ ...current, ...record.loanParams }));
+            setActiveTab('preview');
+            showToast('Đã mở lại báo giá.');
+          };
+
+          const handleDeleteQuotation = async id => {
+            if (!window.confirm('Xóa báo giá này khỏi lịch sử?')) return;
+            setQuotations(current => current.filter(item => item.id !== id));
+            await window.GeelyIDB?.deleteQuotation(id).catch(() => {});
+            if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.deleteQuotation(id).catch(() => {});
+            showToast('Đã xóa báo giá.');
+          };
+
+          const handleNewQuotation = () => {
+            setCurrentQuoteId(createQuoteId());
+            setCustomerName(''); setCustomerPhone(''); setCarColor('');
+            setSelectedPromoIds([]); setDiscount(''); setQuoteNotes(''); setQuoteStatus('draft');
+            setActiveTab('input');
+          };
+
+          const handlePrintA4 = async () => {
+            const element = captureRef.current;
+            if (!element) return showToast('Hãy mở tab Báo Giá trước.');
+            await waitForExportCanvases(element);
+            const clone = element.cloneNode(true);
+            const sourceCanvases = Array.from(element.querySelectorAll('canvas'));
+            const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
+            clonedCanvases.forEach((canvas, index) => {
+              const image = document.createElement('img');
+              try { image.src = sourceCanvases[index]?.toDataURL('image/png') || ''; } catch (error) {}
+              image.style.width = '100%'; image.style.height = '100%'; image.style.objectFit = 'contain';
+              canvas.replaceWith(image);
+            });
+            clone.style.transform = 'none'; clone.style.width = '800px'; clone.style.boxShadow = 'none'; clone.style.border = '0';
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) return showToast('Trình duyệt đã chặn cửa sổ in.');
+            const appCssUrl = new URL('./assets/app.css', window.location.href).href;
+            const exportCssUrl = new URL('./assets/export-compat.css', window.location.href).href;
+            printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${currentQuoteId}</title><link rel="stylesheet" href="${appCssUrl}"><link rel="stylesheet" href="${exportCssUrl}"><style>@page{size:A4;margin:8mm}body{margin:0;background:white}.print-wrap{width:194mm;margin:0 auto}.print-wrap>#quote-capture-area{width:100%!important;transform:none!important;padding:8mm!important;box-sizing:border-box!important}@media print{button{display:none!important}}</style></head><body><div class="print-wrap">${clone.outerHTML}</div><script>window.onload=()=>setTimeout(()=>window.print(),700)<\/script></body></html>`);
+            printWindow.document.close();
           };
 
           const renderInputForm = () => (
@@ -1261,7 +1440,7 @@ const normalizePhoneForZalo = (phone) => {
                     {promotions.map(p => (
                       <label key={p.id} className="flex items-start space-x-3 cursor-pointer p-2 hover:bg-white rounded border border-transparent hover:border-red-200">
                         <input type="checkbox" checked={selectedPromoIds.includes(p.id)} onChange={(e) => { e.target.checked ? setSelectedPromoIds([...selectedPromoIds, p.id]) : setSelectedPromoIds(selectedPromoIds.filter(id => id !== p.id)) }} className="mt-1 w-4 h-4 text-red-600 rounded" />
-                        <span className="text-sm font-medium text-gray-800">{p.name} {p.value > 0 ? `(-${formatVND(p.value)})` : ''}</span>
+                        <span className="text-sm font-medium text-gray-800"><b>{PROMOTION_TYPES[p.type] || 'Khuyến mãi'}:</b> {p.name} {p.deductFromPrice && p.value > 0 ? `(-${formatVND(p.value)})` : (p.value > 0 ? `(Giá trị ${formatVND(p.value)})` : '')}</span>
                       </label>
                     ))}
                   </div>
@@ -1287,6 +1466,22 @@ const normalizePhoneForZalo = (phone) => {
                   <input type="checkbox" checked={includeServiceFee} onChange={(e) => setIncludeServiceFee(e.target.checked)} className="w-5 h-5 text-blue-600 rounded" />
                   <span className="text-sm font-medium text-gray-700">Kèm Phí dịch vụ đăng ký</span>
                 </label>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Trạng thái báo giá</label>
+                    <select value={quoteStatus} onChange={e => setQuoteStatus(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                      <option value="draft">Bản nháp</option><option value="sent">Đã gửi khách</option><option value="followup">Đang theo dõi</option><option value="test_drive">Hẹn lái thử</option><option value="deposited">Đã đặt cọc</option><option value="lost">Không thành công</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Mã báo giá</label>
+                    <div className="px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs font-black text-blue-800 truncate">{currentQuoteId}</div>
+                  </div>
+                </div>
+                <textarea value={quoteNotes} onChange={e => setQuoteNotes(e.target.value)} placeholder="Ghi chú chăm sóc khách hàng..." className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm min-h-20"></textarea>
               </div>
             </div>
           );
@@ -1385,7 +1580,7 @@ const normalizePhoneForZalo = (phone) => {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <h3 className="font-black text-gray-800">☁️ Đồng Bộ Firebase</h3>
-                    <p className="text-xs text-gray-500 mt-1">Đồng bộ xe, giá, khuyến mãi, thông tin bán hàng và các khoản phí.</p>
+                    <p className="text-xs text-gray-500 mt-1">Đồng bộ riêng từng xe, khuyến mãi, cài đặt và lịch sử báo giá.</p>
                   </div>
                   <span className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${
                     ['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
@@ -1457,7 +1652,7 @@ const normalizePhoneForZalo = (phone) => {
                 )}
 
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed">
-                  <b>Ảnh xe không được đưa lên Firebase.</b> Mỗi thiết bị giữ ảnh riêng; khi tải dữ liệu từ đám mây, ảnh đang có trên thiết bị sẽ được giữ lại theo mã dòng xe.
+                  <b>Ảnh chuẩn được đồng bộ bằng đường dẫn GitHub.</b> Ảnh bạn chọn từ thiết bị được lưu riêng trong IndexedDB và sẽ ưu tiên hiển thị trên thiết bị đó.
                 </div>
               </div>
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -1484,9 +1679,9 @@ const normalizePhoneForZalo = (phone) => {
                       <div className="flex items-center gap-3">
                         <div className="relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
                           <CarSilhouette className="w-14 text-slate-200" />
-                          {c.image && (
+                          {(carImageMap[c.id] || c.imagePath) && (
                             <img
-                              src={c.image}
+                              src={carImageMap[c.id] || c.imagePath}
                               crossOrigin="anonymous"
                               alt={c.name}
                               className="absolute inset-0 w-full h-full object-contain p-1 bg-white"
@@ -1499,7 +1694,7 @@ const normalizePhoneForZalo = (phone) => {
                           <div className="font-bold text-gray-800 truncate">{c.name}</div>
                           <div className="text-blue-600 font-semibold">{formatVND(c.price)}</div>
                           <div className="text-[11px] text-gray-500 mt-0.5">
-                            {Number(c.seats) || 5} chỗ · {c.image ? 'Đã có ảnh' : 'Chưa có ảnh'}
+                            {Number(c.seats) || 5} chỗ · {carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh')}
                           </div>
                         </div>
 
@@ -1531,39 +1726,26 @@ const normalizePhoneForZalo = (phone) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">Hình ảnh xe</label>
-                    <input
-                      type="text"
-                      placeholder={newCarImage.startsWith('data:image/') ? 'Đang sử dụng ảnh đã chọn từ thiết bị' : 'Dán link ảnh hoặc chọn ảnh bên dưới'}
-                      value={newCarImage.startsWith('data:image/') ? '' : newCarImage}
-                      onChange={e => setNewCarImage(e.target.value)}
-                      disabled={newCarImage.startsWith('data:image/')}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-green-50 disabled:text-green-700 disabled:font-semibold"
-                    />
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Đường dẫn ảnh chuẩn trên GitHub</label>
+                    <input type="text" placeholder="./assets/cars/ex2_pro.png" value={newCarImagePath} onChange={e => setNewCarImagePath(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <label className={`w-full py-2.5 rounded-lg font-bold text-sm text-center cursor-pointer border-2 transition-colors ${isProcessingCarImage ? 'bg-gray-100 text-gray-400 border-gray-200 pointer-events-none' : 'bg-green-50 text-green-700 border-green-500 hover:bg-green-100'}`}>
                       <input type="file" accept="image/*" onChange={handleCarImageFileChange} className="hidden" disabled={isProcessingCarImage} />
-                      {isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh từ thiết bị'}
+                      {isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh riêng trên máy'}
                     </label>
-                    <button type="button" onClick={() => setNewCarImage('')} disabled={!newCarImage || isProcessingCarImage} className="w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40">Bỏ ảnh hiện tại</button>
+                    <button type="button" onClick={() => setNewCarImage('')} disabled={!newCarImage || isProcessingCarImage} className="w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40">Bỏ ảnh cục bộ</button>
                   </div>
 
-                  <p className="text-[11px] text-gray-500 leading-relaxed">Ảnh chọn từ thiết bị sẽ tự thu nhỏ tối đa 1.200 × 800 px và nén thành JPEG để giảm dung lượng lưu trữ.</p>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">Đường dẫn GitHub được đồng bộ trên mọi thiết bị. Ảnh chọn trực tiếp được nén và lưu trong IndexedDB, không làm đầy localStorage.</p>
 
                   <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center">
                     <CarSilhouette className="w-44 text-slate-200" />
-                    {newCarImage && (
-                      <img
-                        src={newCarImage}
-                        crossOrigin="anonymous"
-                        alt="Xem trước ảnh xe"
-                        className="absolute inset-0 w-full h-full object-contain p-3 bg-white"
-                        onError={e => { e.currentTarget.style.display = 'none'; }}
-                      />
+                    {(newCarImage || newCarImagePath) && (
+                      <img src={newCarImage || newCarImagePath} crossOrigin="anonymous" alt="Xem trước ảnh xe" className="absolute inset-0 w-full h-full object-contain p-3 bg-white" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     )}
-                    <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border">XEM TRƯỚC</span>
+                    <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border">{newCarImage ? 'ẢNH CỤC BỘ' : 'ẢNH GITHUB'}</span>
                   </div>
 
                   <div className={`grid ${editingCarId ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
@@ -1581,17 +1763,48 @@ const normalizePhoneForZalo = (phone) => {
                 <h3 className="font-bold text-gray-800 mb-3">🎁 Quản Lý Khuyến Mãi</h3>
                 <div className="space-y-2 mb-3 max-h-60 overflow-y-auto">
                   {promotions.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm"><div className="font-medium">{p.name} {p.value > 0 ? <span className="text-red-500 block text-xs font-bold">-{formatVND(p.value)}</span> : null}</div><button onClick={() => handleDeletePromo(p.id)} className="text-red-500 font-bold p-2 text-xs">Xóa</button></div>
+                    <div key={p.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm"><div className="font-medium"><span className="text-[10px] uppercase font-black text-blue-600">{PROMOTION_TYPES[p.type] || 'Khuyến mãi'}</span><br/>{p.name} {p.value > 0 ? <span className={p.deductFromPrice ? "text-red-500 block text-xs font-bold" : "text-gray-500 block text-xs font-bold"}>{p.deductFromPrice ? '-' : 'Giá trị '}{formatVND(p.value)}</span> : null}</div><button onClick={() => handleDeletePromo(p.id)} className="text-red-500 font-bold p-2 text-xs">Xóa</button></div>
                   ))}
                 </div>
                 <div className="pt-3 border-t space-y-2">
                   <input type="text" placeholder="Tên KM (VD: Tặng thảm sàn)" value={newPromoName} onChange={e => setNewPromoName(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" />
-                  <input type="text" inputMode="numeric" placeholder="Quy đổi VNĐ (Trừ vào giá nếu có)" value={newPromoValue} onChange={e => formatNumberInput(e, setNewPromoValue)} className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select value={newPromoType} onChange={e => setNewPromoType(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm">{Object.entries(PROMOTION_TYPES).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
+                    <input type="text" inputMode="numeric" placeholder="Giá trị VNĐ" value={newPromoValue} onChange={e => formatNumberInput(e, setNewPromoValue)} className="w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" />
+                  </div>
+                  <label className="flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-700"><input type="checkbox" checked={newPromoDeduct} onChange={e => setNewPromoDeduct(e.target.checked)} className="w-4 h-4"/>Trừ trực tiếp vào giá xe</label>
                   <button onClick={handleAddPromo} className="w-full py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm">+ Thêm Khuyến Mãi</button>
                 </div>
               </div>
             </div>
           );
+
+          const renderHistory = () => {
+            const keyword = historySearch.trim().toLowerCase();
+            const items = quotations.filter(item => !keyword || [item.id, item.customerName, item.customerPhone, item.carName].some(value => String(value || '').toLowerCase().includes(keyword)));
+            const statusLabels = { draft: 'Bản nháp', sent: 'Đã gửi', followup: 'Đang theo dõi', test_drive: 'Hẹn lái thử', deposited: 'Đã đặt cọc', lost: 'Không thành công' };
+            return (
+              <div className="space-y-4 pb-24">
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center justify-between gap-3 mb-3"><div><h3 className="font-black text-gray-800">📋 Lịch sử báo giá</h3><p className="text-xs text-gray-500 mt-1">Được lưu trên máy và đồng bộ Firebase khi đăng nhập.</p></div><button onClick={handleNewQuotation} className="px-3 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs">+ Báo giá mới</button></div>
+                  <input value={historySearch} onChange={e => setHistorySearch(e.target.value)} placeholder="Tìm tên, SĐT, xe hoặc mã báo giá..." className="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                </div>
+                {items.length === 0 ? (
+                  <div className="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500"><p className="font-bold">Chưa có báo giá phù hợp</p><p className="text-xs mt-1">Lưu báo giá tại tab Báo Giá để theo dõi khách hàng.</p></div>
+                ) : items.map(item => (
+                  <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0"><p className="text-[11px] font-black text-blue-600">{item.id}</p><p className="font-black text-gray-900 truncate">{item.customerName || 'Khách hàng chưa đặt tên'}</p><p className="text-xs text-gray-500">{item.customerPhone || 'Chưa có SĐT'} · {item.carName || 'Chưa chọn xe'}</p></div>
+                      <span className="text-[10px] font-black px-2 py-1 bg-slate-100 text-slate-700 rounded-full">{statusLabels[item.status] || 'Bản nháp'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-3 text-xs"><div className="p-2 bg-blue-50 rounded-lg"><span className="text-gray-500">Tổng thanh toán</span><div className="font-black text-blue-800">{formatVND(item.totalAmount)}</div></div><div className="p-2 bg-yellow-50 rounded-lg"><span className="text-gray-500">Cập nhật</span><div className="font-bold text-yellow-800">{new Date(item.updatedAtMs || item.createdAtMs || Date.now()).toLocaleDateString('vi-VN')}</div></div></div>
+                    {item.notes && <p className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg line-clamp-2">{item.notes}</p>}
+                    <div className="grid grid-cols-3 gap-2 mt-3"><button onClick={() => handleLoadQuotation(item)} className="py-2 bg-blue-600 text-white rounded-lg font-bold text-xs">Mở lại</button><button onClick={() => { handleLoadQuotation(item); setCurrentQuoteId(createQuoteId()); }} className="py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg font-bold text-xs">Nhân bản</button><button onClick={() => handleDeleteQuotation(item.id)} className="py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg font-bold text-xs">Xóa</button></div>
+                  </div>
+                ))}
+              </div>
+            );
+          };
 
           const renderQuotePreview = () => {
             if (!calculations || !car) return null;
@@ -1648,8 +1861,8 @@ const normalizePhoneForZalo = (phone) => {
                   </div>
 
                   <div className="w-full h-64 bg-slate-100 flex items-center justify-center mb-8 rounded-xl border border-slate-200 overflow-hidden relative shadow-inner">
-                      {car.image ? (
-                        <CarImageCanvas src={car.image} alt={car.name} />
+                      {resolvedCarImage ? (
+                        <CarImageCanvas src={resolvedCarImage} alt={car.name} />
                       ) : (
                         <CarSilhouette className="w-72 text-slate-300" />
                       )}
@@ -1667,22 +1880,27 @@ const normalizePhoneForZalo = (phone) => {
                             <td className="p-3 text-right font-bold text-slate-800">{formatVND(calculations.price)}</td>
                           </tr>
                           
-                          {(calculations.discountAmount > 0 || selectedPromoIds.length > 0) && (
+                          {calculations.discountAmount > 0 && (
                             <tr className="border-b border-slate-200 border-dashed bg-red-50/50">
                               <td className="p-3 text-red-600">
-                                <span className="font-bold">Khuyến mãi / Giảm giá trực tiếp</span>
-                                {selectedPromoIds.length > 0 && (
-                                  <ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">
-                                    {selectedPromoIds.map(id => { const p = promotions.find(x => x.id === id); return p ? <li key={id}>{p.name}</li> : null; })}
-                                  </ul>
-                                )}
+                                <span className="font-bold">Giảm giá trực tiếp</span>
+                                <ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">
+                                  {calculations.selectedPromotions.filter(p => p.deductFromPrice).map(p => <li key={p.id}>{p.name}</li>)}
+                                  {parseMoney(discount) > 0 && <li>Giảm tiền mặt bổ sung</li>}
+                                </ul>
                               </td>
                               <td className="p-3 text-right font-bold text-red-600 align-top">-{formatVND(calculations.discountAmount)}</td>
                             </tr>
                           )}
+                          {calculations.giftPromotions.length > 0 && (
+                            <tr className="border-b border-slate-200 border-dashed bg-green-50/50">
+                              <td className="p-3 text-green-700"><span className="font-bold">Quà tặng & quyền lợi</span><ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">{calculations.giftPromotions.map(p => <li key={p.id}>{p.name}{p.value > 0 ? ` (giá trị ${formatVND(p.value)})` : ''}</li>)}</ul></td>
+                              <td className="p-3 text-right font-bold text-green-700 align-top">Không trừ giá</td>
+                            </tr>
+                          )}
                           
                           <tr className="border-b-2 border-blue-200 bg-blue-50/50">
-                            <td className="p-3 font-bold text-blue-900">Giá xe sau ưu đãi (Hóa đơn)</td>
+                            <td className="p-3 font-bold text-blue-900">Giá xe dự kiến sau giảm trừ</td>
                             <td className="p-3 text-right font-black text-blue-900 text-lg">{formatVND(calculations.price - calculations.discountAmount)}</td>
                           </tr>
 
@@ -1739,27 +1957,31 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.7</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.8</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
-                <div className="flex p-1 bg-gray-200 rounded-lg shadow-inner mb-4">
-                  <button onClick={() => setActiveTab('input')} className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Nhập TT</button>
-                  <button onClick={() => setActiveTab('loan')} className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'loan' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Vay NH</button>
-                  <button onClick={() => setActiveTab('preview')} className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Báo Giá</button>
-                  <button onClick={() => setActiveTab('settings')} className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'settings' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Cài Đặt</button>
+                <div className="grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5">
+                  <button onClick={() => setActiveTab('input')} className={`py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}`}>Nhập TT</button>
+                  <button onClick={() => setActiveTab('loan')} className={`py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'loan' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}`}>Vay NH</button>
+                  <button onClick={() => setActiveTab('preview')} className={`py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}`}>Báo Giá</button>
+                  <button onClick={() => setActiveTab('history')} className={`py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'history' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}`}>Lịch Sử</button>
+                  <button onClick={() => setActiveTab('settings')} className={`py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'settings' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}`}>Cài Đặt</button>
                 </div>
                 
                 {activeTab === 'input' && renderInputForm()}
                 {activeTab === 'loan' && renderBankLoan()}
                 {activeTab === 'preview' && renderQuotePreview()}
+                {activeTab === 'history' && renderHistory()}
                 {activeTab === 'settings' && renderSettings()}
               </div>
 
               {activeTab === 'preview' && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20 flex justify-center pb-safe">
-                  <div className="max-w-md w-full grid grid-cols-1">
-                    <button onClick={handleExportImage} disabled={isExporting} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:bg-blue-700 transition-colors">{isExporting ? 'Đang tạo ảnh...' : 'Lưu / Chia sẻ Ảnh Báo Giá'}</button>
+                  <div className="max-w-xl w-full grid grid-cols-3 gap-2">
+                    <button onClick={handleSaveQuotation} className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-xs shadow-md">Lưu lịch sử</button>
+                    <button onClick={handlePrintA4} className="w-full py-3 bg-slate-700 text-white rounded-xl font-bold text-xs shadow-md">In / PDF A4</button>
+                    <button onClick={handleExportImage} disabled={isExporting} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-md disabled:opacity-50">{isExporting ? 'Đang tạo...' : 'Ảnh Zalo'}</button>
                   </div>
                 </div>
               )}
@@ -1768,5 +1990,9 @@ const normalizePhoneForZalo = (phone) => {
           );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<GeelyQuotationApp />);
+        const rootElement = document.getElementById('root');
+        if (ReactDOM.createRoot) {
+          ReactDOM.createRoot(rootElement).render(<GeelyQuotationApp />);
+        } else {
+          ReactDOM.render(<GeelyQuotationApp />, rootElement);
+        }

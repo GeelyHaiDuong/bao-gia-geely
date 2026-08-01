@@ -1,9 +1,8 @@
 # Thông báo thư viện bên thứ ba
 
-Ứng dụng sử dụng các thư viện sau:
-
-- React 18.2.0 — MIT License — được tải trong lần mở trực tuyến đầu tiên và lưu bởi Service Worker.
-- ReactDOM 18.2.0 — MIT License — được tải trong lần mở trực tuyến đầu tiên và lưu bởi Service Worker.
-- html2canvas 1.4.1 — MIT License — được tải trong lần mở trực tuyến đầu tiên và lưu bởi Service Worker.
-- QRCode for JavaScript của Kazuhiko Arase, thông qua mã nguồn trong `qrcode-terminal` — MIT License.
-- Tailwind CSS 4.1.10 — MIT License — chỉ dùng trong quá trình build để tạo CSS tĩnh.
+- React 18.2.0 — MIT License — đóng gói cục bộ trong `assets/vendor/`.
+- ReactDOM 18.2.0 — MIT License — đóng gói cục bộ trong `assets/vendor/`.
+- Scheduler 0.23.x — MIT License — đóng gói cục bộ trong `assets/vendor/`.
+- QRCode for JavaScript của Kazuhiko Arase — MIT License — đóng gói trong `assets/qrcode-browser.js`.
+- Tailwind CSS — MIT License — CSS đã được biên dịch tĩnh trong `assets/app.css`.
+- Firebase Web SDK — Apache License 2.0 — tải từ Google khi dùng tính năng đăng nhập/đồng bộ và được Service Worker cache.

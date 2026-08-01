@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="512" viewBox="0 0 1400 512">
+<rect width="1400" height="512" fill="#f8fafc"/>
+<ellipse cx="700" cy="410" rx="460" ry="34" fill="#e2e8f0"/>
+<path d="M215 330c24-80 90-132 190-148l122-20c58-90 139-133 244-133h143c112 0 207 56 278 164l92 28c58 18 96 64 96 119v35h-73c-14 72-77 126-153 126s-139-54-153-126H439c-14 72-77 126-153 126s-139-54-153-126H70v-28c0-67 52-113 145-137z" fill="#cbd5e1"/>
+<circle cx="286" cy="375" r="58" fill="#334155"/><circle cx="286" cy="375" r="26" fill="#cbd5e1"/>
+<circle cx="1114" cy="375" r="58" fill="#334155"/><circle cx="1114" cy="375" r="26" fill="#cbd5e1"/>
+<path d="M550 165h463c-50-57-107-85-173-85H705c-73 0-126 28-155 85z" fill="#94a3b8"/>
+<text x="700" y="486" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="700" fill="#475569">GEELY MONJARO FLAGSHIP</text>
+</svg>

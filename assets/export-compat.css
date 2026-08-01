@@ -1,9 +1,6 @@
 /*
-  Tương thích html2canvas 1.4.1.
-  Tailwind CSS 4 sử dụng OKLCH/color-mix, trong khi html2canvas 1.4.1
-  không phân tích được các hàm màu này trên một số trình duyệt.
-  File này được nạp sau app.css để chuyển toàn bộ màu dùng trong ứng dụng
-  về HEX/RGBA truyền thống trước khi xuất ảnh.
+  Bảng màu HEX/RGBA ổn định cho bản in, ảnh Zalo và các trình duyệt di động.
+  File được nạp sau app.css để tránh khác biệt do các hàm màu mới.
 */
 :root, :host {
   --color-red-50: #fef2f2;

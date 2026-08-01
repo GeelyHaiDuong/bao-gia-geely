@@ -14,7 +14,7 @@
   <link rel="icon" href="./icons/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./assets/app.css">
-  <link rel="stylesheet" href="./assets/export-compat.css?v=170">
+  <link rel="stylesheet" href="./assets/export-compat.css?v=180">
 </head>
 <body class="bg-gray-50 text-gray-900">
   <noscript>
@@ -26,7 +26,7 @@
     <div class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
       <div class="pwa-loader"></div>
       <p class="mt-4 font-bold text-slate-700">Đang mở Báo Giá Geely…</p>
-      <p class="mt-1 text-sm text-slate-500">Ứng dụng có thể dùng ngoại tuyến; cần mạng khi đăng nhập và đồng bộ Firebase.</p>
+      <p class="mt-1 text-sm text-slate-500">Giao diện và ảnh chuẩn dùng được ngoại tuyến; cần mạng khi đăng nhập hoặc đồng bộ Firebase.</p>
     </div>
   </div>
 
@@ -37,20 +37,21 @@
     <button id="pwa-update-button" type="button">Cập nhật</button>
   </div>
 
-  <!-- Hai thư viện này được service worker lưu lại sau lần mở trực tuyến đầu tiên. -->
-  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Giao diện, QR và xuất ảnh được đóng gói cục bộ. Firebase SDK chỉ tải khi cần đồng bộ và được lưu cache. -->
+  <script src="./assets/vendor/react.production.min.js"></script>
+  <script src="./assets/vendor/scheduler.production.min.js"></script>
+  <script src="./assets/vendor/react-dom.production.min.js"></script>
   <script src="./assets/qrcode-browser.js"></script>
-  <script src="./assets/firebase-sync.js?v=170"></script>
-  <script src="./assets/app.js?v=170"></script>
-  <script src="./assets/pwa.js"></script>
+  <script src="./assets/idb-store.js?v=180"></script>
+  <script src="./assets/firebase-sync.js?v=180"></script>
+  <script src="./assets/app.js?v=180"></script>
+  <script src="./assets/pwa.js?v=180"></script>
   <script>
     window.setTimeout(function () {
-      if (!window.React || !window.ReactDOM || !window.html2canvas) {
+      if (!window.React || !window.ReactDOM) {
         var root = document.getElementById('root');
         if (root && root.textContent.indexOf('Đang mở') !== -1) {
-          root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f8fafc;font-family:system-ui"><div style="max-width:380px;background:white;border:1px solid #e2e8f0;border-radius:18px;padding:24px;text-align:center;box-shadow:0 15px 40px rgba(15,23,42,.08)"><h2 style="margin:0 0 10px;color:#0f172a">Chưa tải đủ thư viện</h2><p style="color:#64748b;line-height:1.5">Lần đầu mở ứng dụng cần kết nối Internet. Hãy kiểm tra mạng rồi tải lại trang. Sau khi cài thành công, ứng dụng có thể dùng ngoại tuyến.</p><button onclick="location.reload()" style="border:0;border-radius:12px;background:#2563eb;color:white;padding:12px 18px;font-weight:700">Tải lại</button></div></div>';
+          root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f8fafc;font-family:system-ui"><div style="max-width:380px;background:white;border:1px solid #e2e8f0;border-radius:18px;padding:24px;text-align:center;box-shadow:0 15px 40px rgba(15,23,42,.08)"><h2 style="margin:0 0 10px;color:#0f172a">Chưa tải đủ thư viện giao diện</h2><p style="color:#64748b;line-height:1.5">Lần đầu mở ứng dụng cần kết nối Internet. Hãy kiểm tra mạng rồi tải lại trang. Sau khi cài thành công, ứng dụng có thể dùng ngoại tuyến.</p><button onclick="location.reload()" style="border:0;border-radius:12px;background:#2563eb;color:white;padding:12px 18px;font-weight:700">Tải lại</button></div></div>';
         }
       }
     }, 8000);

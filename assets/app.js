@@ -1,29 +1,32 @@
+// @ts-nocheck
+const React = window.React;
+const ReactDOM = window.ReactDOM;
 const { useState, useMemo, useEffect, useRef } = React;
 const DEFAULT_CAR_MODELS = [
-    { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, image: '' },
-    { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, image: '' },
-    { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, image: '' },
-    { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, image: '' },
-    { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, image: '' },
-    { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, image: '' },
-    { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, image: '' },
-    { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, image: '' },
-    { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, image: '' },
-    { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, image: '' },
-    { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, image: '' },
-    { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, image: '' },
-    { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, image: '' },
+    { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, imagePath: './assets/cars/ex2_pro.svg' },
+    { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, imagePath: './assets/cars/ex2_max.svg' },
+    { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, imagePath: './assets/cars/ex5_pro.svg' },
+    { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, imagePath: './assets/cars/ex5_max.svg' },
+    { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, imagePath: './assets/cars/ex5_emi_pro.svg' },
+    { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, imagePath: './assets/cars/ex5_emi_max.svg' },
+    { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, imagePath: './assets/cars/monjaro_premium.svg' },
+    { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, imagePath: './assets/cars/monjaro_flagship.svg' },
+    { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, imagePath: './assets/cars/coolray_exec_26.svg' },
+    { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, imagePath: './assets/cars/coolray_prem_26.svg' },
+    { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, imagePath: './assets/cars/coolray_flag_26.svg' },
+    { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, imagePath: './assets/cars/okavango_exec.svg' },
+    { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, imagePath: './assets/cars/okavango_prem.svg' },
 ];
 const DEFAULT_PROMOTIONS = [
-    { id: 'p1', name: '01 sạc cầm tay', value: 0 },
-    { id: 'p2', name: '01 gói cứu hộ miễn phí 5 năm', value: 0 },
-    { id: 'p3', name: '01 gói bảo dưỡng miễn phí 5 năm', value: 0 },
-    { id: 'p4', name: '10 triệu tiền mặt', value: 10000000 },
-    { id: 'p5', name: '06 năm bảo dưỡng miễn phí', value: 0 },
-    { id: 'p6', name: '01 năm bảo hiểm thân vỏ', value: 0 },
-    { id: 'p7', name: '06 năm cứu hộ miễn phí', value: 0 },
-    { id: 'p8', name: '01 bộ thảm sàn chính hãng', value: 0 },
-    { id: 'p9', name: '01 bộ sạc 7 kw (quy đổi 5tr TM)', value: 5000000 },
+    { id: 'p1', name: '01 sạc cầm tay', value: 0, type: 'gift', deductFromPrice: false },
+    { id: 'p2', name: '01 gói cứu hộ miễn phí 5 năm', value: 0, type: 'service', deductFromPrice: false },
+    { id: 'p3', name: '01 gói bảo dưỡng miễn phí 5 năm', value: 0, type: 'maintenance', deductFromPrice: false },
+    { id: 'p4', name: '10 triệu tiền mặt', value: 10000000, type: 'cash', deductFromPrice: true },
+    { id: 'p5', name: '06 năm bảo dưỡng miễn phí', value: 0, type: 'maintenance', deductFromPrice: false },
+    { id: 'p6', name: '01 năm bảo hiểm thân vỏ', value: 0, type: 'insurance', deductFromPrice: false },
+    { id: 'p7', name: '06 năm cứu hộ miễn phí', value: 0, type: 'service', deductFromPrice: false },
+    { id: 'p8', name: '01 bộ thảm sàn chính hãng', value: 0, type: 'accessory', deductFromPrice: false },
+    { id: 'p9', name: '01 bộ sạc 7 kW', value: 5000000, type: 'gift', deductFromPrice: false },
 ];
 const LOCATIONS = [
     { id: 'HN', name: 'Hà Nội (Trước bạ 12%, Biển 14tr)', taxRate: 0.12, plateFee: 14000000 },
@@ -38,6 +41,43 @@ const FIXED_FEES = {
     inspection: 340000,
     civilInsurance5Seats: 480700,
     civilInsurance7Seats: 873400,
+};
+const PROMOTION_TYPES = {
+    cash: 'Giảm tiền mặt', registration: 'Hỗ trợ trước bạ', gift: 'Quà tặng',
+    accessory: 'Phụ kiện', insurance: 'Bảo hiểm', maintenance: 'Bảo dưỡng', service: 'Dịch vụ'
+};
+const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
+const DEFAULT_PROMOTION_META = Object.fromEntries(DEFAULT_PROMOTIONS.map(item => [item.id, {
+        type: item.type, deductFromPrice: item.deductFromPrice
+    }]));
+const normalizeCar = car => {
+    const id = String((car === null || car === void 0 ? void 0 : car.id) || `car_${Date.now()}`);
+    return {
+        id,
+        name: String((car === null || car === void 0 ? void 0 : car.name) || ''),
+        price: Number(car === null || car === void 0 ? void 0 : car.price) || 0,
+        seats: Number(car === null || car === void 0 ? void 0 : car.seats) || 5,
+        imagePath: String((car === null || car === void 0 ? void 0 : car.imagePath) || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
+        image: String((car === null || car === void 0 ? void 0 : car.image) || '')
+    };
+};
+const normalizePromotion = promo => {
+    const id = String((promo === null || promo === void 0 ? void 0 : promo.id) || `promo_${Date.now()}`);
+    const defaultMeta = DEFAULT_PROMOTION_META[id];
+    const fallbackDeduct = defaultMeta ? defaultMeta.deductFromPrice : ((Number(promo === null || promo === void 0 ? void 0 : promo.value) || 0) > 0);
+    return {
+        id,
+        name: String((promo === null || promo === void 0 ? void 0 : promo.name) || ''),
+        value: Number(promo === null || promo === void 0 ? void 0 : promo.value) || 0,
+        type: String((promo === null || promo === void 0 ? void 0 : promo.type) || (defaultMeta === null || defaultMeta === void 0 ? void 0 : defaultMeta.type) || (fallbackDeduct ? 'cash' : 'gift')),
+        deductFromPrice: (promo === null || promo === void 0 ? void 0 : promo.deductFromPrice) !== undefined ? Boolean(promo.deductFromPrice) : Boolean(fallbackDeduct)
+    };
+};
+const createQuoteId = () => {
+    const now = new Date();
+    const date = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+    return `BG-HD-${date}-${suffix}`;
 };
 const getSavedData = (key, defaultData) => {
     try {
@@ -408,11 +448,17 @@ const formatSyncTime = value => {
 };
 function GeelyQuotationApp() {
     var _a;
-    const [cars, setCars] = useState(() => getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS));
-    const [promotions, setPromotions] = useState(() => getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS));
+    const [cars, setCars] = useState(() => (getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS) || []).map(normalizeCar));
+    const [promotions, setPromotions] = useState(() => (getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS) || []).map(normalizePromotion));
     const [salesInfo, setSalesInfo] = useState(() => getSavedData('geely_sales_info', { name: '', phone: '' }));
     const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000)));
     const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
+    const [carImageMap, setCarImageMap] = useState({});
+    const [quotations, setQuotations] = useState([]);
+    const [currentQuoteId, setCurrentQuoteId] = useState(() => createQuoteId());
+    const [quoteStatus, setQuoteStatus] = useState('draft');
+    const [quoteNotes, setQuoteNotes] = useState('');
+    const [historySearch, setHistorySearch] = useState('');
     const [firebaseState, setFirebaseState] = useState(() => {
         var _a, _b;
         return (((_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.getState) === null || _b === void 0 ? void 0 : _b.call(_a)) || {
@@ -427,22 +473,61 @@ function GeelyQuotationApp() {
         updatedAtMs: 0
     });
     const latestDataRef = useRef({});
-    const pendingCloudDataRef = useRef(null);
-    const lastCloudPayloadRef = useRef('');
+    const pendingWorkspaceRef = useRef(null);
     const syncReadyRef = useRef(false);
     const syncApplyingRef = useRef(false);
     const syncUnsubscribeRef = useRef(null);
     const syncWriteTimerRef = useRef(null);
-    useEffect(() => { saveData('geely_cars_v8', cars); }, [cars]);
+    const settingsHashRef = useRef('');
+    const cloudCarsHashRef = useRef('');
+    const cloudPromosHashRef = useRef('');
+    useEffect(() => { saveData('geely_cars_v8', cars.map(({ image, ...car }) => car)); }, [cars]);
     useEffect(() => { saveData('geely_promotions_v2', promotions); }, [promotions]);
     useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
     useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
     useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
     useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            if (!window.GeelyIDB)
+                return;
+            const map = {};
+            const migratedCars = [];
+            for (const item of cars) {
+                try {
+                    if (item.image && item.image.startsWith('data:image/')) {
+                        await window.GeelyIDB.saveCarImage(item.id, item.image);
+                        migratedCars.push(item.id);
+                    }
+                    const localImage = await window.GeelyIDB.getCarImage(item.id);
+                    if (localImage)
+                        map[item.id] = localImage;
+                }
+                catch (error) {
+                    console.warn('Không đọc được ảnh IndexedDB:', error);
+                }
+            }
+            if (!cancelled) {
+                setCarImageMap(map);
+                if (migratedCars.length)
+                    setCars(current => current.map(({ image, ...car }) => car));
+            }
+            try {
+                const localQuotes = await window.GeelyIDB.listQuotations();
+                if (!cancelled && localQuotes.length)
+                    setQuotations(localQuotes);
+            }
+            catch (error) {
+                console.warn('Không đọc được lịch sử báo giá:', error);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+    useEffect(() => {
         latestDataRef.current = {
-            cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
+            cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations
         };
-    }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate]);
+    }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations]);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [carColor, setCarColor] = useState('');
@@ -458,7 +543,7 @@ function GeelyQuotationApp() {
     const [activeTab, setActiveTab] = useState(() => {
         try {
             const requestedTab = new URLSearchParams(window.location.search).get('tab');
-            return ['input', 'loan', 'preview', 'settings'].includes(requestedTab) ? requestedTab : 'input';
+            return ['input', 'loan', 'preview', 'history', 'settings'].includes(requestedTab) ? requestedTab : 'input';
         }
         catch (error) {
             return 'input';
@@ -469,10 +554,13 @@ function GeelyQuotationApp() {
     const [newCarPrice, setNewCarPrice] = useState('');
     const [newCarSeats, setNewCarSeats] = useState(5);
     const [newCarImage, setNewCarImage] = useState('');
+    const [newCarImagePath, setNewCarImagePath] = useState('');
     const [editingCarId, setEditingCarId] = useState(null);
     const [isProcessingCarImage, setIsProcessingCarImage] = useState(false);
     const [newPromoName, setNewPromoName] = useState('');
     const [newPromoValue, setNewPromoValue] = useState('');
+    const [newPromoType, setNewPromoType] = useState('gift');
+    const [newPromoDeduct, setNewPromoDeduct] = useState(false);
     const [loanParams, setLoanParams] = useState({
         downPaymentPercent: 20, loanTermYears: 5, fixedInterestRate: 8.0, fixedTermMonths: 12, floatingInterestRate: 11.5
     });
@@ -516,10 +604,10 @@ function GeelyQuotationApp() {
         const today = new Date();
         const dateStr = today.toLocaleDateString('vi-VN');
         const validDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN');
-        const randomCode = Math.floor(10000 + Math.random() * 90000);
-        return { date: dateStr, validUntil: validDate, code: `BG-HD${randomCode}` };
-    }, []);
+        return { date: dateStr, validUntil: validDate, code: currentQuoteId };
+    }, [currentQuoteId]);
     const car = useMemo(() => cars.find(c => c.id === selectedCarId) || cars[0], [selectedCarId, cars]);
+    const resolvedCarImage = car ? (carImageMap[car.id] || car.imagePath || car.image || '') : '';
     const location = useMemo(() => LOCATIONS.find(l => l.id === selectedLocationId) || LOCATIONS[0], [selectedLocationId]);
     const calculations = useMemo(() => {
         if (!car || !location)
@@ -542,17 +630,18 @@ function GeelyQuotationApp() {
         }
         const physicalInsuranceFee = includePhysicalInsurance ? price * (physicalInsuranceRate / 100) : 0;
         const serviceFee = includeServiceFee ? parseMoney(serviceFeeAmount) : 0;
-        const promoValue = selectedPromoIds.reduce((sum, id) => {
-            const p = promotions.find(promo => promo.id === id);
-            return sum + (p ? parseMoney(p.value) : 0);
-        }, 0);
+        const selectedPromotions = selectedPromoIds.map(id => promotions.find(promo => promo.id === id)).filter(Boolean);
+        const promoValue = selectedPromotions
+            .filter(promo => promo.deductFromPrice)
+            .reduce((sum, promo) => sum + parseMoney(promo.value), 0);
+        const giftPromotions = selectedPromotions.filter(promo => !promo.deductFromPrice);
         const manualDiscount = parseMoney(discount);
         const discountAmount = promoValue + manualDiscount;
         const totalRollingCost = taxFee + plateFee + inspectionFee + roadFee + civilInsurance + physicalInsuranceFee + serviceFee;
         const finalAmount = price - discountAmount + totalRollingCost;
         return {
             price, taxFee, plateFee, inspectionFee, roadFee, civilInsurance,
-            physicalInsuranceFee, serviceFee, discountAmount, totalRollingCost, finalAmount, roadFeeYears
+            physicalInsuranceFee, serviceFee, discountAmount, promoValue, giftPromotions, selectedPromotions, totalRollingCost, finalAmount, roadFeeYears
         };
     }, [car, location, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
     const loanCalculations = useMemo(() => {
@@ -579,69 +668,74 @@ function GeelyQuotationApp() {
         };
     }, [calculations, loanParams]);
     const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
-    const getSyncKey = uid => `geely_sync_initialized_v1_${uid || 'unknown'}`;
-    const setSyncInitialized = uid => {
-        if (uid)
-            saveData(getSyncKey(uid), true);
-    };
-    const applyCloudData = cloudPayload => {
-        var _a;
-        if (!cloudPayload || typeof cloudPayload !== 'object')
+    const getSyncKey = uid => `geely_sync_initialized_v2_${uid || 'unknown'}`;
+    const setSyncInitialized = uid => { if (uid)
+        saveData(getSyncKey(uid), true); };
+    const settingsPayload = () => ({
+        salesInfo: { name: String((salesInfo === null || salesInfo === void 0 ? void 0 : salesInfo.name) || ''), phone: String((salesInfo === null || salesInfo === void 0 ? void 0 : salesInfo.phone) || '') },
+        serviceFeeAmount: parseMoney(serviceFeeAmount),
+        physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+    });
+    const cloudCar = item => ({
+        id: String(item.id), name: String(item.name || ''), price: parseMoney(item.price),
+        seats: Number(item.seats) || 5, imagePath: String(item.imagePath || '')
+    });
+    const cloudPromo = item => ({
+        id: String(item.id), name: String(item.name || ''), value: parseMoney(item.value),
+        type: String(item.type || 'gift'), deductFromPrice: Boolean(item.deductFromPrice)
+    });
+    const applyWorkspace = workspace => {
+        var _a, _b, _c, _d, _e;
+        if (!workspace)
             return;
-        const local = latestDataRef.current || {};
-        const localImageMap = new Map((Array.isArray(local.cars) ? local.cars : []).map(car => [String(car.id), car.image || '']));
         syncApplyingRef.current = true;
-        if (Array.isArray(cloudPayload.cars) && cloudPayload.cars.length) {
-            const mergedCars = cloudPayload.cars.map(car => ({
-                id: String(car.id || `car_${Date.now()}`),
-                name: String(car.name || ''),
-                price: parseMoney(car.price),
-                seats: Number(car.seats) || 5,
-                image: localImageMap.get(String(car.id)) || ''
-            }));
-            setCars(mergedCars);
-            if (!mergedCars.some(item => item.id === selectedCarId)) {
-                setSelectedCarId(((_a = mergedCars[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
-            }
+        if (workspace.settings) {
+            if (workspace.settings.salesInfo)
+                setSalesInfo({
+                    name: String(workspace.settings.salesInfo.name || ''),
+                    phone: String(workspace.settings.salesInfo.phone || '')
+                });
+            if (workspace.settings.serviceFeeAmount !== undefined)
+                setServiceFeeAmount(parseMoney(workspace.settings.serviceFeeAmount));
+            if (workspace.settings.physicalInsuranceRate !== undefined)
+                setPhysicalInsuranceRate(Number(workspace.settings.physicalInsuranceRate) || 0);
         }
-        if (Array.isArray(cloudPayload.promotions)) {
-            setPromotions(cloudPayload.promotions.map(promo => ({
-                id: String(promo.id || `promo_${Date.now()}`),
-                name: String(promo.name || ''),
-                value: parseMoney(promo.value)
-            })));
+        const cloudCars = ((_a = workspace.cars) === null || _a === void 0 ? void 0 : _a.length) ? workspace.cars : (_b = workspace.legacy) === null || _b === void 0 ? void 0 : _b.cars;
+        if (Array.isArray(cloudCars) && cloudCars.length) {
+            const nextCars = cloudCars.map(normalizeCar).map(item => ({ ...item, image: '' }));
+            setCars(nextCars);
+            if (!nextCars.some(item => item.id === selectedCarId))
+                setSelectedCarId(((_c = nextCars[0]) === null || _c === void 0 ? void 0 : _c.id) || '');
         }
-        if (cloudPayload.salesInfo && typeof cloudPayload.salesInfo === 'object') {
-            setSalesInfo({
-                name: String(cloudPayload.salesInfo.name || ''),
-                phone: String(cloudPayload.salesInfo.phone || '')
-            });
+        const cloudPromos = ((_d = workspace.promotions) === null || _d === void 0 ? void 0 : _d.length) ? workspace.promotions : (_e = workspace.legacy) === null || _e === void 0 ? void 0 : _e.promotions;
+        if (Array.isArray(cloudPromos))
+            setPromotions(cloudPromos.map(normalizePromotion));
+        if (Array.isArray(workspace.quotations)) {
+            setQuotations(workspace.quotations);
+            workspace.quotations.forEach(item => { var _a; return (_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.saveQuotation(item).catch(() => { }); });
         }
-        if (cloudPayload.serviceFeeAmount !== undefined) {
-            setServiceFeeAmount(parseMoney(cloudPayload.serviceFeeAmount));
+        if (workspace.legacy && !workspace.settings) {
+            if (workspace.legacy.salesInfo)
+                setSalesInfo(workspace.legacy.salesInfo);
+            if (workspace.legacy.serviceFeeAmount !== undefined)
+                setServiceFeeAmount(parseMoney(workspace.legacy.serviceFeeAmount));
+            if (workspace.legacy.physicalInsuranceRate !== undefined)
+                setPhysicalInsuranceRate(Number(workspace.legacy.physicalInsuranceRate) || 0);
         }
-        if (cloudPayload.physicalInsuranceRate !== undefined) {
-            setPhysicalInsuranceRate(Number(cloudPayload.physicalInsuranceRate) || 0);
-        }
-        window.setTimeout(() => { syncApplyingRef.current = false; }, 500);
+        window.setTimeout(() => { syncApplyingRef.current = false; }, 600);
     };
     const describeFirebaseError = error => {
         const code = (error === null || error === void 0 ? void 0 : error.code) || '';
-        if (code.includes('unauthorized-domain')) {
+        if (code.includes('unauthorized-domain'))
             return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
-        }
-        if (code.includes('popup-blocked')) {
-            return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở ứng dụng bằng Chrome hoặc Safari.';
-        }
-        if (code.includes('popup-closed-by-user')) {
+        if (code.includes('popup-blocked'))
+            return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở bằng Chrome hoặc Safari.';
+        if (code.includes('popup-closed-by-user'))
             return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-        }
-        if (code.includes('permission-denied')) {
-            return 'Firestore từ chối truy cập. Hãy kiểm tra lại Security Rules.';
-        }
-        if (!navigator.onLine) {
-            return 'Thiết bị đang ngoại tuyến. Hãy kết nối mạng rồi thử lại.';
-        }
+        if (code.includes('permission-denied'))
+            return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.8.';
+        if (!navigator.onLine)
+            return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
         return (error === null || error === void 0 ? void 0 : error.message) || 'Không thể kết nối Firebase.';
     };
     const handleFirebaseSignIn = async () => {
@@ -667,21 +761,15 @@ function GeelyQuotationApp() {
     const handleUploadCurrentToCloud = async () => {
         if (!syncUser)
             return showToast('Vui lòng đăng nhập Google.');
-        const payload = buildCloudPayload(latestDataRef.current);
-        const serialized = serializeCloudPayload(payload);
         try {
             setSyncStatus({ code: 'working', message: 'Đang đưa dữ liệu lên Firebase...', updatedAtMs: 0 });
-            const result = await window.GeelyFirebaseSync.saveCloudData(payload);
-            lastCloudPayloadRef.current = serialized;
-            pendingCloudDataRef.current = payload;
+            await window.GeelyFirebaseSync.bootstrapWorkspace({
+                settings: settingsPayload(), cars: cars.map(cloudCar), promotions: promotions.map(cloudPromo), quotations
+            });
             syncReadyRef.current = true;
             setSyncInitialized(syncUser.uid);
-            setSyncStatus({
-                code: navigator.onLine ? 'synced' : 'queued',
-                message: navigator.onLine ? 'Đã đồng bộ dữ liệu thiết bị lên Firebase.' : 'Đã xếp hàng đồng bộ khi có mạng.',
-                updatedAtMs: (result === null || result === void 0 ? void 0 : result.updatedAtMs) || Date.now()
-            });
-            showToast('Đã bật đồng bộ tự động.');
+            setSyncStatus({ code: navigator.onLine ? 'synced' : 'queued', message: 'Đã bật đồng bộ từng mục.', updatedAtMs: Date.now() });
+            showToast('Đã đồng bộ dữ liệu lên Firebase.');
         }
         catch (error) {
             const message = describeFirebaseError(error);
@@ -690,151 +778,130 @@ function GeelyQuotationApp() {
         }
     };
     const handleDownloadCloudToDevice = () => {
-        if (!syncUser || !pendingCloudDataRef.current) {
+        if (!pendingWorkspaceRef.current)
             return showToast('Chưa tìm thấy dữ liệu trên Firebase.');
-        }
-        const payload = pendingCloudDataRef.current;
-        lastCloudPayloadRef.current = serializeCloudPayload(payload);
-        applyCloudData(payload);
+        applyWorkspace(pendingWorkspaceRef.current);
         syncReadyRef.current = true;
-        setSyncInitialized(syncUser.uid);
+        setSyncInitialized(syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid);
         setSyncStatus({ code: 'synced', message: 'Đã tải dữ liệu Firebase về thiết bị.', updatedAtMs: Date.now() });
-        showToast('Đã tải dữ liệu và giữ nguyên ảnh xe trên thiết bị này.');
+        showToast('Đã tải dữ liệu; ảnh cục bộ vẫn được giữ theo mã xe.');
     };
     const handleSyncNow = async () => {
-        if (!syncUser || !syncReadyRef.current) {
+        if (!syncUser || !syncReadyRef.current)
             return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
+        try {
+            await window.GeelyFirebaseSync.saveSettings(settingsPayload());
+            await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
+            await Promise.all(promotions.map(item => window.GeelyFirebaseSync.savePromotion(cloudPromo(item))));
+            setSyncStatus({ code: 'synced', message: 'Đã đồng bộ thủ công.', updatedAtMs: Date.now() });
+            showToast('Đồng bộ hoàn tất.');
         }
-        await handleUploadCurrentToCloud();
+        catch (error) {
+            showToast(describeFirebaseError(error));
+        }
     };
     useEffect(() => {
         const service = window.GeelyFirebaseSync;
-        if (!service) {
-            setFirebaseState({ sdk: 'error', user: null, online: navigator.onLine, message: 'Thiếu mô-đun Firebase.', error: 'firebase-sync.js chưa được tải.' });
+        if (!service)
             return undefined;
-        }
         const unsubscribeState = service.onStateChange(nextState => setFirebaseState(nextState));
         const unsubscribeAuth = service.onAuthStateChanged(user => setSyncUser(user));
-        return () => {
-            unsubscribeState === null || unsubscribeState === void 0 ? void 0 : unsubscribeState();
-            unsubscribeAuth === null || unsubscribeAuth === void 0 ? void 0 : unsubscribeAuth();
-        };
+        return () => { unsubscribeState === null || unsubscribeState === void 0 ? void 0 : unsubscribeState(); unsubscribeAuth === null || unsubscribeAuth === void 0 ? void 0 : unsubscribeAuth(); };
     }, []);
     useEffect(() => {
-        if (syncUnsubscribeRef.current) {
-            syncUnsubscribeRef.current();
-            syncUnsubscribeRef.current = null;
-        }
-        if (syncWriteTimerRef.current) {
-            clearTimeout(syncWriteTimerRef.current);
-            syncWriteTimerRef.current = null;
-        }
-        pendingCloudDataRef.current = null;
-        lastCloudPayloadRef.current = '';
+        var _a;
+        (_a = syncUnsubscribeRef.current) === null || _a === void 0 ? void 0 : _a.call(syncUnsubscribeRef);
+        syncUnsubscribeRef.current = null;
         syncReadyRef.current = false;
+        pendingWorkspaceRef.current = null;
         if (!syncUser) {
             setSyncStatus({ code: 'signed_out', message: 'Đăng nhập Google để đồng bộ dữ liệu.', updatedAtMs: 0 });
             return undefined;
         }
         let cancelled = false;
         setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
-        window.GeelyFirebaseSync.watchCloudData(snapshot => {
-            var _a;
-            if (cancelled)
-                return;
-            if (!snapshot.exists || !((_a = snapshot.data) === null || _a === void 0 ? void 0 : _a.data)) {
-                pendingCloudDataRef.current = null;
-                syncReadyRef.current = false;
-                setSyncStatus({
-                    code: 'cloud_empty',
-                    message: 'Tài khoản này chưa có dữ liệu trên Firebase.',
-                    updatedAtMs: 0
-                });
-                return;
+        (async () => {
+            try {
+                const workspace = await window.GeelyFirebaseSync.getWorkspace();
+                if (cancelled)
+                    return;
+                pendingWorkspaceRef.current = workspace;
+                const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
+                if (workspace.empty) {
+                    setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.8.', updatedAtMs: 0 });
+                }
+                else if (!initialized) {
+                    setSyncStatus({ code: 'choice_needed', message: 'Hãy chọn dữ liệu ban đầu dùng làm bản chính.', updatedAtMs: 0 });
+                }
+                else {
+                    applyWorkspace(workspace);
+                    syncReadyRef.current = true;
+                    setSyncStatus({ code: 'synced', message: 'Dữ liệu đã đồng bộ theo từng mục.', updatedAtMs: Date.now() });
+                }
+                const unsubscribe = await window.GeelyFirebaseSync.watchWorkspace(event => {
+                    if (cancelled || !syncReadyRef.current || event.hasPendingWrites)
+                        return;
+                    syncApplyingRef.current = true;
+                    if (event.type === 'settings' && event.data) {
+                        const data = event.data;
+                        if (data.salesInfo)
+                            setSalesInfo(data.salesInfo);
+                        if (data.serviceFeeAmount !== undefined)
+                            setServiceFeeAmount(parseMoney(data.serviceFeeAmount));
+                        if (data.physicalInsuranceRate !== undefined)
+                            setPhysicalInsuranceRate(Number(data.physicalInsuranceRate) || 0);
+                    }
+                    else if (event.type === 'cars') {
+                        const next = event.items.map(normalizeCar);
+                        setCars(next);
+                        cloudCarsHashRef.current = JSON.stringify(next.map(cloudCar));
+                    }
+                    else if (event.type === 'promotions') {
+                        const next = event.items.map(normalizePromotion);
+                        setPromotions(next);
+                        cloudPromosHashRef.current = JSON.stringify(next.map(cloudPromo));
+                    }
+                    else if (event.type === 'quotations') {
+                        setQuotations(event.items);
+                        event.items.forEach(item => { var _a; return (_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.saveQuotation(item).catch(() => { }); });
+                    }
+                    window.setTimeout(() => { syncApplyingRef.current = false; }, 400);
+                    setSyncStatus({ code: event.fromCache && !navigator.onLine ? 'offline' : 'synced', message: 'Dữ liệu đã đồng bộ.', updatedAtMs: Date.now() });
+                }, error => setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 }));
+                if (cancelled)
+                    unsubscribe === null || unsubscribe === void 0 ? void 0 : unsubscribe();
+                else
+                    syncUnsubscribeRef.current = unsubscribe;
             }
-            const wrapper = snapshot.data;
-            const cloudPayload = wrapper.data;
-            const serialized = serializeCloudPayload(cloudPayload);
-            pendingCloudDataRef.current = cloudPayload;
-            const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
-            if (!initialized) {
-                syncReadyRef.current = false;
-                setSyncStatus({
-                    code: 'choice_needed',
-                    message: 'Firebase đã có dữ liệu. Hãy chọn dữ liệu muốn dùng làm bản chính.',
-                    updatedAtMs: Number(wrapper.updatedAtMs) || 0
-                });
-                return;
+            catch (error) {
+                if (!cancelled)
+                    setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
             }
-            syncReadyRef.current = true;
-            if (!snapshot.hasPendingWrites && serialized !== lastCloudPayloadRef.current) {
-                lastCloudPayloadRef.current = serialized;
-                applyCloudData(cloudPayload);
-            }
-            else if (!lastCloudPayloadRef.current) {
-                lastCloudPayloadRef.current = serialized;
-            }
-            setSyncStatus({
-                code: snapshot.hasPendingWrites ? 'queued' : (snapshot.fromCache && !navigator.onLine ? 'offline' : 'synced'),
-                message: snapshot.hasPendingWrites
-                    ? 'Thay đổi đang chờ gửi lên Firebase.'
-                    : (snapshot.fromCache && !navigator.onLine ? 'Đang dùng dữ liệu Firebase đã lưu ngoại tuyến.' : 'Dữ liệu đã đồng bộ.'),
-                updatedAtMs: Number(wrapper.updatedAtMs) || Date.now()
-            });
-        }, error => {
-            if (cancelled)
-                return;
-            const message = describeFirebaseError(error);
-            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-        }).then(unsubscribe => {
-            if (cancelled)
-                unsubscribe === null || unsubscribe === void 0 ? void 0 : unsubscribe();
-            else
-                syncUnsubscribeRef.current = unsubscribe;
-        }).catch(error => {
-            if (cancelled)
-                return;
-            const message = describeFirebaseError(error);
-            setSyncStatus({ code: 'error', message, updatedAtMs: 0 });
-        });
-        return () => {
-            var _a;
-            cancelled = true;
-            (_a = syncUnsubscribeRef.current) === null || _a === void 0 ? void 0 : _a.call(syncUnsubscribeRef);
-            syncUnsubscribeRef.current = null;
-        };
+        })();
+        return () => { var _a; cancelled = true; (_a = syncUnsubscribeRef.current) === null || _a === void 0 ? void 0 : _a.call(syncUnsubscribeRef); syncUnsubscribeRef.current = null; };
     }, [syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid]);
     useEffect(() => {
         if (!syncUser || !syncReadyRef.current || syncApplyingRef.current)
             return undefined;
-        const payload = buildCloudPayload({
-            cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate
-        });
-        const serialized = serializeCloudPayload(payload);
-        if (serialized === lastCloudPayloadRef.current)
-            return undefined;
         if (syncWriteTimerRef.current)
             clearTimeout(syncWriteTimerRef.current);
-        setSyncStatus(current => ({ ...current, code: navigator.onLine ? 'pending' : 'queued', message: navigator.onLine ? 'Có thay đổi, đang chờ đồng bộ...' : 'Thay đổi sẽ đồng bộ khi có mạng.' }));
+        const payload = settingsPayload();
+        const hash = JSON.stringify(payload);
+        if (hash === settingsHashRef.current)
+            return undefined;
         syncWriteTimerRef.current = window.setTimeout(async () => {
             try {
-                const result = await window.GeelyFirebaseSync.saveCloudData(payload);
-                lastCloudPayloadRef.current = serialized;
-                setSyncStatus({
-                    code: navigator.onLine ? 'synced' : 'queued',
-                    message: navigator.onLine ? 'Dữ liệu đã đồng bộ.' : 'Đã lưu ngoại tuyến, sẽ gửi khi có mạng.',
-                    updatedAtMs: (result === null || result === void 0 ? void 0 : result.updatedAtMs) || Date.now()
-                });
+                await window.GeelyFirebaseSync.saveSettings(payload);
+                settingsHashRef.current = hash;
+                setSyncStatus({ code: navigator.onLine ? 'synced' : 'queued', message: navigator.onLine ? 'Cài đặt đã đồng bộ.' : 'Thay đổi đang chờ gửi.', updatedAtMs: Date.now() });
             }
             catch (error) {
                 setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 });
             }
-        }, 1400);
-        return () => {
-            if (syncWriteTimerRef.current)
-                clearTimeout(syncWriteTimerRef.current);
-        };
-    }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid]);
+        }, 1200);
+        return () => { if (syncWriteTimerRef.current)
+            clearTimeout(syncWriteTimerRef.current); };
+    }, [salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser === null || syncUser === void 0 ? void 0 : syncUser.uid]);
     const handleDiscountChange = (e) => {
         const value = parseMoney(e.target.value);
         setDiscount(value ? formatNumber(value) : '');
@@ -873,6 +940,7 @@ function GeelyQuotationApp() {
         setNewCarPrice('');
         setNewCarSeats(5);
         setNewCarImage('');
+        setNewCarImagePath('');
     };
     const optimizeCarImage = (file) => new Promise((resolve, reject) => {
         var _a;
@@ -940,38 +1008,48 @@ function GeelyQuotationApp() {
         setNewCarName(carToEdit.name || '');
         setNewCarPrice(formatNumber(carToEdit.price));
         setNewCarSeats(Number(carToEdit.seats) || 5);
-        setNewCarImage(carToEdit.image || '');
+        setNewCarImage(carImageMap[carToEdit.id] || '');
+        setNewCarImagePath(carToEdit.imagePath || '');
         setTimeout(() => {
             var _a;
             (_a = document.getElementById('car-editor')) === null || _a === void 0 ? void 0 : _a.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 50);
     };
-    const handleSaveCar = () => {
+    const handleSaveCar = async () => {
+        var _a, _b;
         if (!newCarName.trim() || !newCarPrice)
             return showToast('Nhập tên và giá xe!');
         const price = parseMoney(newCarPrice);
         if (!Number.isFinite(price) || price <= 0)
             return showToast('Giá xe không hợp lệ!');
+        const id = editingCarId || ('car_' + Date.now());
         const carData = {
-            name: newCarName.trim(),
-            price,
-            seats: Number(newCarSeats) || 5,
-            image: newCarImage.trim()
+            id, name: newCarName.trim(), price, seats: Number(newCarSeats) || 5,
+            imagePath: newCarImagePath.trim()
         };
-        if (editingCarId) {
-            setCars(currentCars => currentCars.map(item => (item.id === editingCarId ? { ...item, ...carData } : item)));
-            showToast('Đã cập nhật thông tin xe!');
+        try {
+            if (newCarImage === null || newCarImage === void 0 ? void 0 : newCarImage.startsWith('data:image/')) {
+                await ((_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.saveCarImage(id, newCarImage));
+                setCarImageMap(current => ({ ...current, [id]: newCarImage }));
+            }
+            else if (!newCarImage && editingCarId && !newCarImagePath) {
+                await ((_b = window.GeelyIDB) === null || _b === void 0 ? void 0 : _b.deleteCarImage(id));
+                setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
+            }
+            setCars(currentCars => editingCarId
+                ? currentCars.map(item => item.id === id ? { ...item, ...carData, image: '' } : item)
+                : [...currentCars, carData]);
+            if (syncUser && syncReadyRef.current)
+                await window.GeelyFirebaseSync.saveCar(cloudCar(carData));
+            showToast(editingCarId ? 'Đã cập nhật thông tin xe!' : 'Thêm xe thành công!');
+            resetCarEditor();
         }
-        else {
-            setCars(currentCars => [...currentCars, {
-                    id: 'car_' + Date.now(),
-                    ...carData
-                }]);
-            showToast('Thêm xe thành công!');
+        catch (error) {
+            showToast((error === null || error === void 0 ? void 0 : error.message) || 'Không thể lưu xe.');
         }
-        resetCarEditor();
     };
-    const handleDeleteCar = (id) => {
+    const handleDeleteCar = async (id) => {
+        var _a;
         if (cars.length <= 1)
             return showToast('Phải giữ ít nhất 1 xe!');
         const updated = cars.filter(c => c.id !== id);
@@ -980,118 +1058,365 @@ function GeelyQuotationApp() {
             setSelectedCarId(updated[0].id);
         if (editingCarId === id)
             resetCarEditor();
+        await ((_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.deleteCarImage(id).catch(() => { }));
+        setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
+        if (syncUser && syncReadyRef.current)
+            window.GeelyFirebaseSync.deleteCar(id).catch(() => { });
         showToast('Đã xóa xe!');
     };
-    const handleAddPromo = () => {
+    const handleAddPromo = async () => {
         if (!newPromoName.trim())
             return showToast('Nhập tên khuyến mãi!');
-        const value = parseMoney(newPromoValue);
-        setPromotions([...promotions, {
-                id: 'promo_' + Date.now(),
-                name: newPromoName.trim(),
-                value
-            }]);
+        const promo = normalizePromotion({
+            id: 'promo_' + Date.now(), name: newPromoName.trim(), value: parseMoney(newPromoValue),
+            type: newPromoType, deductFromPrice: newPromoDeduct
+        });
+        setPromotions(current => [...current, promo]);
         setNewPromoName('');
         setNewPromoValue('');
+        setNewPromoType('gift');
+        setNewPromoDeduct(false);
+        if (syncUser && syncReadyRef.current)
+            await window.GeelyFirebaseSync.savePromotion(cloudPromo(promo)).catch(() => { });
         showToast('Thêm khuyến mãi thành công!');
     };
-    const handleDeletePromo = (id) => {
-        setPromotions(promotions.filter(p => p.id !== id));
-        setSelectedPromoIds(selectedPromoIds.filter(promoId => promoId !== id));
+    const handleDeletePromo = async (id) => {
+        setPromotions(current => current.filter(p => p.id !== id));
+        setSelectedPromoIds(current => current.filter(promoId => promoId !== id));
+        if (syncUser && syncReadyRef.current)
+            await window.GeelyFirebaseSync.deletePromotion(id).catch(() => { });
     };
     const handleExportImage = async () => {
-        var _a;
-        const element = captureRef.current;
-        if (!element)
-            return showToast('Không tìm thấy nội dung báo giá.');
-        if (!window.html2canvas)
-            return showToast('Thiếu thư viện tạo ảnh. Hãy tải lại ứng dụng khi có mạng.');
-        const originalTransform = element.style.transform;
-        let restorePreparedImages = () => { };
-        let usedPlaceholder = false;
+        var _a, _b, _c;
+        if (!calculations || !car)
+            return showToast('Chưa có dữ liệu báo giá.');
         setIsExporting(true);
-        showToast('Đang tạo ảnh báo giá...');
-        try {
-            element.style.transform = 'none';
-            if ((_a = document.fonts) === null || _a === void 0 ? void 0 : _a.ready) {
-                await document.fonts.ready;
+        showToast('Đang tạo ảnh Zalo...');
+        const loadCanvasImage = source => new Promise((resolve, reject) => {
+            if (!source)
+                return reject(new Error('Thiếu nguồn ảnh.'));
+            const image = new Image();
+            if (/^https?:/i.test(source))
+                image.crossOrigin = 'anonymous';
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error('Không tải được ảnh.'));
+            image.src = source;
+        });
+        const roundedRect = (ctx, x, y, width, height, radius, fill, stroke) => {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + width, y, x + width, y + height, r);
+            ctx.arcTo(x + width, y + height, x, y + height, r);
+            ctx.arcTo(x, y + height, x, y, r);
+            ctx.arcTo(x, y, x + width, y, r);
+            ctx.closePath();
+            if (fill) {
+                ctx.fillStyle = fill;
+                ctx.fill();
             }
-            const preparedImages = await prepareImagesForExport(element);
-            restorePreparedImages = preparedImages.restore;
-            usedPlaceholder = preparedImages.usedPlaceholder;
-            await waitForExportCanvases(element);
-            await new Promise(resolve => setTimeout(resolve, 120));
-            const canvas = await window.html2canvas(element, {
-                scale: Math.min(2, window.devicePixelRatio || 2),
-                useCORS: true,
-                allowTaint: false,
-                imageTimeout: 12000,
-                backgroundColor: '#ffffff',
-                logging: false,
-                removeContainer: true
+            if (stroke) {
+                ctx.strokeStyle = stroke;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        };
+        const drawText = (ctx, text, x, y, options = {}) => {
+            ctx.save();
+            ctx.font = `${options.weight || 600} ${options.size || 28}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+            ctx.fillStyle = options.color || '#0f172a';
+            ctx.textAlign = options.align || 'left';
+            ctx.textBaseline = options.baseline || 'alphabetic';
+            ctx.fillText(String(text || ''), x, y, options.maxWidth || undefined);
+            ctx.restore();
+        };
+        const drawWrapped = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
+            ctx.save();
+            ctx.font = `${options.weight || 500} ${options.size || 24}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+            ctx.fillStyle = options.color || '#334155';
+            ctx.textAlign = options.align || 'left';
+            ctx.textBaseline = 'top';
+            const words = String(text || '').split(/\s+/).filter(Boolean);
+            let line = '';
+            let currentY = y;
+            words.forEach(word => {
+                const test = line ? `${line} ${word}` : word;
+                if (ctx.measureText(test).width > maxWidth && line) {
+                    ctx.fillText(line, x, currentY);
+                    line = word;
+                    currentY += lineHeight;
+                }
+                else
+                    line = test;
             });
-            const blob = await canvasToJpegBlob(canvas, 0.92);
-            const fileName = `BaoGia_Geely_${safeFilePart(customerName)}_${Date.now()}.jpg`;
-            let completedByShare = false;
+            if (line)
+                ctx.fillText(line, x, currentY);
+            ctx.restore();
+            return currentY + lineHeight;
+        };
+        const drawContainedImage = (ctx, image, x, y, width, height) => {
+            try {
+                const temp = document.createElement('canvas');
+                temp.width = Math.max(1, image.naturalWidth || image.width || 1200);
+                temp.height = Math.max(1, image.naturalHeight || image.height || 800);
+                const tempCtx = temp.getContext('2d', { willReadFrequently: true });
+                tempCtx.drawImage(image, 0, 0, temp.width, temp.height);
+                const { sx, sy, sw, sh } = getCarImageContentBounds(image);
+                const scale = Math.min(width / sw, height / sh);
+                const drawWidth = sw * scale;
+                const drawHeight = sh * scale;
+                ctx.drawImage(image, sx, sy, sw, sh, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+            }
+            catch (error) {
+                const iw = image.naturalWidth || image.width || 1;
+                const ih = image.naturalHeight || image.height || 1;
+                const scale = Math.min(width / iw, height / ih);
+                const drawWidth = iw * scale;
+                const drawHeight = ih * scale;
+                ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+            }
+        };
+        try {
+            if ((_a = document.fonts) === null || _a === void 0 ? void 0 : _a.ready)
+                await document.fonts.ready;
+            const directItems = calculations.selectedPromotions.filter(item => item.deductFromPrice).map(item => item.name);
+            if (parseMoney(discount) > 0)
+                directItems.push(`Giảm thêm ${formatVND(parseMoney(discount))}`);
+            const giftItems = calculations.giftPromotions.map(item => item.name);
+            const hasPromotionSummary = directItems.length > 0 || giftItems.length > 0;
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = hasPromotionSummary ? 1500 : 1350;
+            const ctx = canvas.getContext('2d');
+            if (!ctx)
+                throw new Error('Trình duyệt không hỗ trợ canvas.');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Header
+            ctx.fillStyle = '#0f2d64';
+            ctx.fillRect(0, 0, 1080, 165);
+            drawText(ctx, 'GEELY', 60, 82, { size: 52, weight: 900, color: '#ffffff' });
+            drawText(ctx, 'HẢI DƯƠNG', 60, 128, { size: 28, weight: 800, color: '#dbeafe' });
+            drawText(ctx, currentQuoteId, 1020, 72, { size: 24, weight: 800, color: '#ffffff', align: 'right' });
+            drawText(ctx, quoteData.date, 1020, 112, { size: 21, weight: 600, color: '#dbeafe', align: 'right' });
+            // Customer and car heading
+            drawText(ctx, 'BÁO GIÁ DÀNH CHO', 540, 213, { size: 20, weight: 800, color: '#2563eb', align: 'center' });
+            drawText(ctx, customerName || 'QUÝ KHÁCH HÀNG', 540, 258, { size: 34, weight: 900, color: '#0f172a', align: 'center', maxWidth: 940 });
+            if (customerPhone)
+                drawText(ctx, customerPhone, 540, 292, { size: 21, weight: 600, color: '#64748b', align: 'center' });
+            // Car box
+            roundedRect(ctx, 50, 320, 980, 425, 28, '#f8fafc', '#dbe3ef');
+            let carImageDrawn = false;
+            try {
+                const image = await loadCanvasImage(resolvedCarImage);
+                drawContainedImage(ctx, image, 95, 365, 890, 320);
+                carImageDrawn = true;
+            }
+            catch (error) { }
+            if (!carImageDrawn) {
+                drawText(ctx, 'CHƯA CÓ ẢNH XE', 540, 540, { size: 34, weight: 800, color: '#cbd5e1', align: 'center' });
+            }
+            roundedRect(ctx, 76, 342, 460, carColor ? 98 : 72, 16, 'rgba(255,255,255,0.94)', '#dbe3ef');
+            drawWrapped(ctx, car.name, 98, 358, 420, 29, { size: 24, weight: 900, color: '#0f2d64' });
+            if (carColor)
+                drawText(ctx, `Màu: ${carColor}`, 98, 423, { size: 19, weight: 600, color: '#475569' });
+            // Price boxes
+            roundedRect(ctx, 50, 770, 475, 132, 22, '#ffffff', '#dbe3ef');
+            drawText(ctx, 'GIÁ NIÊM YẾT', 78, 812, { size: 19, weight: 800, color: '#64748b' });
+            drawText(ctx, formatVND(calculations.price), 78, 866, { size: 31, weight: 900, color: '#0f172a', maxWidth: 420 });
+            roundedRect(ctx, 555, 770, 475, 132, 22, '#fff1f2', '#fecdd3');
+            drawText(ctx, 'GIẢM TRỰC TIẾP', 583, 812, { size: 19, weight: 800, color: '#e11d48' });
+            drawText(ctx, calculations.discountAmount > 0 ? `-${formatVND(calculations.discountAmount)}` : formatVND(0), 583, 866, { size: 31, weight: 900, color: '#be123c', maxWidth: 420 });
+            // Promotions summary
+            let summaryY = 935;
+            if (hasPromotionSummary) {
+                roundedRect(ctx, 50, 925, 980, 145, 20, '#f8fafc', '#e2e8f0');
+                drawText(ctx, 'ƯU ĐÃI', 78, 963, { size: 20, weight: 900, color: '#0f2d64' });
+                const summary = [...directItems.slice(0, 2), ...giftItems.slice(0, 3)].map(item => `• ${item}`).join('   ');
+                drawWrapped(ctx, summary, 78, 982, 920, 29, { size: 20, weight: 600, color: '#334155' });
+                summaryY = 1095;
+            }
+            // Total / upfront
+            roundedRect(ctx, 50, summaryY, 980, 135, 24, '#0f2d64', null);
+            drawText(ctx, 'TỔNG THANH TOÁN DỰ KIẾN', 82, summaryY + 45, { size: 19, weight: 800, color: '#bfdbfe' });
+            drawText(ctx, formatVND(calculations.finalAmount), 82, summaryY + 100, { size: 38, weight: 900, color: '#fde047', maxWidth: 560 });
+            if (loanCalculations) {
+                ctx.strokeStyle = '#31548b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(690, summaryY + 25);
+                ctx.lineTo(690, summaryY + 110);
+                ctx.stroke();
+                drawText(ctx, 'TRẢ TRƯỚC DỰ KIẾN', 1000, summaryY + 46, { size: 17, weight: 700, color: '#bfdbfe', align: 'right' });
+                drawText(ctx, formatVND(loanCalculations.upfrontPayment), 1000, summaryY + 88, { size: 28, weight: 900, color: '#ffffff', align: 'right', maxWidth: 285 });
+                drawText(ctx, `Tỷ lệ ${loanParams.downPaymentPercent}%`, 1000, summaryY + 113, { size: 16, weight: 600, color: '#bfdbfe', align: 'right' });
+            }
+            // Footer
+            const footerY = summaryY + 165;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(50, footerY);
+            ctx.lineTo(1030, footerY);
+            ctx.stroke();
+            drawText(ctx, 'TƯ VẤN BÁN HÀNG', 62, footerY + 42, { size: 17, weight: 800, color: '#64748b' });
+            drawText(ctx, salesInfo.name || 'NGUYỄN HOÀNG TÙNG', 62, footerY + 82, { size: 29, weight: 900, color: '#0f172a', maxWidth: 600 });
+            drawText(ctx, salesInfo.phone || '0961 018 288', 62, footerY + 118, { size: 26, weight: 900, color: '#dc2626' });
+            try {
+                const qrDataUrl = (_c = (_b = window.GeelyQR) === null || _b === void 0 ? void 0 : _b.toDataURL) === null || _c === void 0 ? void 0 : _c.call(_b, `https://zalo.me/${normalizePhoneForZalo(salesInfo.phone)}`, 220);
+                const qrImage = await loadCanvasImage(qrDataUrl);
+                ctx.drawImage(qrImage, 858, footerY + 14, 150, 150);
+                drawText(ctx, 'QUÉT ZALO', 933, footerY + 176, { size: 15, weight: 900, color: '#0f2d64', align: 'center' });
+            }
+            catch (error) { }
+            const blob = await canvasToJpegBlob(canvas, 0.93);
+            const fileName = `BaoGia_Zalo_${safeFilePart(customerName)}_${Date.now()}.jpg`;
+            let shared = false;
             if (navigator.share && typeof File !== 'undefined') {
                 try {
                     const file = new File([blob], fileName, { type: 'image/jpeg' });
                     if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Báo giá Geely',
-                            text: `Báo giá ${(car === null || car === void 0 ? void 0 : car.name) || 'Geely'}`
-                        });
-                        completedByShare = true;
+                        await navigator.share({ files: [file], title: 'Báo giá Geely', text: `Báo giá ${car.name}` });
+                        shared = true;
                     }
                 }
-                catch (shareError) {
-                    if ((shareError === null || shareError === void 0 ? void 0 : shareError.name) === 'AbortError') {
-                        showToast('Bạn đã đóng bảng chia sẻ.');
-                        return;
-                    }
-                    console.warn('Không thể mở bảng chia sẻ, chuyển sang tải tệp:', shareError);
+                catch (error) {
+                    if ((error === null || error === void 0 ? void 0 : error.name) === 'AbortError')
+                        return showToast('Bạn đã đóng bảng chia sẻ.');
                 }
             }
-            if (!completedByShare) {
-                const objectUrl = URL.createObjectURL(blob);
+            if (!shared) {
+                const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
+                link.href = url;
                 link.download = fileName;
-                link.href = objectUrl;
                 link.rel = 'noopener';
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+                window.setTimeout(() => URL.revokeObjectURL(url), 15000);
             }
-            if (usedPlaceholder) {
-                showToast('Đã tạo ảnh, nhưng ảnh xe từ link ngoài bị thay bằng ảnh dự phòng. Hãy chọn ảnh từ thiết bị để xuất đầy đủ.');
-            }
-            else {
-                showToast(completedByShare ? 'Đã mở bảng lưu/chia sẻ ảnh!' : 'Đã tải ảnh báo giá!');
-            }
+            showToast(shared ? 'Đã mở bảng chia sẻ ảnh Zalo!' : 'Đã tải ảnh Zalo!');
         }
         catch (error) {
-            console.error('Lỗi xuất ảnh báo giá:', error);
-            const message = String((error === null || error === void 0 ? void 0 : error.message) || '');
-            if (/oklch|oklab|color-mix|unsupported color function/i.test(message)) {
-                showToast('Lỗi màu giao diện cũ. Hãy tải lại bản V1.5 rồi thử lại.');
-            }
-            else if (/memory|canvas|size/i.test(message)) {
-                showToast('Điện thoại thiếu bộ nhớ để tạo ảnh. Hãy đóng bớt ứng dụng rồi thử lại.');
-            }
-            else {
-                showToast(`Không thể tạo ảnh: ${message || 'lỗi không xác định'}`);
-            }
+            console.error('Lỗi tạo ảnh Zalo:', error);
+            showToast(`Không thể tạo ảnh Zalo: ${(error === null || error === void 0 ? void 0 : error.message) || 'lỗi không xác định'}`);
         }
         finally {
-            try {
-                restorePreparedImages();
-            }
-            catch (error) { }
-            element.style.transform = originalTransform;
             setIsExporting(false);
         }
+    };
+    const buildQuotationRecord = () => {
+        const existing = quotations.find(item => item.id === currentQuoteId);
+        return {
+            id: currentQuoteId,
+            createdAtMs: (existing === null || existing === void 0 ? void 0 : existing.createdAtMs) || Date.now(),
+            updatedAtMs: Date.now(),
+            status: quoteStatus,
+            notes: quoteNotes,
+            customerName, customerPhone, carColor,
+            carId: selectedCarId,
+            carName: (car === null || car === void 0 ? void 0 : car.name) || '',
+            selectedLocationId, selectedPromoIds,
+            discount: parseMoney(discount), includePhysicalInsurance, includeServiceFee,
+            plateColor, roadFeeYears, tndsOption,
+            loanParams: { ...loanParams },
+            totalAmount: (calculations === null || calculations === void 0 ? void 0 : calculations.finalAmount) || 0,
+            upfrontPayment: (loanCalculations === null || loanCalculations === void 0 ? void 0 : loanCalculations.upfrontPayment) || 0
+        };
+    };
+    const handleSaveQuotation = async () => {
+        var _a;
+        if (!customerName.trim() && !customerPhone.trim())
+            return showToast('Hãy nhập tên hoặc số điện thoại khách hàng.');
+        const record = buildQuotationRecord();
+        setQuotations(current => [record, ...current.filter(item => item.id !== record.id)]);
+        await ((_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.saveQuotation(record).catch(() => { }));
+        if (syncUser && syncReadyRef.current) {
+            try {
+                await window.GeelyFirebaseSync.saveQuotation(record);
+            }
+            catch (error) {
+                showToast('Đã lưu trên máy, nhưng chưa đồng bộ Firebase.');
+                return;
+            }
+        }
+        showToast('Đã lưu báo giá vào lịch sử.');
+    };
+    const handleLoadQuotation = record => {
+        setCurrentQuoteId(record.id || createQuoteId());
+        setQuoteStatus(record.status || 'draft');
+        setQuoteNotes(record.notes || '');
+        setCustomerName(record.customerName || '');
+        setCustomerPhone(record.customerPhone || '');
+        setCarColor(record.carColor || '');
+        if (record.carId && cars.some(item => item.id === record.carId))
+            setSelectedCarId(record.carId);
+        setSelectedLocationId(record.selectedLocationId || LOCATIONS[0].id);
+        setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
+        setDiscount(record.discount ? formatNumber(record.discount) : '');
+        setIncludePhysicalInsurance(record.includePhysicalInsurance !== false);
+        setIncludeServiceFee(record.includeServiceFee !== false);
+        setPlateColor(record.plateColor || 'white');
+        setRoadFeeYears(Number(record.roadFeeYears) || 1);
+        setTndsOption(record.tndsOption || 'auto');
+        if (record.loanParams)
+            setLoanParams(current => ({ ...current, ...record.loanParams }));
+        setActiveTab('preview');
+        showToast('Đã mở lại báo giá.');
+    };
+    const handleDeleteQuotation = async (id) => {
+        var _a;
+        if (!window.confirm('Xóa báo giá này khỏi lịch sử?'))
+            return;
+        setQuotations(current => current.filter(item => item.id !== id));
+        await ((_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.deleteQuotation(id).catch(() => { }));
+        if (syncUser && syncReadyRef.current)
+            await window.GeelyFirebaseSync.deleteQuotation(id).catch(() => { });
+        showToast('Đã xóa báo giá.');
+    };
+    const handleNewQuotation = () => {
+        setCurrentQuoteId(createQuoteId());
+        setCustomerName('');
+        setCustomerPhone('');
+        setCarColor('');
+        setSelectedPromoIds([]);
+        setDiscount('');
+        setQuoteNotes('');
+        setQuoteStatus('draft');
+        setActiveTab('input');
+    };
+    const handlePrintA4 = async () => {
+        const element = captureRef.current;
+        if (!element)
+            return showToast('Hãy mở tab Báo Giá trước.');
+        await waitForExportCanvases(element);
+        const clone = element.cloneNode(true);
+        const sourceCanvases = Array.from(element.querySelectorAll('canvas'));
+        const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
+        clonedCanvases.forEach((canvas, index) => {
+            var _a;
+            const image = document.createElement('img');
+            try {
+                image.src = ((_a = sourceCanvases[index]) === null || _a === void 0 ? void 0 : _a.toDataURL('image/png')) || '';
+            }
+            catch (error) { }
+            image.style.width = '100%';
+            image.style.height = '100%';
+            image.style.objectFit = 'contain';
+            canvas.replaceWith(image);
+        });
+        clone.style.transform = 'none';
+        clone.style.width = '800px';
+        clone.style.boxShadow = 'none';
+        clone.style.border = '0';
+        const printWindow = window.open('', '_blank');
+        if (!printWindow)
+            return showToast('Trình duyệt đã chặn cửa sổ in.');
+        const appCssUrl = new URL('./assets/app.css', window.location.href).href;
+        const exportCssUrl = new URL('./assets/export-compat.css', window.location.href).href;
+        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${currentQuoteId}</title><link rel="stylesheet" href="${appCssUrl}"><link rel="stylesheet" href="${exportCssUrl}"><style>@page{size:A4;margin:8mm}body{margin:0;background:white}.print-wrap{width:194mm;margin:0 auto}.print-wrap>#quote-capture-area{width:100%!important;transform:none!important;padding:8mm!important;box-sizing:border-box!important}@media print{button{display:none!important}}</style></head><body><div class="print-wrap">${clone.outerHTML}</div><script>window.onload=()=>setTimeout(()=>window.print(),700)<\/script></body></html>`);
+        printWindow.document.close();
     };
     const renderInputForm = () => (React.createElement("div", { className: "space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20" },
         React.createElement("div", { className: "grid grid-cols-2 gap-3" },
@@ -1131,9 +1456,13 @@ function GeelyQuotationApp() {
             promotions.length > 0 && (React.createElement("div", { className: "grid grid-cols-1 gap-2 p-3 bg-red-50 border border-red-100 rounded-lg max-h-48 overflow-y-auto" }, promotions.map(p => (React.createElement("label", { key: p.id, className: "flex items-start space-x-3 cursor-pointer p-2 hover:bg-white rounded border border-transparent hover:border-red-200" },
                 React.createElement("input", { type: "checkbox", checked: selectedPromoIds.includes(p.id), onChange: (e) => { e.target.checked ? setSelectedPromoIds([...selectedPromoIds, p.id]) : setSelectedPromoIds(selectedPromoIds.filter(id => id !== p.id)); }, className: "mt-1 w-4 h-4 text-red-600 rounded" }),
                 React.createElement("span", { className: "text-sm font-medium text-gray-800" },
+                    React.createElement("b", null,
+                        PROMOTION_TYPES[p.type] || 'Khuyến mãi',
+                        ":"),
+                    " ",
                     p.name,
                     " ",
-                    p.value > 0 ? `(-${formatVND(p.value)})` : '')))))),
+                    p.deductFromPrice && p.value > 0 ? `(-${formatVND(p.value)})` : (p.value > 0 ? `(Giá trị ${formatVND(p.value)})` : ''))))))),
             React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mt-3 mb-1" }, "Gi\u1EA3m gi\u00E1 ti\u1EC1n m\u1EB7t th\u00EAm (VN\u0110)"),
             React.createElement("input", { type: "text", value: discount, onChange: handleDiscountChange, placeholder: "\u0110\u1EC3 tr\u1ED1ng \u0111\u1EC3 \u0111i\u1EC1n s\u1ED1 ti\u1EC1n gi\u1EA3m...", className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700" })),
         React.createElement("div", { className: "pt-2 space-y-3 border-t border-gray-100" },
@@ -1146,7 +1475,22 @@ function GeelyQuotationApp() {
                     React.createElement("span", { className: "text-xs font-semibold text-gray-500" }, "%")))),
             React.createElement("label", { className: "flex items-center space-x-3 cursor-pointer" },
                 React.createElement("input", { type: "checkbox", checked: includeServiceFee, onChange: (e) => setIncludeServiceFee(e.target.checked), className: "w-5 h-5 text-blue-600 rounded" }),
-                React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m Ph\u00ED d\u1ECBch v\u1EE5 \u0111\u0103ng k\u00FD")))));
+                React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m Ph\u00ED d\u1ECBch v\u1EE5 \u0111\u0103ng k\u00FD"))),
+        React.createElement("div", { className: "pt-3 border-t border-gray-100 space-y-2" },
+            React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                React.createElement("div", null,
+                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "Tr\u1EA1ng th\u00E1i b\u00E1o gi\u00E1"),
+                    React.createElement("select", { value: quoteStatus, onChange: e => setQuoteStatus(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" },
+                        React.createElement("option", { value: "draft" }, "B\u1EA3n nh\u00E1p"),
+                        React.createElement("option", { value: "sent" }, "\u0110\u00E3 g\u1EEDi kh\u00E1ch"),
+                        React.createElement("option", { value: "followup" }, "\u0110ang theo d\u00F5i"),
+                        React.createElement("option", { value: "test_drive" }, "H\u1EB9n l\u00E1i th\u1EED"),
+                        React.createElement("option", { value: "deposited" }, "\u0110\u00E3 \u0111\u1EB7t c\u1ECDc"),
+                        React.createElement("option", { value: "lost" }, "Kh\u00F4ng th\u00E0nh c\u00F4ng"))),
+                React.createElement("div", null,
+                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "M\u00E3 b\u00E1o gi\u00E1"),
+                    React.createElement("div", { className: "px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs font-black text-blue-800 truncate" }, currentQuoteId))),
+            React.createElement("textarea", { value: quoteNotes, onChange: e => setQuoteNotes(e.target.value), placeholder: "Ghi ch\u00FA ch\u0103m s\u00F3c kh\u00E1ch h\u00E0ng...", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm min-h-20" }))));
     const renderBankLoan = () => {
         if (!loanCalculations)
             return null;
@@ -1212,7 +1556,7 @@ function GeelyQuotationApp() {
             React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
                 React.createElement("div", null,
                     React.createElement("h3", { className: "font-black text-gray-800" }, "\u2601\uFE0F \u0110\u1ED3ng B\u1ED9 Firebase"),
-                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 xe, gi\u00E1, khuy\u1EBFn m\u00E3i, th\u00F4ng tin b\u00E1n h\u00E0ng v\u00E0 c\u00E1c kho\u1EA3n ph\u00ED.")),
+                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 ri\u00EAng t\u1EEBng xe, khuy\u1EBFn m\u00E3i, c\u00E0i \u0111\u1EB7t v\u00E0 l\u1ECBch s\u1EED b\u00E1o gi\u00E1.")),
                 React.createElement("span", { className: `shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
                         ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
                             ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
@@ -1245,8 +1589,8 @@ function GeelyQuotationApp() {
                 syncStatus.code === 'cloud_empty' && (React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u hi\u1EC7n t\u1EA1i l\u00EAn Firebase")),
                 !['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (React.createElement("button", { type: "button", onClick: handleSyncNow, className: "w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm" }, "\u0110\u1ED3ng b\u1ED9 ngay")))),
             React.createElement("div", { className: "mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed" },
-                React.createElement("b", null, "\u1EA2nh xe kh\u00F4ng \u0111\u01B0\u1EE3c \u0111\u01B0a l\u00EAn Firebase."),
-                " M\u1ED7i thi\u1EBFt b\u1ECB gi\u1EEF \u1EA3nh ri\u00EAng; khi t\u1EA3i d\u1EEF li\u1EC7u t\u1EEB \u0111\u00E1m m\u00E2y, \u1EA3nh \u0111ang c\u00F3 tr\u00EAn thi\u1EBFt b\u1ECB s\u1EBD \u0111\u01B0\u1EE3c gi\u1EEF l\u1EA1i theo m\u00E3 d\u00F2ng xe.")),
+                React.createElement("b", null, "\u1EA2nh chu\u1EA9n \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 b\u1EB1ng \u0111\u01B0\u1EDDng d\u1EABn GitHub."),
+                " \u1EA2nh b\u1EA1n ch\u1ECDn t\u1EEB thi\u1EBFt b\u1ECB \u0111\u01B0\u1EE3c l\u01B0u ri\u00EAng trong IndexedDB v\u00E0 s\u1EBD \u01B0u ti\u00EAn hi\u1EC3n th\u1ECB tr\u00EAn thi\u1EBFt b\u1ECB \u0111\u00F3.")),
         React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
             React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDC68\u200D\uD83D\uDCBC Th\u00F4ng Tin B\u00E1n H\u00E0ng (In tr\u00EAn B\u00E1o gi\u00E1)"),
             React.createElement("input", { type: "text", placeholder: "T\u00EAn (VD: Tu\u1EA5n Geely)", value: salesInfo.name, onChange: e => setSalesInfo({ ...salesInfo, name: e.target.value }), className: "w-full px-3 py-2 mb-2 bg-gray-50 border rounded-lg text-sm" }),
@@ -1266,14 +1610,14 @@ function GeelyQuotationApp() {
                 React.createElement("div", { className: "flex items-center gap-3" },
                     React.createElement("div", { className: "relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center" },
                         React.createElement(CarSilhouette, { className: "w-14 text-slate-200" }),
-                        c.image && (React.createElement("img", { src: c.image, crossOrigin: "anonymous", alt: c.name, className: "absolute inset-0 w-full h-full object-contain p-1 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } }))),
+                        (carImageMap[c.id] || c.imagePath) && (React.createElement("img", { src: carImageMap[c.id] || c.imagePath, crossOrigin: "anonymous", alt: c.name, className: "absolute inset-0 w-full h-full object-contain p-1 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } }))),
                     React.createElement("div", { className: "min-w-0 flex-1" },
                         React.createElement("div", { className: "font-bold text-gray-800 truncate" }, c.name),
                         React.createElement("div", { className: "text-blue-600 font-semibold" }, formatVND(c.price)),
                         React.createElement("div", { className: "text-[11px] text-gray-500 mt-0.5" },
                             Number(c.seats) || 5,
                             " ch\u1ED7 \u00B7 ",
-                            c.image ? 'Đã có ảnh' : 'Chưa có ảnh')),
+                            carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh'))),
                     React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
                         React.createElement("button", { onClick: () => handleStartEditCar(c), className: "px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "S\u1EEDa"),
                         React.createElement("button", { onClick: () => handleDeleteCar(c.id), className: "px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold text-xs" }, "X\u00F3a"))))))),
@@ -1288,18 +1632,18 @@ function GeelyQuotationApp() {
                         React.createElement("option", { value: 5 }, "Xe 5 ch\u1ED7"),
                         React.createElement("option", { value: 7 }, "Xe 7 ch\u1ED7"))),
                 React.createElement("div", null,
-                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "H\u00ECnh \u1EA3nh xe"),
-                    React.createElement("input", { type: "text", placeholder: newCarImage.startsWith('data:image/') ? 'Đang sử dụng ảnh đã chọn từ thiết bị' : 'Dán link ảnh hoặc chọn ảnh bên dưới', value: newCarImage.startsWith('data:image/') ? '' : newCarImage, onChange: e => setNewCarImage(e.target.value), disabled: newCarImage.startsWith('data:image/'), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-green-50 disabled:text-green-700 disabled:font-semibold" })),
+                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "\u0110\u01B0\u1EDDng d\u1EABn \u1EA3nh chu\u1EA9n tr\u00EAn GitHub"),
+                    React.createElement("input", { type: "text", placeholder: "./assets/cars/ex2_pro.png", value: newCarImagePath, onChange: e => setNewCarImagePath(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" })),
                 React.createElement("div", { className: "grid grid-cols-2 gap-2" },
                     React.createElement("label", { className: `w-full py-2.5 rounded-lg font-bold text-sm text-center cursor-pointer border-2 transition-colors ${isProcessingCarImage ? 'bg-gray-100 text-gray-400 border-gray-200 pointer-events-none' : 'bg-green-50 text-green-700 border-green-500 hover:bg-green-100'}` },
                         React.createElement("input", { type: "file", accept: "image/*", onChange: handleCarImageFileChange, className: "hidden", disabled: isProcessingCarImage }),
-                        isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh từ thiết bị'),
-                    React.createElement("button", { type: "button", onClick: () => setNewCarImage(''), disabled: !newCarImage || isProcessingCarImage, className: "w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40" }, "B\u1ECF \u1EA3nh hi\u1EC7n t\u1EA1i")),
-                React.createElement("p", { className: "text-[11px] text-gray-500 leading-relaxed" }, "\u1EA2nh ch\u1ECDn t\u1EEB thi\u1EBFt b\u1ECB s\u1EBD t\u1EF1 thu nh\u1ECF t\u1ED1i \u0111a 1.200 \u00D7 800 px v\u00E0 n\u00E9n th\u00E0nh JPEG \u0111\u1EC3 gi\u1EA3m dung l\u01B0\u1EE3ng l\u01B0u tr\u1EEF."),
+                        isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh riêng trên máy'),
+                    React.createElement("button", { type: "button", onClick: () => setNewCarImage(''), disabled: !newCarImage || isProcessingCarImage, className: "w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40" }, "B\u1ECF \u1EA3nh c\u1EE5c b\u1ED9")),
+                React.createElement("p", { className: "text-[11px] text-gray-500 leading-relaxed" }, "\u0110\u01B0\u1EDDng d\u1EABn GitHub \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 tr\u00EAn m\u1ECDi thi\u1EBFt b\u1ECB. \u1EA2nh ch\u1ECDn tr\u1EF1c ti\u1EBFp \u0111\u01B0\u1EE3c n\u00E9n v\u00E0 l\u01B0u trong IndexedDB, kh\u00F4ng l\u00E0m \u0111\u1EA7y localStorage."),
                 React.createElement("div", { className: "relative w-full h-40 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center" },
                     React.createElement(CarSilhouette, { className: "w-44 text-slate-200" }),
-                    newCarImage && (React.createElement("img", { src: newCarImage, crossOrigin: "anonymous", alt: "Xem tr\u01B0\u1EDBc \u1EA3nh xe", className: "absolute inset-0 w-full h-full object-contain p-3 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } })),
-                    React.createElement("span", { className: "absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border" }, "XEM TR\u01AF\u1EDAC")),
+                    (newCarImage || newCarImagePath) && (React.createElement("img", { src: newCarImage || newCarImagePath, crossOrigin: "anonymous", alt: "Xem tr\u01B0\u1EDBc \u1EA3nh xe", className: "absolute inset-0 w-full h-full object-contain p-3 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } })),
+                    React.createElement("span", { className: "absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border" }, newCarImage ? 'ẢNH CỤC BỘ' : 'ẢNH GITHUB')),
                 React.createElement("div", { className: `grid ${editingCarId ? 'grid-cols-2' : 'grid-cols-1'} gap-2` },
                     editingCarId && (React.createElement("button", { onClick: resetCarEditor, className: "w-full py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm" }, "H\u1EE7y ch\u1EC9nh s\u1EEDa")),
                     React.createElement("button", { onClick: handleSaveCar, disabled: isProcessingCarImage, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-sm disabled:opacity-50" }, editingCarId ? 'Lưu thay đổi' : '+ Thêm xe')))),
@@ -1307,16 +1651,60 @@ function GeelyQuotationApp() {
             React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83C\uDF81 Qu\u1EA3n L\u00FD Khuy\u1EBFn M\u00E3i"),
             React.createElement("div", { className: "space-y-2 mb-3 max-h-60 overflow-y-auto" }, promotions.map(p => (React.createElement("div", { key: p.id, className: "flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm" },
                 React.createElement("div", { className: "font-medium" },
+                    React.createElement("span", { className: "text-[10px] uppercase font-black text-blue-600" }, PROMOTION_TYPES[p.type] || 'Khuyến mãi'),
+                    React.createElement("br", null),
                     p.name,
                     " ",
-                    p.value > 0 ? React.createElement("span", { className: "text-red-500 block text-xs font-bold" },
-                        "-",
+                    p.value > 0 ? React.createElement("span", { className: p.deductFromPrice ? "text-red-500 block text-xs font-bold" : "text-gray-500 block text-xs font-bold" },
+                        p.deductFromPrice ? '-' : 'Giá trị ',
                         formatVND(p.value)) : null),
                 React.createElement("button", { onClick: () => handleDeletePromo(p.id), className: "text-red-500 font-bold p-2 text-xs" }, "X\u00F3a"))))),
             React.createElement("div", { className: "pt-3 border-t space-y-2" },
                 React.createElement("input", { type: "text", placeholder: "T\u00EAn KM (VD: T\u1EB7ng th\u1EA3m s\u00E0n)", value: newPromoName, onChange: e => setNewPromoName(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }),
-                React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Quy \u0111\u1ED5i VN\u0110 (Tr\u1EEB v\u00E0o gi\u00E1 n\u1EBFu c\u00F3)", value: newPromoValue, onChange: e => formatNumberInput(e, setNewPromoValue), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }),
+                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                    React.createElement("select", { value: newPromoType, onChange: e => setNewPromoType(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }, Object.entries(PROMOTION_TYPES).map(([value, label]) => React.createElement("option", { key: value, value: value }, label))),
+                    React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Gi\u00E1 tr\u1ECB VN\u0110", value: newPromoValue, onChange: e => formatNumberInput(e, setNewPromoValue), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" })),
+                React.createElement("label", { className: "flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-700" },
+                    React.createElement("input", { type: "checkbox", checked: newPromoDeduct, onChange: e => setNewPromoDeduct(e.target.checked), className: "w-4 h-4" }),
+                    "Tr\u1EEB tr\u1EF1c ti\u1EBFp v\u00E0o gi\u00E1 xe"),
                 React.createElement("button", { onClick: handleAddPromo, className: "w-full py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm" }, "+ Th\u00EAm Khuy\u1EBFn M\u00E3i")))));
+    const renderHistory = () => {
+        const keyword = historySearch.trim().toLowerCase();
+        const items = quotations.filter(item => !keyword || [item.id, item.customerName, item.customerPhone, item.carName].some(value => String(value || '').toLowerCase().includes(keyword)));
+        const statusLabels = { draft: 'Bản nháp', sent: 'Đã gửi', followup: 'Đang theo dõi', test_drive: 'Hẹn lái thử', deposited: 'Đã đặt cọc', lost: 'Không thành công' };
+        return (React.createElement("div", { className: "space-y-4 pb-24" },
+            React.createElement("div", { className: "bg-white p-4 rounded-xl border border-gray-100 shadow-sm" },
+                React.createElement("div", { className: "flex items-center justify-between gap-3 mb-3" },
+                    React.createElement("div", null,
+                        React.createElement("h3", { className: "font-black text-gray-800" }, "\uD83D\uDCCB L\u1ECBch s\u1EED b\u00E1o gi\u00E1"),
+                        React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u01B0\u1EE3c l\u01B0u tr\u00EAn m\u00E1y v\u00E0 \u0111\u1ED3ng b\u1ED9 Firebase khi \u0111\u0103ng nh\u1EADp.")),
+                    React.createElement("button", { onClick: handleNewQuotation, className: "px-3 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "+ B\u00E1o gi\u00E1 m\u1EDBi")),
+                React.createElement("input", { value: historySearch, onChange: e => setHistorySearch(e.target.value), placeholder: "T\u00ECm t\u00EAn, S\u0110T, xe ho\u1EB7c m\u00E3 b\u00E1o gi\u00E1...", className: "w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" })),
+            items.length === 0 ? (React.createElement("div", { className: "bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500" },
+                React.createElement("p", { className: "font-bold" }, "Ch\u01B0a c\u00F3 b\u00E1o gi\u00E1 ph\u00F9 h\u1EE3p"),
+                React.createElement("p", { className: "text-xs mt-1" }, "L\u01B0u b\u00E1o gi\u00E1 t\u1EA1i tab B\u00E1o Gi\u00E1 \u0111\u1EC3 theo d\u00F5i kh\u00E1ch h\u00E0ng."))) : items.map(item => (React.createElement("div", { key: item.id, className: "bg-white p-4 rounded-xl border border-gray-100 shadow-sm" },
+                React.createElement("div", { className: "flex items-start justify-between gap-3" },
+                    React.createElement("div", { className: "min-w-0" },
+                        React.createElement("p", { className: "text-[11px] font-black text-blue-600" }, item.id),
+                        React.createElement("p", { className: "font-black text-gray-900 truncate" }, item.customerName || 'Khách hàng chưa đặt tên'),
+                        React.createElement("p", { className: "text-xs text-gray-500" },
+                            item.customerPhone || 'Chưa có SĐT',
+                            " \u00B7 ",
+                            item.carName || 'Chưa chọn xe')),
+                    React.createElement("span", { className: "text-[10px] font-black px-2 py-1 bg-slate-100 text-slate-700 rounded-full" }, statusLabels[item.status] || 'Bản nháp')),
+                React.createElement("div", { className: "grid grid-cols-2 gap-2 mt-3 text-xs" },
+                    React.createElement("div", { className: "p-2 bg-blue-50 rounded-lg" },
+                        React.createElement("span", { className: "text-gray-500" }, "T\u1ED5ng thanh to\u00E1n"),
+                        React.createElement("div", { className: "font-black text-blue-800" }, formatVND(item.totalAmount))),
+                    React.createElement("div", { className: "p-2 bg-yellow-50 rounded-lg" },
+                        React.createElement("span", { className: "text-gray-500" }, "C\u1EADp nh\u1EADt"),
+                        React.createElement("div", { className: "font-bold text-yellow-800" }, new Date(item.updatedAtMs || item.createdAtMs || Date.now()).toLocaleDateString('vi-VN')))),
+                item.notes && React.createElement("p", { className: "mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg line-clamp-2" }, item.notes),
+                React.createElement("div", { className: "grid grid-cols-3 gap-2 mt-3" },
+                    React.createElement("button", { onClick: () => handleLoadQuotation(item), className: "py-2 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "M\u1EDF l\u1EA1i"),
+                    React.createElement("button", { onClick: () => { handleLoadQuotation(item); setCurrentQuoteId(createQuoteId()); }, className: "py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg font-bold text-xs" }, "Nh\u00E2n b\u1EA3n"),
+                    React.createElement("button", { onClick: () => handleDeleteQuotation(item.id), className: "py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg font-bold text-xs" }, "X\u00F3a")))))));
+    };
     const renderQuotePreview = () => {
         if (!calculations || !car)
             return null;
@@ -1363,7 +1751,7 @@ function GeelyQuotationApp() {
                                 "M\u00E0u s\u1EAFc: ",
                                 carColor))),
                     React.createElement("div", { className: "w-full h-64 bg-slate-100 flex items-center justify-center mb-8 rounded-xl border border-slate-200 overflow-hidden relative shadow-inner" },
-                        car.image ? (React.createElement(CarImageCanvas, { src: car.image, alt: car.name })) : (React.createElement(CarSilhouette, { className: "w-72 text-slate-300" })),
+                        resolvedCarImage ? (React.createElement(CarImageCanvas, { src: resolvedCarImage, alt: car.name })) : (React.createElement(CarSilhouette, { className: "w-72 text-slate-300" })),
                         React.createElement("div", { className: "absolute top-4 right-4 bg-white/95 backdrop-blur px-5 py-3 rounded-lg shadow-md border border-slate-200 text-center" },
                             React.createElement("p", { className: "text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1" }, "Gi\u00E1 Ni\u00EAm Y\u1EBFt"),
                             React.createElement("p", { className: "text-2xl font-black text-blue-900 leading-none" }, formatVND(calculations.price)))),
@@ -1374,15 +1762,24 @@ function GeelyQuotationApp() {
                             React.createElement("tr", { className: "border-b border-slate-200 border-dashed" },
                                 React.createElement("td", { className: "p-3 text-slate-700" }, "Gi\u00E1 xe ni\u00EAm y\u1EBFt"),
                                 React.createElement("td", { className: "p-3 text-right font-bold text-slate-800" }, formatVND(calculations.price))),
-                            (calculations.discountAmount > 0 || selectedPromoIds.length > 0) && (React.createElement("tr", { className: "border-b border-slate-200 border-dashed bg-red-50/50" },
+                            calculations.discountAmount > 0 && (React.createElement("tr", { className: "border-b border-slate-200 border-dashed bg-red-50/50" },
                                 React.createElement("td", { className: "p-3 text-red-600" },
-                                    React.createElement("span", { className: "font-bold" }, "Khuy\u1EBFn m\u00E3i / Gi\u1EA3m gi\u00E1 tr\u1EF1c ti\u1EBFp"),
-                                    selectedPromoIds.length > 0 && (React.createElement("ul", { className: "text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600" }, selectedPromoIds.map(id => { const p = promotions.find(x => x.id === id); return p ? React.createElement("li", { key: id }, p.name) : null; })))),
+                                    React.createElement("span", { className: "font-bold" }, "Gi\u1EA3m gi\u00E1 tr\u1EF1c ti\u1EBFp"),
+                                    React.createElement("ul", { className: "text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600" },
+                                        calculations.selectedPromotions.filter(p => p.deductFromPrice).map(p => React.createElement("li", { key: p.id }, p.name)),
+                                        parseMoney(discount) > 0 && React.createElement("li", null, "Gi\u1EA3m ti\u1EC1n m\u1EB7t b\u1ED5 sung"))),
                                 React.createElement("td", { className: "p-3 text-right font-bold text-red-600 align-top" },
                                     "-",
                                     formatVND(calculations.discountAmount)))),
+                            calculations.giftPromotions.length > 0 && (React.createElement("tr", { className: "border-b border-slate-200 border-dashed bg-green-50/50" },
+                                React.createElement("td", { className: "p-3 text-green-700" },
+                                    React.createElement("span", { className: "font-bold" }, "Qu\u00E0 t\u1EB7ng & quy\u1EC1n l\u1EE3i"),
+                                    React.createElement("ul", { className: "text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600" }, calculations.giftPromotions.map(p => React.createElement("li", { key: p.id },
+                                        p.name,
+                                        p.value > 0 ? ` (giá trị ${formatVND(p.value)})` : '')))),
+                                React.createElement("td", { className: "p-3 text-right font-bold text-green-700 align-top" }, "Kh\u00F4ng tr\u1EEB gi\u00E1"))),
                             React.createElement("tr", { className: "border-b-2 border-blue-200 bg-blue-50/50" },
-                                React.createElement("td", { className: "p-3 font-bold text-blue-900" }, "Gi\u00E1 xe sau \u01B0u \u0111\u00E3i (H\u00F3a \u0111\u01A1n)"),
+                                React.createElement("td", { className: "p-3 font-bold text-blue-900" }, "Gi\u00E1 xe d\u1EF1 ki\u1EBFn sau gi\u1EA3m tr\u1EEB"),
                                 React.createElement("td", { className: "p-3 text-right font-black text-blue-900 text-lg" }, formatVND(calculations.price - calculations.discountAmount))),
                             React.createElement("tr", { className: "bg-slate-100 border-b border-slate-300" },
                                 React.createElement("td", { className: "p-3 font-black text-slate-800 uppercase mt-4 block border-none" },
@@ -1449,21 +1846,30 @@ function GeelyQuotationApp() {
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 1.7"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 1.8"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
-            React.createElement("div", { className: "flex p-1 bg-gray-200 rounded-lg shadow-inner mb-4" },
-                React.createElement("button", { onClick: () => setActiveTab('input'), className: `flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}` }, "Nh\u1EADp TT"),
-                React.createElement("button", { onClick: () => setActiveTab('loan'), className: `flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'loan' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}` }, "Vay NH"),
-                React.createElement("button", { onClick: () => setActiveTab('preview'), className: `flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}` }, "B\u00E1o Gi\u00E1"),
-                React.createElement("button", { onClick: () => setActiveTab('settings'), className: `flex-1 py-2 px-1 text-[11px] sm:text-xs font-bold rounded-md transition-all ${activeTab === 'settings' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}` }, "C\u00E0i \u0110\u1EB7t")),
+            React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
+                React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),
+                React.createElement("button", { onClick: () => setActiveTab('loan'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'loan' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Vay NH"),
+                React.createElement("button", { onClick: () => setActiveTab('preview'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "B\u00E1o Gi\u00E1"),
+                React.createElement("button", { onClick: () => setActiveTab('history'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'history' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "L\u1ECBch S\u1EED"),
+                React.createElement("button", { onClick: () => setActiveTab('settings'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'settings' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "C\u00E0i \u0110\u1EB7t")),
             activeTab === 'input' && renderInputForm(),
             activeTab === 'loan' && renderBankLoan(),
             activeTab === 'preview' && renderQuotePreview(),
+            activeTab === 'history' && renderHistory(),
             activeTab === 'settings' && renderSettings()),
         activeTab === 'preview' && (React.createElement("div", { className: "fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20 flex justify-center pb-safe" },
-            React.createElement("div", { className: "max-w-md w-full grid grid-cols-1" },
-                React.createElement("button", { onClick: handleExportImage, disabled: isExporting, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md active:bg-blue-700 transition-colors" }, isExporting ? 'Đang tạo ảnh...' : 'Lưu / Chia sẻ Ảnh Báo Giá')))),
+            React.createElement("div", { className: "max-w-xl w-full grid grid-cols-3 gap-2" },
+                React.createElement("button", { onClick: handleSaveQuotation, className: "w-full py-3 bg-green-600 text-white rounded-xl font-bold text-xs shadow-md" }, "L\u01B0u l\u1ECBch s\u1EED"),
+                React.createElement("button", { onClick: handlePrintA4, className: "w-full py-3 bg-slate-700 text-white rounded-xl font-bold text-xs shadow-md" }, "In / PDF A4"),
+                React.createElement("button", { onClick: handleExportImage, disabled: isExporting, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-md disabled:opacity-50" }, isExporting ? 'Đang tạo...' : 'Ảnh Zalo')))),
         toastMessage && React.createElement("div", { className: "fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-5 py-2 rounded-full shadow-xl text-sm font-medium animate-fade-in-out w-max max-w-[90%] text-center" }, toastMessage)));
 }
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(GeelyQuotationApp, null));
+const rootElement = document.getElementById('root');
+if (ReactDOM.createRoot) {
+    ReactDOM.createRoot(rootElement).render(React.createElement(GeelyQuotationApp, null));
+}
+else {
+    ReactDOM.render(React.createElement(GeelyQuotationApp, null), rootElement);
+}
