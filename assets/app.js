@@ -831,29 +831,112 @@ function GeelyQuotationApp() {
             physicalInsuranceFee, serviceFee, discountAmount, promoValue, giftPromotions, selectedPromotions, totalRollingCost, finalAmount, roadFeeYears
         };
     }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
+    const normalizedLoanParams = useMemo(() => {
+        const downPaymentPercent = Math.min(100, Math.max(0, Number(loanParams.downPaymentPercent) || 0));
+        const loanTermYears = Math.min(8, Math.max(1, Number(loanParams.loanTermYears) || 1));
+        const months = loanTermYears * 12;
+        const fixedTermMonths = Math.min(months, Math.max(0, Number(loanParams.fixedTermMonths) || 0));
+        const fixedInterestRate = Math.max(0, Number(loanParams.fixedInterestRate) || 0);
+        const floatingInterestRate = Math.max(0, Number(loanParams.floatingInterestRate) || 0);
+        return { downPaymentPercent, loanTermYears, months, fixedTermMonths, fixedInterestRate, floatingInterestRate };
+    }, [
+        loanParams.downPaymentPercent,
+        loanParams.loanTermYears,
+        loanParams.fixedTermMonths,
+        loanParams.fixedInterestRate,
+        loanParams.floatingInterestRate
+    ]);
     const loanCalculations = useMemo(() => {
         if (!calculations)
             return null;
-        const loanAmount = calculations.price * (1 - loanParams.downPaymentPercent / 100);
-        const upfrontPayment = calculations.finalAmount - loanAmount;
-        const months = loanParams.loanTermYears * 12;
-        const monthlyPrincipal = loanAmount / months;
-        const currentFirstMonthRate = loanParams.fixedTermMonths > 0 ? loanParams.fixedInterestRate : loanParams.floatingInterestRate;
-        const firstMonthInterest = loanAmount * (currentFirstMonthRate / 100 / 12);
-        const firstMonthTotal = monthlyPrincipal + firstMonthInterest;
-        let firstFloatingMonth = loanParams.fixedTermMonths + 1;
-        let firstFloatingMonthInterest = 0;
-        let firstFloatingMonthTotal = 0;
-        if (firstFloatingMonth <= months && loanParams.fixedTermMonths > 0) {
-            const remainingPrincipalBeforeFloat = loanAmount - (monthlyPrincipal * loanParams.fixedTermMonths);
-            firstFloatingMonthInterest = remainingPrincipalBeforeFloat * (loanParams.floatingInterestRate / 100 / 12);
-            firstFloatingMonthTotal = monthlyPrincipal + firstFloatingMonthInterest;
+        const { downPaymentPercent, months, fixedTermMonths, fixedInterestRate, floatingInterestRate } = normalizedLoanParams;
+        const loanAmount = Math.max(0, calculations.price * (1 - downPaymentPercent / 100));
+        const upfrontPayment = Math.max(0, calculations.finalAmount - loanAmount);
+        const monthlyPrincipal = months > 0 ? loanAmount / months : 0;
+        const schedule = [];
+        let totalInterest = 0;
+        let totalPrincipal = 0;
+        for (let month = 1; month <= months; month += 1) {
+            const openingBalance = Math.max(0, loanAmount - monthlyPrincipal * (month - 1));
+            const annualRate = fixedTermMonths > 0 && month <= fixedTermMonths
+                ? fixedInterestRate
+                : floatingInterestRate;
+            const interest = openingBalance * annualRate / 100 / 12;
+            const principalPayment = month === months ? openingBalance : Math.min(monthlyPrincipal, openingBalance);
+            const totalPayment = principalPayment + interest;
+            const closingBalance = Math.max(0, openingBalance - principalPayment);
+            totalInterest += interest;
+            totalPrincipal += principalPayment;
+            schedule.push({
+                month,
+                openingBalance,
+                principalPayment,
+                interest,
+                totalPayment,
+                closingBalance,
+                annualRate,
+                rateType: fixedTermMonths > 0 && month <= fixedTermMonths ? 'Ưu đãi' : 'Thả nổi'
+            });
         }
+        const firstMonth = schedule[0] || null;
+        const lastPreferredMonth = fixedTermMonths > 0 ? schedule[fixedTermMonths - 1] || null : null;
+        const firstFloatingMonth = fixedTermMonths < months ? schedule[fixedTermMonths] || null : null;
+        const finalMonth = schedule[schedule.length - 1] || null;
+        const totalBankPayment = totalPrincipal + totalInterest;
+        const averageMonthlyPayment = months > 0 ? totalBankPayment / months : 0;
         return {
-            loanAmount, upfrontPayment, monthlyPrincipal, firstMonthInterest, firstMonthTotal,
-            months, firstFloatingMonth, firstFloatingMonthInterest, firstFloatingMonthTotal
+            loanAmount,
+            upfrontPayment,
+            monthlyPrincipal,
+            months,
+            fixedTermMonths,
+            schedule,
+            firstMonth,
+            lastPreferredMonth,
+            firstFloatingMonth,
+            finalMonth,
+            totalInterest,
+            totalPrincipal,
+            totalBankPayment,
+            averageMonthlyPayment,
+            firstMonthInterest: (firstMonth === null || firstMonth === void 0 ? void 0 : firstMonth.interest) || 0,
+            firstMonthTotal: (firstMonth === null || firstMonth === void 0 ? void 0 : firstMonth.totalPayment) || 0,
+            firstFloatingMonthInterest: (firstFloatingMonth === null || firstFloatingMonth === void 0 ? void 0 : firstFloatingMonth.interest) || 0,
+            firstFloatingMonthTotal: (firstFloatingMonth === null || firstFloatingMonth === void 0 ? void 0 : firstFloatingMonth.totalPayment) || 0
         };
-    }, [calculations, loanParams]);
+    }, [
+        calculations === null || calculations === void 0 ? void 0 : calculations.price,
+        calculations === null || calculations === void 0 ? void 0 : calculations.finalAmount,
+        normalizedLoanParams.downPaymentPercent,
+        normalizedLoanParams.months,
+        normalizedLoanParams.fixedTermMonths,
+        normalizedLoanParams.fixedInterestRate,
+        normalizedLoanParams.floatingInterestRate
+    ]);
+    const updateLoanParam = (key, rawValue) => {
+        const value = Number(rawValue);
+        setLoanParams(current => ({
+            ...current,
+            [key]: Number.isFinite(value) ? value : 0
+        }));
+    };
+    const updateLoanTermYears = rawValue => {
+        const years = Math.min(8, Math.max(1, Number(rawValue) || 1));
+        setLoanParams(current => ({
+            ...current,
+            loanTermYears: years,
+            fixedTermMonths: Math.min(Number(current.fixedTermMonths) || 0, years * 12)
+        }));
+    };
+    const updateLoanRate = (key, rawValue) => {
+        setLoanParams(current => ({ ...current, [key]: rawValue }));
+    };
+    const normalizeLoanRateField = key => {
+        setLoanParams(current => ({
+            ...current,
+            [key]: Math.max(0, Number(current[key]) || 0)
+        }));
+    };
     const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
     const getSyncKey = uid => `geely_sync_initialized_v2_${uid || 'unknown'}`;
     const setSyncInitialized = uid => { if (uid)
@@ -1180,26 +1263,44 @@ function GeelyQuotationApp() {
     const handleExportExcel = () => {
         if (!loanCalculations || !calculations)
             return;
-        const loanAmount = loanCalculations.loanAmount;
-        const months = loanCalculations.months;
-        const monthlyPrincipal = loanCalculations.monthlyPrincipal;
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Thang,Du no dau ky,Goc phai tra,Lai phai tra,Tong Goc + Lai\n";
-        let currentPrincipal = loanAmount;
-        for (let i = 1; i <= months; i++) {
-            let currentRate = i <= loanParams.fixedTermMonths ? loanParams.fixedInterestRate : loanParams.floatingInterestRate;
-            let interest = currentPrincipal * (currentRate / 100 / 12);
-            let totalPayment = monthlyPrincipal + interest;
-            csvContent += `${i},"${Math.round(currentPrincipal)}","${Math.round(monthlyPrincipal)}","${Math.round(interest)}","${Math.round(totalPayment)}"\n`;
-            currentPrincipal -= monthlyPrincipal;
-        }
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `LichTraNo_Geely_${customerName || 'KhachHang'}.csv`);
+        const rows = [
+            ['LỊCH TRẢ NỢ DƯ NỢ GIẢM DẦN'],
+            ['Khách hàng', customerName || 'Khách hàng'],
+            ['Dòng xe', (car === null || car === void 0 ? void 0 : car.name) || ''],
+            ['Số tiền vay', Math.round(loanCalculations.loanAmount)],
+            ['Thời gian vay', `${loanCalculations.months} tháng`],
+            ['Thời gian ưu đãi', `${loanCalculations.fixedTermMonths} tháng`],
+            ['Lãi suất ưu đãi', `${normalizedLoanParams.fixedInterestRate}%/năm`],
+            ['Lãi suất thả nổi dự kiến', `${normalizedLoanParams.floatingInterestRate}%/năm`],
+            ['Tổng tiền lãi dự kiến', Math.round(loanCalculations.totalInterest)],
+            ['Tổng trả ngân hàng dự kiến', Math.round(loanCalculations.totalBankPayment)],
+            [],
+            ['Tháng', 'Dư nợ đầu kỳ', 'Gốc phải trả', 'Lãi phải trả', 'Tổng gốc + lãi', 'Dư nợ cuối kỳ', 'Lãi suất %/năm', 'Giai đoạn']
+        ];
+        loanCalculations.schedule.forEach(item => {
+            rows.push([
+                item.month,
+                Math.round(item.openingBalance),
+                Math.round(item.principalPayment),
+                Math.round(item.interest),
+                Math.round(item.totalPayment),
+                Math.round(item.closingBalance),
+                item.annualRate,
+                item.rateType
+            ]);
+        });
+        const escapeCsv = value => `"${String(value !== null && value !== void 0 ? value : '').replace(/"/g, '""')}"`;
+        const csvContent = '\uFEFF' + rows.map(row => row.map(escapeCsv).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `LichTraNo_DuNoGiamDan_${customerName || 'KhachHang'}.csv`;
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Đã tải lịch trả nợ dư nợ giảm dần.');
     };
     const resetCarEditor = () => {
         setEditingCarId(null);
@@ -1788,10 +1889,10 @@ function GeelyQuotationApp() {
                         carImageMap[car === null || car === void 0 ? void 0 : car.id] && React.createElement("option", { value: "__local__" }, "\u1EA2nh ri\u00EAng tr\u00EAn m\u00E1y"))) : (React.createElement("input", { type: "text", value: carColor, onChange: (e) => setCarColor(e.target.value), placeholder: "VD: Tr\u1EAFng", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" })))),
             ((_b = car === null || car === void 0 ? void 0 : car.colors) === null || _b === void 0 ? void 0 : _b.length) > 0 && (React.createElement("div", null,
                 React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-2" }, "Ch\u1ECDn nhanh m\u00E0u xe"),
-                React.createElement("div", { className: "flex gap-2 overflow-x-auto pb-2" }, car.colors.map(color => (React.createElement("button", { key: color.id, type: "button", onClick: () => handleColorSelection(color.id), className: `shrink-0 w-24 rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}` },
-                    React.createElement("div", { className: "h-14 rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center" },
+                React.createElement("div", { className: "car-color-quick-grid" }, car.colors.map(color => (React.createElement("button", { key: color.id, type: "button", onClick: () => handleColorSelection(color.id), className: `car-color-quick-card rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}`, title: color.name },
+                    React.createElement("div", { className: "car-color-quick-image rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center" },
                         React.createElement("img", { src: color.imagePath, alt: `${car.name} ${color.name}`, className: "w-full h-full object-contain p-1", onError: e => { e.currentTarget.style.opacity = '0.15'; } })),
-                    React.createElement("div", { className: `mt-1 text-[10px] font-bold truncate ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}` }, color.name))))))),
+                    React.createElement("div", { className: `car-color-quick-label mt-1 text-[10px] font-bold ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}` }, color.name))))))),
             React.createElement("div", null,
                 React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mb-1" }, "N\u01A1i \u0111\u0103ng k\u00FD"),
                 React.createElement("select", { value: selectedLocationId, onChange: (e) => setSelectedLocationId(e.target.value), className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }, registrationFees.locations.map(l => React.createElement("option", { key: l.id, value: l.id }, l.name))),
@@ -1872,62 +1973,105 @@ function GeelyQuotationApp() {
     const renderBankLoan = () => {
         if (!loanCalculations)
             return null;
+        const preferredOptions = [0, 6, 12, 24, 36].filter(month => month <= normalizedLoanParams.months);
+        const firstMonth = loanCalculations.firstMonth;
+        const lastPreferredMonth = loanCalculations.lastPreferredMonth;
+        const firstFloatingMonth = loanCalculations.firstFloatingMonth;
+        const finalMonth = loanCalculations.finalMonth;
+        const PaymentCard = ({ title, item, tone = 'blue', note = '' }) => {
+            if (!item)
+                return null;
+            const tones = {
+                blue: 'bg-blue-50 border-blue-200 text-blue-700',
+                green: 'bg-green-50 border-green-200 text-green-700',
+                orange: 'bg-orange-50 border-orange-200 text-orange-700',
+                slate: 'bg-slate-50 border-slate-200 text-slate-700'
+            };
+            return (React.createElement("div", { className: `border rounded-xl p-3 ${tones[tone] || tones.blue}` },
+                React.createElement("div", { className: "flex items-start justify-between gap-3" },
+                    React.createElement("div", null,
+                        React.createElement("p", { className: "text-xs font-black uppercase" }, title),
+                        React.createElement("p", { className: "text-[11px] opacity-75 mt-0.5" },
+                            "L\u00E3i su\u1EA5t ",
+                            item.annualRate,
+                            "%/n\u0103m \u00B7 D\u01B0 n\u1EE3 \u0111\u1EA7u k\u1EF3 ",
+                            formatVND(item.openingBalance))),
+                    React.createElement("span", { className: "text-xs font-bold whitespace-nowrap" },
+                        "Th\u00E1ng ",
+                        item.month)),
+                React.createElement("p", { className: "text-2xl font-black mt-2" }, formatVND(item.totalPayment)),
+                React.createElement("div", { className: "grid grid-cols-2 gap-2 mt-2 text-xs" },
+                    React.createElement("span", null,
+                        "G\u1ED1c: ",
+                        React.createElement("b", null, formatVND(item.principalPayment))),
+                    React.createElement("span", null,
+                        "L\u00E3i: ",
+                        React.createElement("b", null, formatVND(item.interest)))),
+                note && React.createElement("p", { className: "text-[10px] mt-2 opacity-75 italic" }, note)));
+        };
         return (React.createElement("div", { className: "space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20" },
-            React.createElement("h3", { className: "font-bold text-gray-800 text-lg mb-2" }, "Ph\u01B0\u01A1ng \u00E1n t\u00E0i ch\u00EDnh"),
+            React.createElement("div", { className: "flex items-start justify-between gap-3" },
+                React.createElement("div", null,
+                    React.createElement("h3", { className: "font-bold text-gray-800 text-lg" }, "Ph\u01B0\u01A1ng \u00E1n t\u00E0i ch\u00EDnh"),
+                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "Ph\u01B0\u01A1ng ph\u00E1p duy nh\u1EA5t: g\u1ED1c c\u1ED1 \u0111\u1ECBnh, l\u00E3i t\u00EDnh tr\u00EAn d\u01B0 n\u1EE3 gi\u1EA3m d\u1EA7n.")),
+                React.createElement("span", { className: "px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase whitespace-nowrap" }, "D\u01B0 n\u1EE3 gi\u1EA3m d\u1EA7n")),
             React.createElement("div", { className: "space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200" },
                 React.createElement("div", null,
                     React.createElement("div", { className: "flex justify-between mb-1" },
                         React.createElement("span", { className: "text-sm font-semibold text-gray-700" }, "T\u1EF7 l\u1EC7 tr\u1EA3 tr\u01B0\u1EDBc"),
                         React.createElement("span", { className: "text-sm font-bold text-blue-600" },
-                            loanParams.downPaymentPercent,
+                            normalizedLoanParams.downPaymentPercent,
                             "%")),
-                    React.createElement("input", { type: "range", min: "15", max: "80", step: "5", value: loanParams.downPaymentPercent, onChange: (e) => setLoanParams({ ...loanParams, downPaymentPercent: Number(e.target.value) }), className: "w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" })),
+                    React.createElement("input", { type: "range", min: "15", max: "80", step: "5", value: normalizedLoanParams.downPaymentPercent, onChange: (e) => updateLoanParam('downPaymentPercent', e.target.value), className: "w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" })),
                 React.createElement("div", { className: "grid grid-cols-2 gap-3" },
                     React.createElement("div", null,
-                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian vay (N\u0103m)"),
-                        React.createElement("select", { value: loanParams.loanTermYears, onChange: (e) => setLoanParams({ ...loanParams, loanTermYears: Number(e.target.value) }), className: "w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium" }, [2, 3, 4, 5, 6, 7, 8].map(y => React.createElement("option", { key: y, value: y },
+                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian vay"),
+                        React.createElement("select", { value: normalizedLoanParams.loanTermYears, onChange: (e) => updateLoanTermYears(e.target.value), className: "w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium" }, [1, 2, 3, 4, 5, 6, 7, 8].map(y => React.createElement("option", { key: y, value: y },
                             y,
-                            " n\u0103m")))),
+                            " n\u0103m (",
+                            y * 12,
+                            " th\u00E1ng)")))),
                     React.createElement("div", null,
-                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian \u01AFu \u0111\u00E3i"),
-                        React.createElement("select", { value: loanParams.fixedTermMonths, onChange: (e) => setLoanParams({ ...loanParams, fixedTermMonths: Number(e.target.value) }), className: "w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium" },
-                            React.createElement("option", { value: 0 }, "Kh\u00F4ng \u01B0u \u0111\u00E3i"),
-                            React.createElement("option", { value: 6 }, "6 th\u00E1ng"),
-                            React.createElement("option", { value: 12 }, "12 th\u00E1ng (1 n\u0103m)"),
-                            React.createElement("option", { value: 24 }, "24 th\u00E1ng (2 n\u0103m)"),
-                            React.createElement("option", { value: 36 }, "36 th\u00E1ng (3 n\u0103m)")))),
+                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian \u01B0u \u0111\u00E3i"),
+                        React.createElement("select", { value: normalizedLoanParams.fixedTermMonths, onChange: (e) => updateLoanParam('fixedTermMonths', e.target.value), className: "w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium" }, preferredOptions.map(month => React.createElement("option", { key: month, value: month }, month === 0 ? 'Không ưu đãi' : `${month} tháng`))))),
                 React.createElement("div", { className: "grid grid-cols-2 gap-3" },
                     React.createElement("div", null,
-                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "L\u00E3i su\u1EA5t \u01AFu \u0111\u00E3i"),
+                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "L\u00E3i su\u1EA5t \u01B0u \u0111\u00E3i (%/n\u0103m)"),
                         React.createElement("div", { className: "flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden" },
-                            React.createElement("input", { type: "number", step: "0.1", value: loanParams.fixedInterestRate, onChange: (e) => setLoanParams({ ...loanParams, fixedInterestRate: Number(e.target.value) }), className: "w-full px-3 py-2 outline-none text-sm font-medium text-blue-600" }),
+                            React.createElement("input", { type: "number", inputMode: "decimal", min: "0", max: "100", step: "0.1", disabled: normalizedLoanParams.fixedTermMonths === 0, value: loanParams.fixedInterestRate, onChange: (e) => updateLoanRate('fixedInterestRate', e.target.value), onBlur: () => normalizeLoanRateField('fixedInterestRate'), className: "w-full px-3 py-2 outline-none text-sm font-medium text-blue-600 disabled:bg-gray-100 disabled:text-gray-400" }),
                             React.createElement("span", { className: "px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm" }, "%"))),
                     React.createElement("div", null,
-                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "L\u00E3i th\u1EA3 n\u1ED5i d\u1EF1 ki\u1EBFn"),
+                        React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "L\u00E3i th\u1EA3 n\u1ED5i d\u1EF1 ki\u1EBFn (%/n\u0103m)"),
                         React.createElement("div", { className: "flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden" },
-                            React.createElement("input", { type: "number", step: "0.1", value: loanParams.floatingInterestRate, onChange: (e) => setLoanParams({ ...loanParams, floatingInterestRate: Number(e.target.value) }), className: "w-full px-3 py-2 outline-none text-sm font-medium text-orange-600" }),
+                            React.createElement("input", { type: "number", inputMode: "decimal", min: "0", max: "100", step: "0.1", value: loanParams.floatingInterestRate, onChange: (e) => updateLoanRate('floatingInterestRate', e.target.value), onBlur: () => normalizeLoanRateField('floatingInterestRate'), className: "w-full px-3 py-2 outline-none text-sm font-medium text-orange-600" }),
                             React.createElement("span", { className: "px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm" }, "%")))),
-                React.createElement("p", { className: "text-[10px] text-gray-500 italic mt-1" }, "* L\u00E3i th\u1EA3 n\u1ED5i = L\u00E3i c\u01A1 s\u1EDF + Bi\u00EAn \u0111\u1ED9 (Th\u01B0\u1EDDng t\u1EEB 10.5% - 12%)")),
-            React.createElement("div", { className: "border-t border-gray-100 pt-4 mt-2" },
-                React.createElement("div", { className: "bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3 text-center" },
-                    React.createElement("p", { className: "text-sm font-semibold text-blue-900 mb-1" }, "Kho\u1EA3n tr\u1EA3 tr\u01B0\u1EDBc (Bao g\u1ED3m l\u0103n b\u00E1nh)"),
-                    React.createElement("p", { className: "text-3xl font-black text-blue-700" }, formatVND(loanCalculations.upfrontPayment))),
-                React.createElement("div", { className: "flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 mb-3" },
-                    React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "T\u1ED5ng s\u1ED1 ti\u1EC1n vay NH"),
-                    React.createElement("span", { className: "font-bold text-gray-900" }, formatVND(loanCalculations.loanAmount))),
-                React.createElement("div", { className: "bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg mb-2" },
-                    React.createElement("p", { className: "text-xs font-bold text-green-700 uppercase mb-1" }, "G\u1ED1c & L\u00E3i th\u00E1ng \u0111\u1EA7u (\u01AFu \u0111\u00E3i)"),
-                    React.createElement("div", { className: "flex justify-between items-end" },
-                        React.createElement("span", { className: "text-2xl font-black text-green-600" }, formatVND(loanCalculations.firstMonthTotal)))),
-                loanCalculations.firstFloatingMonthTotal > 0 && (React.createElement("div", { className: "bg-orange-50 border-l-4 border-orange-500 p-3 rounded-r-lg" },
-                    React.createElement("p", { className: "text-xs font-bold text-orange-700 uppercase mb-1" },
-                        "D\u1EF1 ki\u1EBFn G\u1ED1c & L\u00E3i th\u00E1ng ",
-                        loanCalculations.firstFloatingMonth,
-                        " (Th\u1EA3 n\u1ED5i)"),
-                    React.createElement("div", { className: "flex justify-between items-end" },
-                        React.createElement("span", { className: "text-lg font-black text-orange-600" }, formatVND(loanCalculations.firstFloatingMonthTotal))),
-                    React.createElement("p", { className: "text-[10px] text-orange-500 mt-1" }, "* T\u00EDnh tr\u00EAn d\u01B0 n\u1EE3 th\u1EF1c t\u1EBF c\u00F2n l\u1EA1i sau khi h\u1EBFt \u01B0u \u0111\u00E3i")))),
-            React.createElement("button", { onClick: handleExportExcel, className: "w-full mt-4 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors" }, "T\u1EA3i B\u1EA3ng L\u00E3i Xu\u1ED1ng Excel (CSV)")));
+                React.createElement("p", { className: "text-[10px] text-gray-500 italic" }, "K\u1EBFt qu\u1EA3 b\u00EAn d\u01B0\u1EDBi c\u1EADp nh\u1EADt ngay khi thay \u0111\u1ED5i t\u1EF7 l\u1EC7 tr\u1EA3 tr\u01B0\u1EDBc, k\u1EF3 h\u1EA1n, th\u1EDDi gian \u01B0u \u0111\u00E3i ho\u1EB7c l\u00E3i su\u1EA5t.")),
+            React.createElement("div", { className: "grid grid-cols-2 gap-3" },
+                React.createElement("div", { className: "bg-blue-50 border border-blue-200 rounded-xl p-3" },
+                    React.createElement("p", { className: "text-xs font-semibold text-blue-900" }, "Tr\u1EA3 tr\u01B0\u1EDBc + chi ph\u00ED l\u0103n b\u00E1nh"),
+                    React.createElement("p", { className: "text-xl font-black text-blue-700 mt-1" }, formatVND(loanCalculations.upfrontPayment))),
+                React.createElement("div", { className: "bg-slate-50 border border-slate-200 rounded-xl p-3" },
+                    React.createElement("p", { className: "text-xs font-semibold text-slate-700" }, "S\u1ED1 ti\u1EC1n vay ng\u00E2n h\u00E0ng"),
+                    React.createElement("p", { className: "text-xl font-black text-slate-900 mt-1" }, formatVND(loanCalculations.loanAmount)))),
+            React.createElement("div", { className: "grid grid-cols-2 gap-3 text-sm" },
+                React.createElement("div", { className: "p-3 rounded-lg bg-gray-50 border" },
+                    React.createElement("span", { className: "text-gray-500 block text-xs" }, "G\u1ED1c c\u1ED1 \u0111\u1ECBnh m\u1ED7i th\u00E1ng"),
+                    React.createElement("b", null, formatVND(loanCalculations.monthlyPrincipal))),
+                React.createElement("div", { className: "p-3 rounded-lg bg-gray-50 border" },
+                    React.createElement("span", { className: "text-gray-500 block text-xs" }, "T\u1ED5ng ti\u1EC1n l\u00E3i d\u1EF1 ki\u1EBFn"),
+                    React.createElement("b", { className: "text-orange-600" }, formatVND(loanCalculations.totalInterest))),
+                React.createElement("div", { className: "p-3 rounded-lg bg-gray-50 border" },
+                    React.createElement("span", { className: "text-gray-500 block text-xs" }, "T\u1ED5ng tr\u1EA3 ng\u00E2n h\u00E0ng"),
+                    React.createElement("b", null, formatVND(loanCalculations.totalBankPayment))),
+                React.createElement("div", { className: "p-3 rounded-lg bg-gray-50 border" },
+                    React.createElement("span", { className: "text-gray-500 block text-xs" }, "B\u00ECnh qu\u00E2n m\u1ED7i th\u00E1ng"),
+                    React.createElement("b", null, formatVND(loanCalculations.averageMonthlyPayment)))),
+            React.createElement("div", { className: "space-y-3" },
+                React.createElement(PaymentCard, { title: "K\u1EF3 thanh to\u00E1n \u0111\u1EA7u ti\u00EAn", item: firstMonth, tone: "green" }),
+                lastPreferredMonth && lastPreferredMonth.month !== (firstMonth === null || firstMonth === void 0 ? void 0 : firstMonth.month) && (React.createElement(PaymentCard, { title: "K\u1EF3 cu\u1ED1i th\u1EDDi gian \u01B0u \u0111\u00E3i", item: lastPreferredMonth, tone: "blue" })),
+                firstFloatingMonth && (React.createElement(PaymentCard, { title: "K\u1EF3 \u0111\u1EA7u l\u00E3i su\u1EA5t th\u1EA3 n\u1ED5i", item: firstFloatingMonth, tone: "orange", note: "L\u00E3i su\u1EA5t th\u1EA3 n\u1ED5i l\u00E0 m\u1EE9c d\u1EF1 ki\u1EBFn v\u00E0 c\u00F3 th\u1EC3 thay \u0111\u1ED5i theo ch\u00EDnh s\u00E1ch ng\u00E2n h\u00E0ng." })),
+                finalMonth && finalMonth.month !== (firstMonth === null || firstMonth === void 0 ? void 0 : firstMonth.month) && finalMonth.month !== (lastPreferredMonth === null || lastPreferredMonth === void 0 ? void 0 : lastPreferredMonth.month) && finalMonth.month !== (firstFloatingMonth === null || firstFloatingMonth === void 0 ? void 0 : firstFloatingMonth.month) && (React.createElement(PaymentCard, { title: "K\u1EF3 thanh to\u00E1n cu\u1ED1i c\u00F9ng", item: finalMonth, tone: "slate" }))),
+            React.createElement("button", { onClick: handleExportExcel, className: "w-full mt-2 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors" }, "T\u1EA3i l\u1ECBch tr\u1EA3 n\u1EE3 d\u01B0 n\u1EE3 gi\u1EA3m d\u1EA7n (CSV)")));
     };
     const renderSettings = () => {
         var _a, _b;
@@ -2337,7 +2481,7 @@ function GeelyQuotationApp() {
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.0"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.2"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),

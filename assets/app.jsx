@@ -895,32 +895,128 @@ const normalizePhoneForZalo = (phone) => {
             };
           }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
 
+          const normalizedLoanParams = useMemo(() => {
+            const downPaymentPercent = Math.min(100, Math.max(0, Number(loanParams.downPaymentPercent) || 0));
+            const loanTermYears = Math.min(8, Math.max(1, Number(loanParams.loanTermYears) || 1));
+            const months = loanTermYears * 12;
+            const fixedTermMonths = Math.min(months, Math.max(0, Number(loanParams.fixedTermMonths) || 0));
+            const fixedInterestRate = Math.max(0, Number(loanParams.fixedInterestRate) || 0);
+            const floatingInterestRate = Math.max(0, Number(loanParams.floatingInterestRate) || 0);
+            return { downPaymentPercent, loanTermYears, months, fixedTermMonths, fixedInterestRate, floatingInterestRate };
+          }, [
+            loanParams.downPaymentPercent,
+            loanParams.loanTermYears,
+            loanParams.fixedTermMonths,
+            loanParams.fixedInterestRate,
+            loanParams.floatingInterestRate
+          ]);
+
           const loanCalculations = useMemo(() => {
             if (!calculations) return null;
-            const loanAmount = calculations.price * (1 - loanParams.downPaymentPercent / 100);
-            const upfrontPayment = calculations.finalAmount - loanAmount;
-            const months = loanParams.loanTermYears * 12;
-            const monthlyPrincipal = loanAmount / months;
-            
-            const currentFirstMonthRate = loanParams.fixedTermMonths > 0 ? loanParams.fixedInterestRate : loanParams.floatingInterestRate;
-            const firstMonthInterest = loanAmount * (currentFirstMonthRate / 100 / 12);
-            const firstMonthTotal = monthlyPrincipal + firstMonthInterest;
 
-            let firstFloatingMonth = loanParams.fixedTermMonths + 1;
-            let firstFloatingMonthInterest = 0;
-            let firstFloatingMonthTotal = 0;
+            const {
+              downPaymentPercent,
+              months,
+              fixedTermMonths,
+              fixedInterestRate,
+              floatingInterestRate
+            } = normalizedLoanParams;
 
-            if (firstFloatingMonth <= months && loanParams.fixedTermMonths > 0) {
-              const remainingPrincipalBeforeFloat = loanAmount - (monthlyPrincipal * loanParams.fixedTermMonths);
-              firstFloatingMonthInterest = remainingPrincipalBeforeFloat * (loanParams.floatingInterestRate / 100 / 12);
-              firstFloatingMonthTotal = monthlyPrincipal + firstFloatingMonthInterest;
+            const loanAmount = Math.max(0, calculations.price * (1 - downPaymentPercent / 100));
+            const upfrontPayment = Math.max(0, calculations.finalAmount - loanAmount);
+            const monthlyPrincipal = months > 0 ? loanAmount / months : 0;
+            const schedule = [];
+            let totalInterest = 0;
+            let totalPrincipal = 0;
+
+            for (let month = 1; month <= months; month += 1) {
+              const openingBalance = Math.max(0, loanAmount - monthlyPrincipal * (month - 1));
+              const annualRate = fixedTermMonths > 0 && month <= fixedTermMonths
+                ? fixedInterestRate
+                : floatingInterestRate;
+              const interest = openingBalance * annualRate / 100 / 12;
+              const principalPayment = month === months ? openingBalance : Math.min(monthlyPrincipal, openingBalance);
+              const totalPayment = principalPayment + interest;
+              const closingBalance = Math.max(0, openingBalance - principalPayment);
+
+              totalInterest += interest;
+              totalPrincipal += principalPayment;
+              schedule.push({
+                month,
+                openingBalance,
+                principalPayment,
+                interest,
+                totalPayment,
+                closingBalance,
+                annualRate,
+                rateType: fixedTermMonths > 0 && month <= fixedTermMonths ? 'Ưu đãi' : 'Thả nổi'
+              });
             }
 
+            const firstMonth = schedule[0] || null;
+            const lastPreferredMonth = fixedTermMonths > 0 ? schedule[fixedTermMonths - 1] || null : null;
+            const firstFloatingMonth = fixedTermMonths < months ? schedule[fixedTermMonths] || null : null;
+            const finalMonth = schedule[schedule.length - 1] || null;
+            const totalBankPayment = totalPrincipal + totalInterest;
+            const averageMonthlyPayment = months > 0 ? totalBankPayment / months : 0;
+
             return {
-              loanAmount, upfrontPayment, monthlyPrincipal, firstMonthInterest, firstMonthTotal,
-              months, firstFloatingMonth, firstFloatingMonthInterest, firstFloatingMonthTotal
+              loanAmount,
+              upfrontPayment,
+              monthlyPrincipal,
+              months,
+              fixedTermMonths,
+              schedule,
+              firstMonth,
+              lastPreferredMonth,
+              firstFloatingMonth,
+              finalMonth,
+              totalInterest,
+              totalPrincipal,
+              totalBankPayment,
+              averageMonthlyPayment,
+              firstMonthInterest: firstMonth?.interest || 0,
+              firstMonthTotal: firstMonth?.totalPayment || 0,
+              firstFloatingMonthInterest: firstFloatingMonth?.interest || 0,
+              firstFloatingMonthTotal: firstFloatingMonth?.totalPayment || 0
             };
-          }, [calculations, loanParams]);
+          }, [
+            calculations?.price,
+            calculations?.finalAmount,
+            normalizedLoanParams.downPaymentPercent,
+            normalizedLoanParams.months,
+            normalizedLoanParams.fixedTermMonths,
+            normalizedLoanParams.fixedInterestRate,
+            normalizedLoanParams.floatingInterestRate
+          ]);
+
+          const updateLoanParam = (key, rawValue) => {
+            const value = Number(rawValue);
+            setLoanParams(current => ({
+              ...current,
+              [key]: Number.isFinite(value) ? value : 0
+            }));
+          };
+
+          const updateLoanTermYears = rawValue => {
+            const years = Math.min(8, Math.max(1, Number(rawValue) || 1));
+            setLoanParams(current => ({
+              ...current,
+              loanTermYears: years,
+              fixedTermMonths: Math.min(Number(current.fixedTermMonths) || 0, years * 12)
+            }));
+          };
+
+          const updateLoanRate = (key, rawValue) => {
+            setLoanParams(current => ({ ...current, [key]: rawValue }));
+          };
+
+          const normalizeLoanRateField = key => {
+            setLoanParams(current => ({
+              ...current,
+              [key]: Math.max(0, Number(current[key]) || 0)
+            }));
+          };
 
           const showToast = (message) => { setToastMessage(message); setTimeout(() => setToastMessage(''), 3000); };
 
@@ -1192,33 +1288,49 @@ const normalizePhoneForZalo = (phone) => {
             showToast('Đã khôi phục bảng phí mặc định.');
           };
 
-          const handleExportExcel = () => { 
-              if (!loanCalculations || !calculations) return;
-              const loanAmount = loanCalculations.loanAmount;
-              const months = loanCalculations.months;
-              const monthlyPrincipal = loanCalculations.monthlyPrincipal;
-              
-              let csvContent = "data:text/csv;charset=utf-8,";
-              csvContent += "Thang,Du no dau ky,Goc phai tra,Lai phai tra,Tong Goc + Lai\n";
-              
-              let currentPrincipal = loanAmount;
-              
-              for (let i = 1; i <= months; i++) {
-                let currentRate = i <= loanParams.fixedTermMonths ? loanParams.fixedInterestRate : loanParams.floatingInterestRate;
-                let interest = currentPrincipal * (currentRate / 100 / 12);
-                let totalPayment = monthlyPrincipal + interest;
-                
-                csvContent += `${i},"${Math.round(currentPrincipal)}","${Math.round(monthlyPrincipal)}","${Math.round(interest)}","${Math.round(totalPayment)}"\n`;
-                currentPrincipal -= monthlyPrincipal;
-              }
-              
-              const encodedUri = encodeURI(csvContent);
-              const link = document.createElement("a");
-              link.setAttribute("href", encodedUri);
-              link.setAttribute("download", `LichTraNo_Geely_${customerName || 'KhachHang'}.csv`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+          const handleExportExcel = () => {
+            if (!loanCalculations || !calculations) return;
+
+            const rows = [
+              ['LỊCH TRẢ NỢ DƯ NỢ GIẢM DẦN'],
+              ['Khách hàng', customerName || 'Khách hàng'],
+              ['Dòng xe', car?.name || ''],
+              ['Số tiền vay', Math.round(loanCalculations.loanAmount)],
+              ['Thời gian vay', `${loanCalculations.months} tháng`],
+              ['Thời gian ưu đãi', `${loanCalculations.fixedTermMonths} tháng`],
+              ['Lãi suất ưu đãi', `${normalizedLoanParams.fixedInterestRate}%/năm`],
+              ['Lãi suất thả nổi dự kiến', `${normalizedLoanParams.floatingInterestRate}%/năm`],
+              ['Tổng tiền lãi dự kiến', Math.round(loanCalculations.totalInterest)],
+              ['Tổng trả ngân hàng dự kiến', Math.round(loanCalculations.totalBankPayment)],
+              [],
+              ['Tháng', 'Dư nợ đầu kỳ', 'Gốc phải trả', 'Lãi phải trả', 'Tổng gốc + lãi', 'Dư nợ cuối kỳ', 'Lãi suất %/năm', 'Giai đoạn']
+            ];
+
+            loanCalculations.schedule.forEach(item => {
+              rows.push([
+                item.month,
+                Math.round(item.openingBalance),
+                Math.round(item.principalPayment),
+                Math.round(item.interest),
+                Math.round(item.totalPayment),
+                Math.round(item.closingBalance),
+                item.annualRate,
+                item.rateType
+              ]);
+            });
+
+            const escapeCsv = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+            const csvContent = '\uFEFF' + rows.map(row => row.map(escapeCsv).join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `LichTraNo_DuNoGiamDan_${customerName || 'KhachHang'}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('Đã tải lịch trả nợ dư nợ giảm dần.');
           };
 
           const resetCarEditor = () => {
@@ -1757,13 +1869,19 @@ const normalizePhoneForZalo = (phone) => {
               {car?.colors?.length > 0 && (
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-2">Chọn nhanh màu xe</label>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                  <div className="car-color-quick-grid">
                     {car.colors.map(color => (
-                      <button key={color.id} type="button" onClick={() => handleColorSelection(color.id)} className={`shrink-0 w-24 rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}`}>
-                        <div className="h-14 rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center">
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => handleColorSelection(color.id)}
+                        className={`car-color-quick-card rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}`}
+                        title={color.name}
+                      >
+                        <div className="car-color-quick-image rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center">
                           <img src={color.imagePath} alt={`${car.name} ${color.name}`} className="w-full h-full object-contain p-1" onError={e => { e.currentTarget.style.opacity = '0.15'; }} />
                         </div>
-                        <div className={`mt-1 text-[10px] font-bold truncate ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}`}>{color.name}</div>
+                        <div className={`car-color-quick-label mt-1 text-[10px] font-bold ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}`}>{color.name}</div>
                       </button>
                     ))}
                   </div>
@@ -1856,88 +1974,148 @@ const normalizePhoneForZalo = (phone) => {
 
           const renderBankLoan = () => {
             if (!loanCalculations) return null;
+
+            const preferredOptions = [0, 6, 12, 24, 36].filter(month => month <= normalizedLoanParams.months);
+            const firstMonth = loanCalculations.firstMonth;
+            const lastPreferredMonth = loanCalculations.lastPreferredMonth;
+            const firstFloatingMonth = loanCalculations.firstFloatingMonth;
+            const finalMonth = loanCalculations.finalMonth;
+
+            const PaymentCard = ({ title, item, tone = 'blue', note = '' }) => {
+              if (!item) return null;
+              const tones = {
+                blue: 'bg-blue-50 border-blue-200 text-blue-700',
+                green: 'bg-green-50 border-green-200 text-green-700',
+                orange: 'bg-orange-50 border-orange-200 text-orange-700',
+                slate: 'bg-slate-50 border-slate-200 text-slate-700'
+              };
+              return (
+                <div className={`border rounded-xl p-3 ${tones[tone] || tones.blue}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase">{title}</p>
+                      <p className="text-[11px] opacity-75 mt-0.5">Lãi suất {item.annualRate}%/năm · Dư nợ đầu kỳ {formatVND(item.openingBalance)}</p>
+                    </div>
+                    <span className="text-xs font-bold whitespace-nowrap">Tháng {item.month}</span>
+                  </div>
+                  <p className="text-2xl font-black mt-2">{formatVND(item.totalPayment)}</p>
+                  <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                    <span>Gốc: <b>{formatVND(item.principalPayment)}</b></span>
+                    <span>Lãi: <b>{formatVND(item.interest)}</b></span>
+                  </div>
+                  {note && <p className="text-[10px] mt-2 opacity-75 italic">{note}</p>}
+                </div>
+              );
+            };
+
             return (
               <div className="space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20">
-                 <h3 className="font-bold text-gray-800 text-lg mb-2">Phương án tài chính</h3>
-                 <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-gray-800 text-lg">Phương án tài chính</h3>
+                    <p className="text-xs text-gray-500 mt-1">Phương pháp duy nhất: gốc cố định, lãi tính trên dư nợ giảm dần.</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase whitespace-nowrap">Dư nợ giảm dần</span>
+                </div>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-semibold text-gray-700">Tỷ lệ trả trước</span>
+                      <span className="text-sm font-bold text-blue-600">{normalizedLoanParams.downPaymentPercent}%</span>
+                    </div>
+                    <input type="range" min="15" max="80" step="5" value={normalizedLoanParams.downPaymentPercent} onChange={(e) => updateLoanParam('downPaymentPercent', e.target.value)} className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                       <div className="flex justify-between mb-1">
-                         <span className="text-sm font-semibold text-gray-700">Tỷ lệ trả trước</span>
-                         <span className="text-sm font-bold text-blue-600">{loanParams.downPaymentPercent}%</span>
-                       </div>
-                       <input type="range" min="15" max="80" step="5" value={loanParams.downPaymentPercent} onChange={(e) => setLoanParams({...loanParams, downPaymentPercent: Number(e.target.value)})} className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Thời gian vay</label>
+                      <select value={normalizedLoanParams.loanTermYears} onChange={(e) => updateLoanTermYears(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(y => <option key={y} value={y}>{y} năm ({y * 12} tháng)</option>)}
+                      </select>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Thời gian vay (Năm)</label>
-                        <select value={loanParams.loanTermYears} onChange={(e) => setLoanParams({...loanParams, loanTermYears: Number(e.target.value)})} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium">
-                          {[2, 3, 4, 5, 6, 7, 8].map(y => <option key={y} value={y}>{y} năm</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Thời gian Ưu đãi</label>
-                        <select value={loanParams.fixedTermMonths} onChange={(e) => setLoanParams({...loanParams, fixedTermMonths: Number(e.target.value)})} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium">
-                          <option value={0}>Không ưu đãi</option>
-                          <option value={6}>6 tháng</option>
-                          <option value={12}>12 tháng (1 năm)</option>
-                          <option value={24}>24 tháng (2 năm)</option>
-                          <option value={36}>36 tháng (3 năm)</option>
-                        </select>
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Thời gian ưu đãi</label>
+                      <select value={normalizedLoanParams.fixedTermMonths} onChange={(e) => updateLoanParam('fixedTermMonths', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                        {preferredOptions.map(month => <option key={month} value={month}>{month === 0 ? 'Không ưu đãi' : `${month} tháng`}</option>)}
+                      </select>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Lãi suất Ưu đãi</label>
-                        <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
-                          <input type="number" step="0.1" value={loanParams.fixedInterestRate} onChange={(e) => setLoanParams({...loanParams, fixedInterestRate: Number(e.target.value)})} className="w-full px-3 py-2 outline-none text-sm font-medium text-blue-600" />
-                          <span className="px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm">%</span>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Lãi thả nổi dự kiến</label>
-                        <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
-                          <input type="number" step="0.1" value={loanParams.floatingInterestRate} onChange={(e) => setLoanParams({...loanParams, floatingInterestRate: Number(e.target.value)})} className="w-full px-3 py-2 outline-none text-sm font-medium text-orange-600" />
-                          <span className="px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm">%</span>
-                        </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Lãi suất ưu đãi (%/năm)</label>
+                      <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          disabled={normalizedLoanParams.fixedTermMonths === 0}
+                          value={loanParams.fixedInterestRate}
+                          onChange={(e) => updateLoanRate('fixedInterestRate', e.target.value)}
+                          onBlur={() => normalizeLoanRateField('fixedInterestRate')}
+                          className="w-full px-3 py-2 outline-none text-sm font-medium text-blue-600 disabled:bg-gray-100 disabled:text-gray-400"
+                        />
+                        <span className="px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm">%</span>
                       </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 italic mt-1">* Lãi thả nổi = Lãi cơ sở + Biên độ (Thường từ 10.5% - 12%)</p>
-                 </div>
-
-                 <div className="border-t border-gray-100 pt-4 mt-2">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3 text-center">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">Khoản trả trước (Bao gồm lăn bánh)</p>
-                      <p className="text-3xl font-black text-blue-700">{formatVND(loanCalculations.upfrontPayment)}</p>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Lãi thả nổi dự kiến (%/năm)</label>
+                      <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={loanParams.floatingInterestRate}
+                          onChange={(e) => updateLoanRate('floatingInterestRate', e.target.value)}
+                          onBlur={() => normalizeLoanRateField('floatingInterestRate')}
+                          className="w-full px-3 py-2 outline-none text-sm font-medium text-orange-600"
+                        />
+                        <span className="px-3 bg-gray-100 text-gray-500 font-semibold border-l text-sm">%</span>
+                      </div>
                     </div>
-                    
-                    <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 mb-3">
-                       <span className="text-sm font-medium text-gray-700">Tổng số tiền vay NH</span>
-                       <span className="font-bold text-gray-900">{formatVND(loanCalculations.loanAmount)}</span>
-                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-500 italic">Kết quả bên dưới cập nhật ngay khi thay đổi tỷ lệ trả trước, kỳ hạn, thời gian ưu đãi hoặc lãi suất.</p>
+                </div>
 
-                    <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg mb-2">
-                       <p className="text-xs font-bold text-green-700 uppercase mb-1">Gốc & Lãi tháng đầu (Ưu đãi)</p>
-                       <div className="flex justify-between items-end">
-                         <span className="text-2xl font-black text-green-600">{formatVND(loanCalculations.firstMonthTotal)}</span>
-                       </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-blue-900">Trả trước + chi phí lăn bánh</p>
+                    <p className="text-xl font-black text-blue-700 mt-1">{formatVND(loanCalculations.upfrontPayment)}</p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-slate-700">Số tiền vay ngân hàng</p>
+                    <p className="text-xl font-black text-slate-900 mt-1">{formatVND(loanCalculations.loanAmount)}</p>
+                  </div>
+                </div>
 
-                    {loanCalculations.firstFloatingMonthTotal > 0 && (
-                       <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded-r-lg">
-                         <p className="text-xs font-bold text-orange-700 uppercase mb-1">Dự kiến Gốc & Lãi tháng {loanCalculations.firstFloatingMonth} (Thả nổi)</p>
-                         <div className="flex justify-between items-end">
-                           <span className="text-lg font-black text-orange-600">{formatVND(loanCalculations.firstFloatingMonthTotal)}</span>
-                         </div>
-                         <p className="text-[10px] text-orange-500 mt-1">* Tính trên dư nợ thực tế còn lại sau khi hết ưu đãi</p>
-                       </div>
-                    )}
-                 </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="p-3 rounded-lg bg-gray-50 border"><span className="text-gray-500 block text-xs">Gốc cố định mỗi tháng</span><b>{formatVND(loanCalculations.monthlyPrincipal)}</b></div>
+                  <div className="p-3 rounded-lg bg-gray-50 border"><span className="text-gray-500 block text-xs">Tổng tiền lãi dự kiến</span><b className="text-orange-600">{formatVND(loanCalculations.totalInterest)}</b></div>
+                  <div className="p-3 rounded-lg bg-gray-50 border"><span className="text-gray-500 block text-xs">Tổng trả ngân hàng</span><b>{formatVND(loanCalculations.totalBankPayment)}</b></div>
+                  <div className="p-3 rounded-lg bg-gray-50 border"><span className="text-gray-500 block text-xs">Bình quân mỗi tháng</span><b>{formatVND(loanCalculations.averageMonthlyPayment)}</b></div>
+                </div>
 
-                 <button onClick={handleExportExcel} className="w-full mt-4 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors">
-                    Tải Bảng Lãi Xuống Excel (CSV)
-                 </button>
+                <div className="space-y-3">
+                  <PaymentCard title="Kỳ thanh toán đầu tiên" item={firstMonth} tone="green" />
+                  {lastPreferredMonth && lastPreferredMonth.month !== firstMonth?.month && (
+                    <PaymentCard title="Kỳ cuối thời gian ưu đãi" item={lastPreferredMonth} tone="blue" />
+                  )}
+                  {firstFloatingMonth && (
+                    <PaymentCard title="Kỳ đầu lãi suất thả nổi" item={firstFloatingMonth} tone="orange" note="Lãi suất thả nổi là mức dự kiến và có thể thay đổi theo chính sách ngân hàng." />
+                  )}
+                  {finalMonth && finalMonth.month !== firstMonth?.month && finalMonth.month !== lastPreferredMonth?.month && finalMonth.month !== firstFloatingMonth?.month && (
+                    <PaymentCard title="Kỳ thanh toán cuối cùng" item={finalMonth} tone="slate" />
+                  )}
+                </div>
+
+                <button onClick={handleExportExcel} className="w-full mt-2 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors">
+                  Tải lịch trả nợ dư nợ giảm dần (CSV)
+                </button>
               </div>
             );
           }
@@ -2431,7 +2609,7 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.0</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.2</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
