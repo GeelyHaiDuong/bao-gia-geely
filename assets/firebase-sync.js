@@ -117,7 +117,7 @@
   });
 
   const api = {
-    version: '1.8.0',
+    version: '1.9.0',
     ready: initialize,
     retry: initialize,
     getState: () => ({ ...state }),
@@ -156,7 +156,7 @@
       const { user, db: firestore } = await requireUser();
       const refs = getWorkspaceRefs(firestore, user.uid);
       const batch = firestore.batch();
-      batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 2 }, { merge: true });
+      batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 3 }, { merge: true });
       (cars || []).forEach(car => batch.set(refs.cars.doc(String(car.id)), { ...car, id: String(car.id), ...serverMeta(user) }, { merge: true }));
       (promotions || []).forEach(promo => batch.set(refs.promotions.doc(String(promo.id)), { ...promo, id: String(promo.id), ...serverMeta(user) }, { merge: true }));
       (quotations || []).forEach(quote => batch.set(refs.quotations.doc(String(quote.id)), { ...quote, id: String(quote.id), ...serverMeta(user) }, { merge: true }));
@@ -167,7 +167,7 @@
     async saveSettings(settings) {
       const { user, db: firestore } = await requireUser();
       const ref = getWorkspaceRefs(firestore, user.uid).settings;
-      await ref.set({ ...settings, ...serverMeta(user), schemaVersion: 2 }, { merge: true });
+      await ref.set({ ...settings, ...serverMeta(user), schemaVersion: 3 }, { merge: true });
       return { updatedAtMs: Date.now() };
     },
     async saveCar(car) {

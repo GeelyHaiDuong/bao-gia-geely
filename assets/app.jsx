@@ -3,20 +3,27 @@ const React = window.React;
 const ReactDOM = window.ReactDOM;
 const { useState, useMemo, useEffect, useRef } = React;
 
+        const ENGINE_TYPES = {
+          gasoline: 'Xăng',
+          hybrid: 'Hybrid',
+          phev: 'PHEV',
+          ev: 'Thuần điện'
+        };
+
         const DEFAULT_CAR_MODELS = [
-          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, imagePath: './assets/cars/ex2_pro.svg' },
-          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, imagePath: './assets/cars/ex2_max.svg' },
-          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, imagePath: './assets/cars/ex5_pro.svg' },
-          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, imagePath: './assets/cars/ex5_max.svg' },
-          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, imagePath: './assets/cars/ex5_emi_pro.svg' },
-          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, imagePath: './assets/cars/ex5_emi_max.svg' },
-          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, imagePath: './assets/cars/monjaro_premium.svg' },
-          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, imagePath: './assets/cars/monjaro_flagship.svg' },
-          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, imagePath: './assets/cars/coolray_exec_26.svg' },
-          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, imagePath: './assets/cars/coolray_prem_26.svg' },
-          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, imagePath: './assets/cars/coolray_flag_26.svg' },
-          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, imagePath: './assets/cars/okavango_exec.svg' },
-          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, imagePath: './assets/cars/okavango_prem.svg' },
+          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_pro.svg' },
+          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_max.svg' },
+          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_pro.svg' },
+          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_max.svg' },
+          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_pro.svg' },
+          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_max.svg' },
+          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_premium.svg' },
+          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_flagship.svg' },
+          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_exec_26.svg' },
+          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_prem_26.svg' },
+          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_flag_26.svg' },
+          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_exec.svg' },
+          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_prem.svg' },
         ];
 
         const DEFAULT_PROMOTIONS = [
@@ -31,20 +38,48 @@ const { useState, useMemo, useEffect, useRef } = React;
           { id: 'p9', name: '01 bộ sạc 7 kW', value: 5000000, type: 'gift', deductFromPrice: false },
         ];
 
-        const LOCATIONS = [
-          { id: 'HN', name: 'Hà Nội (Trước bạ 12%, Biển 14tr)', taxRate: 0.12, plateFee: 14000000 },
-          { id: 'HN_EV', name: 'Hà Nội - Xe điện (Trước bạ 0%, Biển 14tr)', taxRate: 0, plateFee: 14000000 },
-          { id: 'HCM', name: 'TP. Hồ Chí Minh (Trước bạ 10%, Biển 20tr)', taxRate: 0.10, plateFee: 20000000 },
-          { id: 'HCM_EV', name: 'TP. Hồ Chí Minh - Xe điện (Trước bạ 0%, Biển 20tr)', taxRate: 0, plateFee: 20000000 },
-          { id: 'TINH_12', name: 'Tỉnh khác (Trước bạ 12%, Biển 1tr)', taxRate: 0.12, plateFee: 1000000 },
-          { id: 'TINH_10', name: 'Tỉnh khác (Trước bạ 10%, Biển 1tr)', taxRate: 0.10, plateFee: 1000000 },
-          { id: 'TINH_EV', name: 'Tỉnh khác - Xe điện (Trước bạ 0%, Biển 1tr)', taxRate: 0, plateFee: 1000000 },
-        ];
+        const DEFAULT_REGISTRATION_FEES = {
+          effectiveDate: '2026-08-01',
+          inspectionFee: 340000,
+          roadFeeMonthlyWhite: 130000,
+          roadFeeMonthlyYellow: 180000,
+          civilInsurance5Seats: 480700,
+          civilInsurance7Seats: 873400,
+          locations: [
+            { id: 'HN', name: 'Hà Nội', plateFee: 14000000, effectiveDate: '2026-08-01', taxRates: { gasoline: 0.12, hybrid: 0.12, phev: 0.12, ev: 0 } },
+            { id: 'HCM', name: 'TP. Hồ Chí Minh', plateFee: 20000000, effectiveDate: '2026-08-01', taxRates: { gasoline: 0.10, hybrid: 0.10, phev: 0.10, ev: 0 } },
+            { id: 'TINH_12', name: 'Tỉnh/Thành áp dụng 12%', plateFee: 1000000, effectiveDate: '2026-08-01', taxRates: { gasoline: 0.12, hybrid: 0.12, phev: 0.12, ev: 0 } },
+            { id: 'TINH_10', name: 'Tỉnh/Thành áp dụng 10%', plateFee: 1000000, effectiveDate: '2026-08-01', taxRates: { gasoline: 0.10, hybrid: 0.10, phev: 0.10, ev: 0 } },
+          ]
+        };
 
-        const FIXED_FEES = {
-          inspection: 340000, 
-          civilInsurance5Seats: 480700, 
-          civilInsurance7Seats: 873400, 
+        const normalizeTaxRates = rates => Object.fromEntries(Object.keys(ENGINE_TYPES).map(type => [
+          type,
+          Math.max(0, Number(rates?.[type]) || 0)
+        ]));
+
+        const normalizeRegistrationLocation = location => ({
+          id: String(location?.id || `area_${Date.now()}_${Math.random().toString(36).slice(2,6)}`),
+          name: String(location?.name || 'Khu vực mới'),
+          plateFee: parseMoney(location?.plateFee),
+          effectiveDate: String(location?.effectiveDate || DEFAULT_REGISTRATION_FEES.effectiveDate),
+          taxRates: normalizeTaxRates(location?.taxRates)
+        });
+
+        const normalizeRegistrationFees = data => {
+          const source = data && typeof data === 'object' ? data : {};
+          const locations = Array.isArray(source.locations) && source.locations.length
+            ? source.locations.map(normalizeRegistrationLocation)
+            : DEFAULT_REGISTRATION_FEES.locations.map(normalizeRegistrationLocation);
+          return {
+            effectiveDate: String(source.effectiveDate || DEFAULT_REGISTRATION_FEES.effectiveDate),
+            inspectionFee: parseMoney(source.inspectionFee ?? DEFAULT_REGISTRATION_FEES.inspectionFee),
+            roadFeeMonthlyWhite: parseMoney(source.roadFeeMonthlyWhite ?? DEFAULT_REGISTRATION_FEES.roadFeeMonthlyWhite),
+            roadFeeMonthlyYellow: parseMoney(source.roadFeeMonthlyYellow ?? DEFAULT_REGISTRATION_FEES.roadFeeMonthlyYellow),
+            civilInsurance5Seats: parseMoney(source.civilInsurance5Seats ?? DEFAULT_REGISTRATION_FEES.civilInsurance5Seats),
+            civilInsurance7Seats: parseMoney(source.civilInsurance7Seats ?? DEFAULT_REGISTRATION_FEES.civilInsurance7Seats),
+            locations
+          };
         };
 
         const PROMOTION_TYPES = {
@@ -52,17 +87,20 @@ const { useState, useMemo, useEffect, useRef } = React;
           accessory: 'Phụ kiện', insurance: 'Bảo hiểm', maintenance: 'Bảo dưỡng', service: 'Dịch vụ'
         };
         const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
+        const DEFAULT_CAR_ENGINE_TYPES = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.engineType]));
         const DEFAULT_PROMOTION_META = Object.fromEntries(DEFAULT_PROMOTIONS.map(item => [item.id, {
           type: item.type, deductFromPrice: item.deductFromPrice
         }]));
 
         const normalizeCar = car => {
           const id = String(car?.id || `car_${Date.now()}`);
+          const engineType = String(car?.engineType || DEFAULT_CAR_ENGINE_TYPES[id] || 'gasoline');
           return {
             id,
             name: String(car?.name || ''),
             price: Number(car?.price) || 0,
             seats: Number(car?.seats) || 5,
+            engineType: ENGINE_TYPES[engineType] ? engineType : 'gasoline',
             imagePath: String(car?.imagePath || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
             image: String(car?.image || '')
           };
@@ -465,12 +503,13 @@ const normalizePhoneForZalo = (phone) => {
         );
 
 
-        const buildCloudPayload = ({ cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate }) => ({
+        const buildCloudPayload = ({ cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees }) => ({
           cars: (Array.isArray(cars) ? cars : []).map(car => ({
             id: String(car.id || `car_${Date.now()}`),
             name: String(car.name || ''),
             price: parseMoney(car.price),
-            seats: Number(car.seats) || 5
+            seats: Number(car.seats) || 5,
+            engineType: ENGINE_TYPES[car.engineType] ? car.engineType : 'gasoline'
           })),
           promotions: (Array.isArray(promotions) ? promotions : []).map(promo => ({
             id: String(promo.id || `promo_${Date.now()}`),
@@ -482,7 +521,8 @@ const normalizePhoneForZalo = (phone) => {
             phone: String(salesInfo?.phone || '')
           },
           serviceFeeAmount: parseMoney(serviceFeeAmount),
-          physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+          physicalInsuranceRate: Number(physicalInsuranceRate) || 0,
+          registrationFees: normalizeRegistrationFees(registrationFees)
         });
 
         const serializeCloudPayload = payload => JSON.stringify(payload || {});
@@ -502,6 +542,7 @@ const normalizePhoneForZalo = (phone) => {
           const [salesInfo, setSalesInfo] = useState(() => getSavedData('geely_sales_info', { name: '', phone: '' }));
           const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000))); 
           const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
+          const [registrationFees, setRegistrationFees] = useState(() => normalizeRegistrationFees(getSavedData('geely_registration_fees_v1', DEFAULT_REGISTRATION_FEES)));
 
           const [carImageMap, setCarImageMap] = useState({});
           const [quotations, setQuotations] = useState([]);
@@ -538,6 +579,7 @@ const normalizePhoneForZalo = (phone) => {
           useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
           useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
           useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
+          useEffect(() => { saveData('geely_registration_fees_v1', registrationFees); }, [registrationFees]);
 
           useEffect(() => {
             let cancelled = false;
@@ -569,16 +611,16 @@ const normalizePhoneForZalo = (phone) => {
 
           useEffect(() => {
             latestDataRef.current = {
-              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations
+              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations
             };
-          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, quotations]);
+          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations]);
 
           const [customerName, setCustomerName] = useState('');
           const [customerPhone, setCustomerPhone] = useState('');
           const [carColor, setCarColor] = useState('');
 
           const [selectedCarId, setSelectedCarId] = useState(cars[0]?.id || '');
-          const [selectedLocationId, setSelectedLocationId] = useState(LOCATIONS[0].id);
+          const [selectedLocationId, setSelectedLocationId] = useState(registrationFees.locations[0]?.id || '');
           const [selectedPromoIds, setSelectedPromoIds] = useState([]); 
           const [discount, setDiscount] = useState(''); 
           const [includePhysicalInsurance, setIncludePhysicalInsurance] = useState(true);
@@ -601,6 +643,7 @@ const normalizePhoneForZalo = (phone) => {
           const [newCarName, setNewCarName] = useState('');
           const [newCarPrice, setNewCarPrice] = useState('');
           const [newCarSeats, setNewCarSeats] = useState(5);
+          const [newCarEngineType, setNewCarEngineType] = useState('gasoline');
           const [newCarImage, setNewCarImage] = useState('');
           const [newCarImagePath, setNewCarImagePath] = useState('');
           const [editingCarId, setEditingCarId] = useState(null);
@@ -610,6 +653,12 @@ const normalizePhoneForZalo = (phone) => {
           const [newPromoValue, setNewPromoValue] = useState('');
           const [newPromoType, setNewPromoType] = useState('gift');
           const [newPromoDeduct, setNewPromoDeduct] = useState(false);
+
+          const [editingLocationId, setEditingLocationId] = useState(null);
+          const [newLocationName, setNewLocationName] = useState('');
+          const [newLocationPlateFee, setNewLocationPlateFee] = useState('');
+          const [newLocationEffectiveDate, setNewLocationEffectiveDate] = useState(registrationFees.effectiveDate);
+          const [newLocationTaxRates, setNewLocationTaxRates] = useState({ gasoline: 0, hybrid: 0, phev: 0, ev: 0 });
 
           const [loanParams, setLoanParams] = useState({
             downPaymentPercent: 20, loanTermYears: 5, fixedInterestRate: 8.0, fixedTermMonths: 12, floatingInterestRate: 11.5 
@@ -669,24 +718,35 @@ const normalizePhoneForZalo = (phone) => {
 
           const car = useMemo(() => cars.find(c => c.id === selectedCarId) || cars[0], [selectedCarId, cars]);
           const resolvedCarImage = car ? (carImageMap[car.id] || car.imagePath || car.image || '') : '';
-          const location = useMemo(() => LOCATIONS.find(l => l.id === selectedLocationId) || LOCATIONS[0], [selectedLocationId]);
+          const location = useMemo(() => registrationFees.locations.find(l => l.id === selectedLocationId) || registrationFees.locations[0], [selectedLocationId, registrationFees.locations]);
+
+          useEffect(() => {
+            if (!registrationFees.locations.length) return;
+            if (!registrationFees.locations.some(item => item.id === selectedLocationId)) {
+              setSelectedLocationId(registrationFees.locations[0].id);
+            }
+          }, [registrationFees.locations, selectedLocationId]);
 
           const calculations = useMemo(() => {
             if (!car || !location) return null;
             const price = parseMoney(car.price);
-            const taxFee = price * location.taxRate;
-            const plateFee = location.plateFee;
-            const inspectionFee = FIXED_FEES.inspection;
-            const roadFeePerMonth = plateColor === 'white' ? 130000 : 180000;
+            const engineType = ENGINE_TYPES[car.engineType] ? car.engineType : 'gasoline';
+            const taxRate = Math.max(0, Number(location.taxRates?.[engineType]) || 0);
+            const taxFee = price * taxRate;
+            const plateFee = parseMoney(location.plateFee);
+            const inspectionFee = parseMoney(registrationFees.inspectionFee);
+            const roadFeePerMonth = plateColor === 'white'
+              ? parseMoney(registrationFees.roadFeeMonthlyWhite)
+              : parseMoney(registrationFees.roadFeeMonthlyYellow);
             const roadFee = roadFeePerMonth * 12 * roadFeeYears;
 
             let civilInsurance = 0;
             if (tndsOption === 'auto') {
-              civilInsurance = car.seats <= 5 ? FIXED_FEES.civilInsurance5Seats : FIXED_FEES.civilInsurance7Seats;
+              civilInsurance = car.seats <= 5 ? parseMoney(registrationFees.civilInsurance5Seats) : parseMoney(registrationFees.civilInsurance7Seats);
             } else if (tndsOption === '5_seats') {
-              civilInsurance = FIXED_FEES.civilInsurance5Seats;
+              civilInsurance = parseMoney(registrationFees.civilInsurance5Seats);
             } else {
-              civilInsurance = FIXED_FEES.civilInsurance7Seats;
+              civilInsurance = parseMoney(registrationFees.civilInsurance7Seats);
             }
             
             const physicalInsuranceFee = includePhysicalInsurance ? price * (physicalInsuranceRate / 100) : 0;
@@ -704,10 +764,11 @@ const normalizePhoneForZalo = (phone) => {
             const finalAmount = price - discountAmount + totalRollingCost;
 
             return {
-              price, taxFee, plateFee, inspectionFee, roadFee, civilInsurance,
+              price, taxRate, taxFee, plateFee, inspectionFee, roadFeePerMonth, roadFee, civilInsurance,
+              engineType, effectiveDate: location.effectiveDate || registrationFees.effectiveDate,
               physicalInsuranceFee, serviceFee, discountAmount, promoValue, giftPromotions, selectedPromotions, totalRollingCost, finalAmount, roadFeeYears
             };
-          }, [car, location, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
+          }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
 
           const loanCalculations = useMemo(() => {
             if (!calculations) return null;
@@ -745,11 +806,14 @@ const normalizePhoneForZalo = (phone) => {
           const settingsPayload = () => ({
             salesInfo: { name: String(salesInfo?.name || ''), phone: String(salesInfo?.phone || '') },
             serviceFeeAmount: parseMoney(serviceFeeAmount),
-            physicalInsuranceRate: Number(physicalInsuranceRate) || 0
+            physicalInsuranceRate: Number(physicalInsuranceRate) || 0,
+            registrationFees: normalizeRegistrationFees(registrationFees)
           });
           const cloudCar = item => ({
             id: String(item.id), name: String(item.name || ''), price: parseMoney(item.price),
-            seats: Number(item.seats) || 5, imagePath: String(item.imagePath || '')
+            seats: Number(item.seats) || 5,
+            engineType: ENGINE_TYPES[item.engineType] ? item.engineType : 'gasoline',
+            imagePath: String(item.imagePath || '')
           });
           const cloudPromo = item => ({
             id: String(item.id), name: String(item.name || ''), value: parseMoney(item.value),
@@ -766,6 +830,7 @@ const normalizePhoneForZalo = (phone) => {
               });
               if (workspace.settings.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(workspace.settings.serviceFeeAmount));
               if (workspace.settings.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(workspace.settings.physicalInsuranceRate) || 0);
+              if (workspace.settings.registrationFees) setRegistrationFees(normalizeRegistrationFees(workspace.settings.registrationFees));
             }
             const cloudCars = workspace.cars?.length ? workspace.cars : workspace.legacy?.cars;
             if (Array.isArray(cloudCars) && cloudCars.length) {
@@ -783,6 +848,7 @@ const normalizePhoneForZalo = (phone) => {
               if (workspace.legacy.salesInfo) setSalesInfo(workspace.legacy.salesInfo);
               if (workspace.legacy.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(workspace.legacy.serviceFeeAmount));
               if (workspace.legacy.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(workspace.legacy.physicalInsuranceRate) || 0);
+              if (workspace.legacy.registrationFees) setRegistrationFees(normalizeRegistrationFees(workspace.legacy.registrationFees));
             }
             window.setTimeout(() => { syncApplyingRef.current = false; }, 600);
           };
@@ -792,7 +858,7 @@ const normalizePhoneForZalo = (phone) => {
             if (code.includes('unauthorized-domain')) return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
             if (code.includes('popup-blocked')) return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở bằng Chrome hoặc Safari.';
             if (code.includes('popup-closed-by-user')) return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.8.';
+            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.9.';
             if (!navigator.onLine) return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
             return error?.message || 'Không thể kết nối Firebase.';
           };
@@ -867,7 +933,7 @@ const normalizePhoneForZalo = (phone) => {
                 pendingWorkspaceRef.current = workspace;
                 const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
                 if (workspace.empty) {
-                  setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.8.', updatedAtMs: 0 });
+                  setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.9.', updatedAtMs: 0 });
                 } else if (!initialized) {
                   setSyncStatus({ code: 'choice_needed', message: 'Hãy chọn dữ liệu ban đầu dùng làm bản chính.', updatedAtMs: 0 });
                 } else {
@@ -882,6 +948,7 @@ const normalizePhoneForZalo = (phone) => {
                     if (data.salesInfo) setSalesInfo(data.salesInfo);
                     if (data.serviceFeeAmount !== undefined) setServiceFeeAmount(parseMoney(data.serviceFeeAmount));
                     if (data.physicalInsuranceRate !== undefined) setPhysicalInsuranceRate(Number(data.physicalInsuranceRate) || 0);
+                    if (data.registrationFees) setRegistrationFees(normalizeRegistrationFees(data.registrationFees));
                   } else if (event.type === 'cars') {
                     const next = event.items.map(normalizeCar);
                     setCars(next);
@@ -919,7 +986,7 @@ const normalizePhoneForZalo = (phone) => {
               } catch (error) { setSyncStatus({ code: 'error', message: describeFirebaseError(error), updatedAtMs: 0 }); }
             }, 1200);
             return () => { if (syncWriteTimerRef.current) clearTimeout(syncWriteTimerRef.current); };
-          }, [salesInfo, serviceFeeAmount, physicalInsuranceRate, syncUser?.uid]);
+          }, [salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, syncUser?.uid]);
 
           const handleDiscountChange = (e) => {
             const value = parseMoney(e.target.value);
@@ -929,6 +996,72 @@ const normalizePhoneForZalo = (phone) => {
           const formatNumberInput = (e, setter) => {
             const value = parseMoney(e.target.value);
             setter(value ? formatNumber(value) : '');
+          };
+
+          const formatPercentValue = value => {
+            const percent = Math.max(0, Number(value) || 0) * 100;
+            return Number(percent.toFixed(3));
+          };
+
+          const updateRegistrationFee = (field, value) => {
+            setRegistrationFees(current => normalizeRegistrationFees({ ...current, [field]: value }));
+          };
+
+          const resetLocationEditor = () => {
+            setEditingLocationId(null);
+            setNewLocationName('');
+            setNewLocationPlateFee('');
+            setNewLocationEffectiveDate(registrationFees.effectiveDate || '');
+            setNewLocationTaxRates({ gasoline: 0, hybrid: 0, phev: 0, ev: 0 });
+          };
+
+          const handleStartEditLocation = area => {
+            setEditingLocationId(area.id);
+            setNewLocationName(area.name || '');
+            setNewLocationPlateFee(formatNumber(area.plateFee));
+            setNewLocationEffectiveDate(area.effectiveDate || registrationFees.effectiveDate || '');
+            setNewLocationTaxRates(normalizeTaxRates(area.taxRates));
+            window.setTimeout(() => document.getElementById('registration-area-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+          };
+
+          const handleSaveLocation = () => {
+            if (!newLocationName.trim()) return showToast('Hãy nhập tên khu vực đăng ký.');
+            const id = editingLocationId || `area_${Date.now()}`;
+            const area = normalizeRegistrationLocation({
+              id,
+              name: newLocationName.trim(),
+              plateFee: parseMoney(newLocationPlateFee),
+              effectiveDate: newLocationEffectiveDate || registrationFees.effectiveDate,
+              taxRates: newLocationTaxRates
+            });
+            setRegistrationFees(current => normalizeRegistrationFees({
+              ...current,
+              locations: editingLocationId
+                ? current.locations.map(item => item.id === id ? area : item)
+                : [...current.locations, area]
+            }));
+            if (!selectedLocationId) setSelectedLocationId(id);
+            resetLocationEditor();
+            showToast(editingLocationId ? 'Đã cập nhật khu vực đăng ký.' : 'Đã thêm khu vực đăng ký.');
+          };
+
+          const handleDeleteLocation = id => {
+            if (registrationFees.locations.length <= 1) return showToast('Phải giữ ít nhất một khu vực đăng ký.');
+            if (!window.confirm('Xóa khu vực đăng ký này?')) return;
+            const nextLocations = registrationFees.locations.filter(item => item.id !== id);
+            setRegistrationFees(current => normalizeRegistrationFees({ ...current, locations: nextLocations }));
+            if (selectedLocationId === id) setSelectedLocationId(nextLocations[0]?.id || '');
+            if (editingLocationId === id) resetLocationEditor();
+            showToast('Đã xóa khu vực đăng ký.');
+          };
+
+          const handleRestoreDefaultFees = () => {
+            if (!window.confirm('Khôi phục toàn bộ bảng phí đăng ký về dữ liệu mặc định của ứng dụng?')) return;
+            const defaults = normalizeRegistrationFees(DEFAULT_REGISTRATION_FEES);
+            setRegistrationFees(defaults);
+            setSelectedLocationId(defaults.locations[0]?.id || '');
+            resetLocationEditor();
+            showToast('Đã khôi phục bảng phí mặc định.');
           };
 
           const handleExportExcel = () => { 
@@ -965,6 +1098,7 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarName('');
             setNewCarPrice('');
             setNewCarSeats(5);
+            setNewCarEngineType('gasoline');
             setNewCarImage('');
             setNewCarImagePath('');
           };
@@ -1039,6 +1173,7 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarName(carToEdit.name || '');
             setNewCarPrice(formatNumber(carToEdit.price));
             setNewCarSeats(Number(carToEdit.seats) || 5);
+            setNewCarEngineType(ENGINE_TYPES[carToEdit.engineType] ? carToEdit.engineType : 'gasoline');
             setNewCarImage(carImageMap[carToEdit.id] || '');
             setNewCarImagePath(carToEdit.imagePath || '');
 
@@ -1054,6 +1189,7 @@ const normalizePhoneForZalo = (phone) => {
             const id = editingCarId || ('car_' + Date.now());
             const carData = {
               id, name: newCarName.trim(), price, seats: Number(newCarSeats) || 5,
+              engineType: ENGINE_TYPES[newCarEngineType] ? newCarEngineType : 'gasoline',
               imagePath: newCarImagePath.trim()
             };
             try {
@@ -1218,9 +1354,11 @@ const normalizePhoneForZalo = (phone) => {
               if (!carImageDrawn) {
                 drawText(ctx, 'CHƯA CÓ ẢNH XE', 540, 540, { size: 34, weight: 800, color: '#cbd5e1', align: 'center' });
               }
-              roundedRect(ctx, 76, 342, 460, carColor ? 98 : 72, 16, 'rgba(255,255,255,0.94)', '#dbe3ef');
-              drawWrapped(ctx, car.name, 98, 358, 420, 29, { size: 24, weight: 900, color: '#0f2d64' });
-              if (carColor) drawText(ctx, `Màu: ${carColor}`, 98, 423, { size: 19, weight: 600, color: '#475569' });
+              roundedRect(ctx, 76, 342, 500, carColor ? 142 : 118, 16, 'rgba(255,255,255,0.94)', '#dbe3ef');
+              drawWrapped(ctx, car.name, 98, 358, 455, 29, { size: 24, weight: 900, color: '#0f2d64' });
+              drawText(ctx, `Động cơ: ${ENGINE_TYPES[car.engineType] || 'Xăng'} · Trước bạ ${formatPercentValue(calculations.taxRate)}%`, 98, 423, { size: 18, weight: 700, color: '#2563eb' });
+              drawText(ctx, `Đăng ký: ${location.name}`, 98, 452, { size: 17, weight: 600, color: '#475569' });
+              if (carColor) drawText(ctx, `Màu: ${carColor}`, 98, 480, { size: 17, weight: 600, color: '#475569' });
 
               // Price boxes
               roundedRect(ctx, 50, 770, 475, 132, 22, '#ffffff', '#dbe3ef');
@@ -1305,7 +1443,18 @@ const normalizePhoneForZalo = (phone) => {
               customerName, customerPhone, carColor,
               carId: selectedCarId,
               carName: car?.name || '',
-              selectedLocationId, selectedPromoIds,
+              carEngineType: car?.engineType || 'gasoline',
+              selectedLocationId,
+              registrationFeeSnapshot: calculations && location ? {
+                locationName: location.name,
+                taxRate: calculations.taxRate,
+                plateFee: calculations.plateFee,
+                inspectionFee: calculations.inspectionFee,
+                roadFeePerMonth: calculations.roadFeePerMonth,
+                civilInsurance: calculations.civilInsurance,
+                effectiveDate: calculations.effectiveDate
+              } : null,
+              selectedPromoIds,
               discount: parseMoney(discount), includePhysicalInsurance, includeServiceFee,
               plateColor, roadFeeYears, tndsOption,
               loanParams: { ...loanParams },
@@ -1334,7 +1483,8 @@ const normalizePhoneForZalo = (phone) => {
             setCustomerPhone(record.customerPhone || '');
             setCarColor(record.carColor || '');
             if (record.carId && cars.some(item => item.id === record.carId)) setSelectedCarId(record.carId);
-            setSelectedLocationId(record.selectedLocationId || LOCATIONS[0].id);
+            const preferredLocationId = record.selectedLocationId;
+            setSelectedLocationId(registrationFees.locations.some(item => item.id === preferredLocationId) ? preferredLocationId : (registrationFees.locations[0]?.id || ''));
             setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
             setDiscount(record.discount ? formatNumber(record.discount) : '');
             setIncludePhysicalInsurance(record.includePhysicalInsurance !== false);
@@ -1413,16 +1563,24 @@ const normalizePhoneForZalo = (phone) => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Nơi đăng ký</label>
                 <select value={selectedLocationId} onChange={(e) => setSelectedLocationId(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                  {LOCATIONS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  {registrationFees.locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
+                {car && location && calculations && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-900">
+                    <div className="flex items-center justify-between gap-3"><span>Loại động cơ</span><b>{ENGINE_TYPES[calculations.engineType]}</b></div>
+                    <div className="flex items-center justify-between gap-3 mt-1"><span>Trước bạ tự động</span><b>{formatPercentValue(calculations.taxRate)}%</b></div>
+                    <div className="flex items-center justify-between gap-3 mt-1"><span>Phí biển số</span><b>{formatVND(calculations.plateFee)}</b></div>
+                    <div className="flex items-center justify-between gap-3 mt-1"><span>Ngày áp dụng</span><b>{calculations.effectiveDate ? new Date(`${calculations.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt'}</b></div>
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Loại Biển (Phí ĐB)</label>
                   <select value={plateColor} onChange={(e) => setPlateColor(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium">
-                    <option value="white">Trắng (130k)</option>
-                    <option value="yellow">Vàng (180k)</option>
+                    <option value="white">Trắng ({formatVND(registrationFees.roadFeeMonthlyWhite)}/tháng)</option>
+                    <option value="yellow">Vàng ({formatVND(registrationFees.roadFeeMonthlyYellow)}/tháng)</option>
                   </select>
                 </div>
                 <div>
@@ -1668,6 +1826,75 @@ const normalizePhoneForZalo = (phone) => {
                    <span className="px-3 text-gray-500 font-semibold border-l text-sm bg-white">VNĐ</span>
                 </div>
               </div>
+
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="font-black text-gray-800">🧾 Phí đăng ký & khu vực</h3>
+                    <p className="text-xs text-gray-500 mt-1">Ứng dụng tự chọn tỷ lệ trước bạ theo loại động cơ của xe.</p>
+                  </div>
+                  <button onClick={handleRestoreDefaultFees} className="shrink-0 px-2.5 py-1.5 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-black">Khôi phục mặc định</button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <label className="text-xs font-bold text-gray-600">Ngày áp dụng chung
+                    <input type="date" value={registrationFees.effectiveDate || ''} onChange={e => updateRegistrationFee('effectiveDate', e.target.value)} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
+                  </label>
+                  <label className="text-xs font-bold text-gray-600">Phí đăng kiểm
+                    <input type="text" inputMode="numeric" value={formatNumber(registrationFees.inspectionFee)} onChange={e => updateRegistrationFee('inspectionFee', parseMoney(e.target.value))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                  <label className="text-xs font-bold text-gray-600">Đường bộ biển trắng/tháng
+                    <input type="text" inputMode="numeric" value={formatNumber(registrationFees.roadFeeMonthlyWhite)} onChange={e => updateRegistrationFee('roadFeeMonthlyWhite', parseMoney(e.target.value))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                  <label className="text-xs font-bold text-gray-600">Đường bộ biển vàng/tháng
+                    <input type="text" inputMode="numeric" value={formatNumber(registrationFees.roadFeeMonthlyYellow)} onChange={e => updateRegistrationFee('roadFeeMonthlyYellow', parseMoney(e.target.value))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                  <label className="text-xs font-bold text-gray-600">TNDS xe 5 chỗ
+                    <input type="text" inputMode="numeric" value={formatNumber(registrationFees.civilInsurance5Seats)} onChange={e => updateRegistrationFee('civilInsurance5Seats', parseMoney(e.target.value))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                  <label className="text-xs font-bold text-gray-600">TNDS xe 7 chỗ
+                    <input type="text" inputMode="numeric" value={formatNumber(registrationFees.civilInsurance7Seats)} onChange={e => updateRegistrationFee('civilInsurance7Seats', parseMoney(e.target.value))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                </div>
+
+                <div className="border-t border-gray-100 pt-3">
+                  <div className="flex items-center justify-between mb-2"><h4 className="text-sm font-black text-gray-700">Khu vực đăng ký</h4><span className="text-[10px] font-bold text-gray-500">{registrationFees.locations.length} khu vực</span></div>
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                    {registrationFees.locations.map(area => (
+                      <div key={area.id} className={`p-3 rounded-xl border ${editingLocationId === area.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-black text-sm text-gray-800 truncate">{area.name}</div>
+                            <div className="text-xs text-blue-700 font-bold mt-0.5">Biển số: {formatVND(area.plateFee)}</div>
+                            <div className="grid grid-cols-4 gap-1 mt-2">
+                              {Object.entries(ENGINE_TYPES).map(([type,label]) => <div key={type} className="bg-white border border-gray-200 rounded-md p-1 text-center"><div className="text-[8px] uppercase font-black text-gray-400 truncate">{label}</div><div className="text-[11px] font-black text-gray-700">{formatPercentValue(area.taxRates?.[type])}%</div></div>)}
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-1.5">Áp dụng: {area.effectiveDate ? new Date(`${area.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt'}</div>
+                          </div>
+                          <div className="flex flex-col gap-1.5 shrink-0"><button onClick={() => handleStartEditLocation(area)} className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold">Sửa</button><button onClick={() => handleDeleteLocation(area.id)} className="px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold">Xóa</button></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div id="registration-area-editor" className={`mt-4 pt-4 border-t space-y-3 scroll-mt-24 ${editingLocationId ? 'border-blue-300' : 'border-gray-200'}`}>
+                  <div className="flex items-center justify-between"><h4 className={`font-black text-sm uppercase ${editingLocationId ? 'text-blue-700' : 'text-gray-700'}`}>{editingLocationId ? 'Chỉnh sửa khu vực' : 'Thêm khu vực mới'}</h4>{editingLocationId && <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">ĐANG SỬA</span>}</div>
+                  <input type="text" value={newLocationName} onChange={e => setNewLocationName(e.target.value)} placeholder="Tên khu vực (VD: Hải Phòng)" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-xs font-bold text-gray-600">Phí biển số
+                      <input type="text" inputMode="numeric" value={newLocationPlateFee} onChange={e => formatNumberInput(e, setNewLocationPlateFee)} placeholder="1.000.000" className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                    </label>
+                    <label className="text-xs font-bold text-gray-600">Ngày áp dụng
+                      <input type="date" value={newLocationEffectiveDate || ''} onChange={e => setNewLocationEffectiveDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                    </label>
+                  </div>
+                  <div><p className="text-xs font-black text-gray-600 mb-2">Tỷ lệ trước bạ theo loại động cơ (%)</p><div className="grid grid-cols-2 gap-2">{Object.entries(ENGINE_TYPES).map(([type,label]) => <label key={type} className="text-xs font-bold text-gray-600">{label}<div className="mt-1 flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden"><input type="number" min="0" max="100" step="0.1" value={formatPercentValue(newLocationTaxRates[type])} onChange={e => setNewLocationTaxRates(current => ({ ...current, [type]: Math.max(0, Number(e.target.value) || 0) / 100 }))} className="w-full px-3 py-2 outline-none bg-transparent text-sm"/><span className="px-2 text-gray-500 font-bold">%</span></div></label>)}</div></div>
+                  <div className={`grid ${editingLocationId ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>{editingLocationId && <button onClick={resetLocationEditor} className="py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm">Hủy</button>}<button onClick={handleSaveLocation} className="py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm">{editingLocationId ? 'Lưu khu vực' : '+ Thêm khu vực'}</button></div>
+                </div>
+
+                <p className="mt-3 text-[10px] text-orange-700 bg-orange-50 border border-orange-100 rounded-lg p-2 leading-relaxed">Các mức đang hiển thị là cấu hình vận hành của ứng dụng. Hãy cập nhật theo chính sách thực tế trước khi gửi báo giá cho khách.</p>
+              </div>
               
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-800 mb-1">🚘 Quản Lý Dòng Xe & Hình Ảnh</h3>
@@ -1694,7 +1921,7 @@ const normalizePhoneForZalo = (phone) => {
                           <div className="font-bold text-gray-800 truncate">{c.name}</div>
                           <div className="text-blue-600 font-semibold">{formatVND(c.price)}</div>
                           <div className="text-[11px] text-gray-500 mt-0.5">
-                            {Number(c.seats) || 5} chỗ · {carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh')}
+                            {Number(c.seats) || 5} chỗ · {ENGINE_TYPES[c.engineType] || 'Xăng'} · {carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh')}
                           </div>
                         </div>
 
@@ -1722,6 +1949,13 @@ const normalizePhoneForZalo = (phone) => {
                     <select value={newCarSeats} onChange={e => setNewCarSeats(Number(e.target.value))} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
                       <option value={5}>Xe 5 chỗ</option>
                       <option value={7}>Xe 7 chỗ</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Loại động cơ — dùng để tự chọn mức trước bạ</label>
+                    <select value={newCarEngineType} onChange={e => setNewCarEngineType(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                      {Object.entries(ENGINE_TYPES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
                   </div>
 
@@ -1856,6 +2090,7 @@ const normalizePhoneForZalo = (phone) => {
                       <div className="border border-blue-200 p-4 rounded-lg bg-blue-50/30">
                           <p className="text-blue-500 text-xs uppercase font-bold tracking-wider mb-2">Thông tin dòng xe</p>
                           <p className="font-black text-lg text-blue-900">{car.name}</p>
+                          <p className="text-slate-700 font-medium mt-1">Động cơ: {ENGINE_TYPES[car.engineType] || 'Xăng'}</p>
                           {carColor && <p className="text-slate-700 font-medium mt-1">Màu sắc: {carColor}</p>}
                       </div>
                   </div>
@@ -1904,8 +2139,8 @@ const normalizePhoneForZalo = (phone) => {
                             <td className="p-3 text-right font-black text-blue-900 text-lg">{formatVND(calculations.price - calculations.discountAmount)}</td>
                           </tr>
 
-                          <tr className="bg-slate-100 border-b border-slate-300"><td className="p-3 font-black text-slate-800 uppercase mt-4 block border-none">2. Chi phí đăng ký (Tạm tính tại {location.name})</td><td></td></tr>
-                          <tr className="border-b border-slate-200 border-dashed"><td className="p-2.5 text-slate-700 pl-4">Lệ phí trước bạ</td><td className="p-2.5 text-right font-medium">{formatVND(calculations.taxFee)}</td></tr>
+                          <tr className="bg-slate-100 border-b border-slate-300"><td className="p-3 font-black text-slate-800 uppercase mt-4 block border-none">2. Chi phí đăng ký (Tạm tính tại {location.name})</td><td className="p-3 text-right text-[10px] font-bold text-slate-500">Áp dụng {calculations.effectiveDate ? new Date(`${calculations.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : ''}</td></tr>
+                          <tr className="border-b border-slate-200 border-dashed"><td className="p-2.5 text-slate-700 pl-4">Lệ phí trước bạ ({formatPercentValue(calculations.taxRate)}% · {ENGINE_TYPES[calculations.engineType]})</td><td className="p-2.5 text-right font-medium">{formatVND(calculations.taxFee)}</td></tr>
                           <tr className="border-b border-slate-200 border-dashed"><td className="p-2.5 text-slate-700 pl-4">Phí cấp biển số</td><td className="p-2.5 text-right font-medium">{formatVND(calculations.plateFee)}</td></tr>
                           <tr className="border-b border-slate-200 border-dashed"><td className="p-2.5 text-slate-700 pl-4">Phí đăng kiểm</td><td className="p-2.5 text-right font-medium">{formatVND(calculations.inspectionFee)}</td></tr>
                           <tr className="border-b border-slate-200 border-dashed"><td className="p-2.5 text-slate-700 pl-4">Phí bảo trì đường bộ ({calculations.roadFeeYears} năm)</td><td className="p-2.5 text-right font-medium">{formatVND(calculations.roadFee)}</td></tr>
@@ -1957,7 +2192,7 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.8</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.9</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
