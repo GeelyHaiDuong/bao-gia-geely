@@ -8,20 +8,65 @@ const ENGINE_TYPES = {
     phev: 'PHEV',
     ev: 'Thuần điện'
 };
+const CAR_COLOR_LIBRARY = {
+    ex2: [
+        { id: 'aurora-green', name: 'Xanh Bạc Hà', imagePath: './assets/cars/Ex2/ex2-aurora-green.png' },
+        { id: 'beige', name: 'Kem Vani', imagePath: './assets/cars/Ex2/ex2-beige.png' },
+        { id: 'commet-grey', name: 'Xám Than Tre', imagePath: './assets/cars/Ex2/ex2-commet-grey.png' },
+        { id: 'moon-white', name: 'Trắng Sữa', imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+        { id: 'star-silver', name: 'Bạc Ánh Sao', imagePath: './assets/cars/Ex2/ex2-star-silver.png' }
+    ],
+    ex5: [
+        { id: 'black', name: 'Đen', imagePath: './assets/cars/EX5/ex5-black.png' },
+        { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/EX5/ex5-green.png' },
+        { id: 'grey', name: 'Xám', imagePath: './assets/cars/EX5/ex5-grey.png' },
+        { id: 'silver', name: 'Bạc', imagePath: './assets/cars/EX5/ex5-silver.png' },
+        { id: 'white', name: 'Trắng', imagePath: './assets/cars/EX5/ex5-white.png' }
+    ],
+    ex5_emi: [
+        { id: 'black', name: 'Đen', imagePath: './assets/cars/EX5 EMi/ex5-black.png' },
+        { id: 'blue', name: 'Xanh Dương', imagePath: './assets/cars/EX5 EMi/ex5-blue.png' },
+        { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/EX5 EMi/ex5-green.png' },
+        { id: 'grey', name: 'Xám', imagePath: './assets/cars/EX5 EMi/ex5-grey.png' },
+        { id: 'silver', name: 'Bạc', imagePath: './assets/cars/EX5 EMi/ex5-silver.png' },
+        { id: 'white', name: 'Trắng', imagePath: './assets/cars/EX5 EMi/ex5-white.png' }
+    ],
+    coolray: [
+        { id: 'green', name: 'Xanh', imagePath: './assets/cars/Coolray/coolray-new-green.png' },
+        { id: 'black', name: 'Đen', imagePath: './assets/cars/Coolray/den.png' },
+        { id: 'red', name: 'Đỏ', imagePath: './assets/cars/Coolray/do.png' },
+        { id: 'white', name: 'Trắng', imagePath: './assets/cars/Coolray/trang.png' },
+        { id: 'grey', name: 'Xám', imagePath: './assets/cars/Coolray/xam.png' }
+    ],
+    monjaro: [
+        { id: 'black', name: 'Đen', imagePath: './assets/cars/Monjaro/monjaro-black.png' },
+        { id: 'blue', name: 'Xanh Dương', imagePath: './assets/cars/Monjaro/monjaro-blue.png' },
+        { id: 'grey', name: 'Xám', imagePath: './assets/cars/Monjaro/monjaro-grey.png' },
+        { id: 'silver', name: 'Bạc', imagePath: './assets/cars/Monjaro/monjaro-sliver.png' },
+        { id: 'white', name: 'Trắng', imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+        { id: 'xam-lomo', name: 'Xám Lomo', imagePath: './assets/cars/Monjaro/monjaro-xam-lomo.png' },
+        { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/Monjaro/monjaro-xanh-la.png' }
+    ],
+    okavango: [
+        { id: 'black', name: 'Đen', imagePath: './assets/cars/Okavango/CHernyy.png' },
+        { id: 'crystal-white', name: 'Trắng Pha Lê', imagePath: './assets/cars/Okavango/Kristalno_belyy.png' }
+    ]
+};
+const cloneColorSet = key => (CAR_COLOR_LIBRARY[key] || []).map(color => ({ ...color }));
 const DEFAULT_CAR_MODELS = [
-    { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_pro.svg' },
-    { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_max.svg' },
-    { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_pro.svg' },
-    { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_max.svg' },
-    { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_pro.svg' },
-    { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_max.svg' },
-    { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_premium.svg' },
-    { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_flagship.svg' },
-    { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_exec_26.svg' },
-    { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_prem_26.svg' },
-    { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_flag_26.svg' },
-    { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_exec.svg' },
-    { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_prem.svg' },
+    { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, engineType: 'ev', colorGroup: 'ex2', defaultColorId: 'moon-white', colors: cloneColorSet('ex2'), imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+    { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, engineType: 'ev', colorGroup: 'ex2', defaultColorId: 'moon-white', colors: cloneColorSet('ex2'), imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+    { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, engineType: 'ev', colorGroup: 'ex5', defaultColorId: 'white', colors: cloneColorSet('ex5'), imagePath: './assets/cars/EX5/ex5-white.png' },
+    { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, engineType: 'ev', colorGroup: 'ex5', defaultColorId: 'white', colors: cloneColorSet('ex5'), imagePath: './assets/cars/EX5/ex5-white.png' },
+    { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, engineType: 'phev', colorGroup: 'ex5_emi', defaultColorId: 'white', colors: cloneColorSet('ex5_emi'), imagePath: './assets/cars/EX5 EMi/ex5-white.png' },
+    { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, engineType: 'phev', colorGroup: 'ex5_emi', defaultColorId: 'white', colors: cloneColorSet('ex5_emi'), imagePath: './assets/cars/EX5 EMi/ex5-white.png' },
+    { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, engineType: 'gasoline', colorGroup: 'monjaro', defaultColorId: 'white', colors: cloneColorSet('monjaro'), imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+    { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, engineType: 'gasoline', colorGroup: 'monjaro', defaultColorId: 'white', colors: cloneColorSet('monjaro'), imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+    { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+    { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+    { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+    { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, engineType: 'hybrid', colorGroup: 'okavango', defaultColorId: 'crystal-white', colors: cloneColorSet('okavango'), imagePath: './assets/cars/Okavango/Kristalno_belyy.png' },
+    { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, engineType: 'hybrid', colorGroup: 'okavango', defaultColorId: 'crystal-white', colors: cloneColorSet('okavango'), imagePath: './assets/cars/Okavango/Kristalno_belyy.png' },
 ];
 const DEFAULT_PROMOTIONS = [
     { id: 'p1', name: '01 sạc cầm tay', value: 0, type: 'gift', deductFromPrice: false },
@@ -81,19 +126,46 @@ const PROMOTION_TYPES = {
 };
 const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
 const DEFAULT_CAR_ENGINE_TYPES = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.engineType]));
+const DEFAULT_CAR_COLOR_GROUPS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.colorGroup || '']));
+const DEFAULT_CAR_DEFAULT_COLORS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.defaultColorId || '']));
+const DEFAULT_CAR_COLORS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.colors || []]));
 const DEFAULT_PROMOTION_META = Object.fromEntries(DEFAULT_PROMOTIONS.map(item => [item.id, {
         type: item.type, deductFromPrice: item.deductFromPrice
     }]));
+const slugifyColorId = (value, fallback = 'color') => {
+    const normalized = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return normalized || fallback;
+};
+const normalizeCarColor = (color, index = 0) => ({
+    id: String((color === null || color === void 0 ? void 0 : color.id) || slugifyColorId(color === null || color === void 0 ? void 0 : color.name, `color-${index + 1}`)),
+    name: String((color === null || color === void 0 ? void 0 : color.name) || `Màu ${index + 1}`),
+    imagePath: String((color === null || color === void 0 ? void 0 : color.imagePath) || '')
+});
 const normalizeCar = car => {
+    var _a, _b;
     const id = String((car === null || car === void 0 ? void 0 : car.id) || `car_${Date.now()}`);
     const engineType = String((car === null || car === void 0 ? void 0 : car.engineType) || DEFAULT_CAR_ENGINE_TYPES[id] || 'gasoline');
+    const fallbackColors = (DEFAULT_CAR_COLORS[id] || []).map(normalizeCarColor);
+    const providedColors = Array.isArray(car === null || car === void 0 ? void 0 : car.colors) && car.colors.length
+        ? car.colors.map(normalizeCarColor)
+        : fallbackColors;
+    const uniqueColors = providedColors.filter((color, index, list) => list.findIndex(item => item.id === color.id) === index);
+    const requestedDefault = String((car === null || car === void 0 ? void 0 : car.defaultColorId) || DEFAULT_CAR_DEFAULT_COLORS[id] || '');
+    const defaultColorId = uniqueColors.some(color => color.id === requestedDefault)
+        ? requestedDefault
+        : (((_a = uniqueColors[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
+    const defaultColorImage = ((_b = uniqueColors.find(color => color.id === defaultColorId)) === null || _b === void 0 ? void 0 : _b.imagePath) || '';
     return {
         id,
         name: String((car === null || car === void 0 ? void 0 : car.name) || ''),
         price: Number(car === null || car === void 0 ? void 0 : car.price) || 0,
         seats: Number(car === null || car === void 0 ? void 0 : car.seats) || 5,
         engineType: ENGINE_TYPES[engineType] ? engineType : 'gasoline',
-        imagePath: String((car === null || car === void 0 ? void 0 : car.imagePath) || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
+        colorGroup: String((car === null || car === void 0 ? void 0 : car.colorGroup) || DEFAULT_CAR_COLOR_GROUPS[id] || ''),
+        colors: uniqueColors,
+        defaultColorId,
+        imagePath: String((car === null || car === void 0 ? void 0 : car.imagePath) || defaultColorImage || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
         image: String((car === null || car === void 0 ? void 0 : car.image) || '')
     };
 };
@@ -571,6 +643,7 @@ function GeelyQuotationApp() {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [carColor, setCarColor] = useState('');
+    const [selectedColorId, setSelectedColorId] = useState(() => { var _a, _b, _c, _d; return ((_a = cars[0]) === null || _a === void 0 ? void 0 : _a.defaultColorId) || ((_d = (_c = (_b = cars[0]) === null || _b === void 0 ? void 0 : _b.colors) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.id) || ''; });
     const [selectedCarId, setSelectedCarId] = useState(((_a = cars[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
     const [selectedLocationId, setSelectedLocationId] = useState(((_b = registrationFees.locations[0]) === null || _b === void 0 ? void 0 : _b.id) || '');
     const [selectedPromoIds, setSelectedPromoIds] = useState([]);
@@ -596,6 +669,8 @@ function GeelyQuotationApp() {
     const [newCarEngineType, setNewCarEngineType] = useState('gasoline');
     const [newCarImage, setNewCarImage] = useState('');
     const [newCarImagePath, setNewCarImagePath] = useState('');
+    const [newCarColors, setNewCarColors] = useState([]);
+    const [newCarDefaultColorId, setNewCarDefaultColorId] = useState('');
     const [editingCarId, setEditingCarId] = useState(null);
     const [isProcessingCarImage, setIsProcessingCarImage] = useState(false);
     const [newPromoName, setNewPromoName] = useState('');
@@ -653,8 +728,61 @@ function GeelyQuotationApp() {
         return { date: dateStr, validUntil: validDate, code: currentQuoteId };
     }, [currentQuoteId]);
     const car = useMemo(() => cars.find(c => c.id === selectedCarId) || cars[0], [selectedCarId, cars]);
-    const resolvedCarImage = car ? (carImageMap[car.id] || car.imagePath || car.image || '') : '';
+    const selectedCarColor = useMemo(() => {
+        var _a;
+        if (!car || selectedColorId === '__local__')
+            return null;
+        return (car.colors || []).find(color => color.id === selectedColorId)
+            || (car.colors || []).find(color => color.id === car.defaultColorId)
+            || ((_a = car.colors) === null || _a === void 0 ? void 0 : _a[0])
+            || null;
+    }, [car, selectedColorId]);
+    const resolvedCarImage = car
+        ? (selectedColorId === '__local__'
+            ? (carImageMap[car.id] || car.imagePath || car.image || '')
+            : ((selectedCarColor === null || selectedCarColor === void 0 ? void 0 : selectedCarColor.imagePath) || car.imagePath || carImageMap[car.id] || car.image || ''))
+        : '';
     const location = useMemo(() => registrationFees.locations.find(l => l.id === selectedLocationId) || registrationFees.locations[0], [selectedLocationId, registrationFees.locations]);
+    useEffect(() => {
+        if (!car)
+            return;
+        if (selectedColorId === '__local__' && carImageMap[car.id]) {
+            if (!carColor)
+                setCarColor('Ảnh riêng');
+            return;
+        }
+        const colors = Array.isArray(car.colors) ? car.colors : [];
+        const current = colors.find(color => color.id === selectedColorId);
+        const fallback = colors.find(color => color.id === car.defaultColorId) || colors[0];
+        const next = current || fallback;
+        if (next) {
+            if (selectedColorId !== next.id)
+                setSelectedColorId(next.id);
+            if (carColor !== next.name)
+                setCarColor(next.name);
+        }
+        else if (selectedColorId) {
+            setSelectedColorId('');
+        }
+    }, [car === null || car === void 0 ? void 0 : car.id, car === null || car === void 0 ? void 0 : car.defaultColorId, car === null || car === void 0 ? void 0 : car.colors, selectedColorId, carImageMap]);
+    const handleCarSelection = carId => {
+        var _a, _b;
+        const nextCar = cars.find(item => item.id === carId);
+        setSelectedCarId(carId);
+        const nextColor = ((_a = nextCar === null || nextCar === void 0 ? void 0 : nextCar.colors) === null || _a === void 0 ? void 0 : _a.find(color => color.id === nextCar.defaultColorId)) || ((_b = nextCar === null || nextCar === void 0 ? void 0 : nextCar.colors) === null || _b === void 0 ? void 0 : _b[0]);
+        setSelectedColorId((nextColor === null || nextColor === void 0 ? void 0 : nextColor.id) || (carImageMap[carId] ? '__local__' : ''));
+        setCarColor((nextColor === null || nextColor === void 0 ? void 0 : nextColor.name) || (carImageMap[carId] ? 'Ảnh riêng' : ''));
+    };
+    const handleColorSelection = colorId => {
+        var _a;
+        setSelectedColorId(colorId);
+        if (colorId === '__local__') {
+            setCarColor('Ảnh riêng');
+            return;
+        }
+        const color = (_a = car === null || car === void 0 ? void 0 : car.colors) === null || _a === void 0 ? void 0 : _a.find(item => item.id === colorId);
+        setCarColor((color === null || color === void 0 ? void 0 : color.name) || '');
+    };
     useEffect(() => {
         if (!registrationFees.locations.length)
             return;
@@ -740,6 +868,9 @@ function GeelyQuotationApp() {
         id: String(item.id), name: String(item.name || ''), price: parseMoney(item.price),
         seats: Number(item.seats) || 5,
         engineType: ENGINE_TYPES[item.engineType] ? item.engineType : 'gasoline',
+        colorGroup: String(item.colorGroup || ''),
+        colors: (item.colors || []).map(normalizeCarColor),
+        defaultColorId: String(item.defaultColorId || ''),
         imagePath: String(item.imagePath || '')
     });
     const cloudPromo = item => ({
@@ -799,7 +930,7 @@ function GeelyQuotationApp() {
         if (code.includes('popup-closed-by-user'))
             return 'Bạn đã đóng cửa sổ đăng nhập Google.';
         if (code.includes('permission-denied'))
-            return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.9.';
+            return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V2.0.';
         if (!navigator.onLine)
             return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
         return (error === null || error === void 0 ? void 0 : error.message) || 'Không thể kết nối Firebase.';
@@ -894,7 +1025,7 @@ function GeelyQuotationApp() {
                 pendingWorkspaceRef.current = workspace;
                 const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
                 if (workspace.empty) {
-                    setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.9.', updatedAtMs: 0 });
+                    setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V2.0.', updatedAtMs: 0 });
                 }
                 else if (!initialized) {
                     setSyncStatus({ code: 'choice_needed', message: 'Hãy chọn dữ liệu ban đầu dùng làm bản chính.', updatedAtMs: 0 });
@@ -1078,6 +1209,39 @@ function GeelyQuotationApp() {
         setNewCarEngineType('gasoline');
         setNewCarImage('');
         setNewCarImagePath('');
+        setNewCarColors([]);
+        setNewCarDefaultColorId('');
+    };
+    const addEditorColor = () => {
+        const id = `color-${Date.now().toString(36)}`;
+        setNewCarColors(current => [...current, { id, name: '', imagePath: '' }]);
+        if (!newCarDefaultColorId)
+            setNewCarDefaultColorId(id);
+    };
+    const loadDefaultEditorColors = () => {
+        var _a, _b, _c;
+        const group = DEFAULT_CAR_COLOR_GROUPS[editingCarId];
+        if (!group || !CAR_COLOR_LIBRARY[group])
+            return showToast('Dòng xe này chưa có thư viện màu mặc định.');
+        const colors = cloneColorSet(group);
+        const defaultId = DEFAULT_CAR_DEFAULT_COLORS[editingCarId] || ((_a = colors[0]) === null || _a === void 0 ? void 0 : _a.id) || '';
+        setNewCarColors(colors);
+        setNewCarDefaultColorId(defaultId);
+        setNewCarImagePath(((_b = colors.find(color => color.id === defaultId)) === null || _b === void 0 ? void 0 : _b.imagePath) || ((_c = colors[0]) === null || _c === void 0 ? void 0 : _c.imagePath) || '');
+        showToast('Đã nạp thư viện màu chuẩn từ GitHub.');
+    };
+    const updateEditorColor = (index, field, value) => {
+        setNewCarColors(current => current.map((color, colorIndex) => colorIndex === index ? { ...color, [field]: value } : color));
+    };
+    const removeEditorColor = index => {
+        setNewCarColors(current => {
+            var _a;
+            const removed = current[index];
+            const next = current.filter((_, colorIndex) => colorIndex !== index);
+            if ((removed === null || removed === void 0 ? void 0 : removed.id) === newCarDefaultColorId)
+                setNewCarDefaultColorId(((_a = next[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
+            return next;
+        });
     };
     const optimizeCarImage = (file) => new Promise((resolve, reject) => {
         var _a;
@@ -1141,6 +1305,7 @@ function GeelyQuotationApp() {
         }
     };
     const handleStartEditCar = (carToEdit) => {
+        var _a, _b;
         setEditingCarId(carToEdit.id);
         setNewCarName(carToEdit.name || '');
         setNewCarPrice(formatNumber(carToEdit.price));
@@ -1148,31 +1313,46 @@ function GeelyQuotationApp() {
         setNewCarEngineType(ENGINE_TYPES[carToEdit.engineType] ? carToEdit.engineType : 'gasoline');
         setNewCarImage(carImageMap[carToEdit.id] || '');
         setNewCarImagePath(carToEdit.imagePath || '');
+        setNewCarColors((carToEdit.colors || []).map(color => ({ ...color })));
+        setNewCarDefaultColorId(carToEdit.defaultColorId || ((_b = (_a = carToEdit.colors) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.id) || '');
         setTimeout(() => {
             var _a;
             (_a = document.getElementById('car-editor')) === null || _a === void 0 ? void 0 : _a.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 50);
     };
     const handleSaveCar = async () => {
-        var _a, _b;
+        var _a, _b, _c, _d;
         if (!newCarName.trim() || !newCarPrice)
             return showToast('Nhập tên và giá xe!');
         const price = parseMoney(newCarPrice);
         if (!Number.isFinite(price) || price <= 0)
             return showToast('Giá xe không hợp lệ!');
         const id = editingCarId || ('car_' + Date.now());
+        const normalizedColors = newCarColors
+            .map((color, index) => normalizeCarColor({
+            ...color,
+            id: color.id || slugifyColorId(color.name, `color-${index + 1}`)
+        }, index))
+            .filter(color => color.name.trim() && color.imagePath.trim());
+        const uniqueColors = normalizedColors.filter((color, index, list) => list.findIndex(item => item.id === color.id) === index);
+        const defaultColorId = uniqueColors.some(color => color.id === newCarDefaultColorId)
+            ? newCarDefaultColorId
+            : (((_a = uniqueColors[0]) === null || _a === void 0 ? void 0 : _a.id) || '');
+        const defaultColorImage = ((_b = uniqueColors.find(color => color.id === defaultColorId)) === null || _b === void 0 ? void 0 : _b.imagePath) || '';
         const carData = {
             id, name: newCarName.trim(), price, seats: Number(newCarSeats) || 5,
             engineType: ENGINE_TYPES[newCarEngineType] ? newCarEngineType : 'gasoline',
-            imagePath: newCarImagePath.trim()
+            colors: uniqueColors,
+            defaultColorId,
+            imagePath: defaultColorImage || newCarImagePath.trim()
         };
         try {
             if (newCarImage === null || newCarImage === void 0 ? void 0 : newCarImage.startsWith('data:image/')) {
-                await ((_a = window.GeelyIDB) === null || _a === void 0 ? void 0 : _a.saveCarImage(id, newCarImage));
+                await ((_c = window.GeelyIDB) === null || _c === void 0 ? void 0 : _c.saveCarImage(id, newCarImage));
                 setCarImageMap(current => ({ ...current, [id]: newCarImage }));
             }
-            else if (!newCarImage && editingCarId && !newCarImagePath) {
-                await ((_b = window.GeelyIDB) === null || _b === void 0 ? void 0 : _b.deleteCarImage(id));
+            else if (!newCarImage && editingCarId && carImageMap[id]) {
+                await ((_d = window.GeelyIDB) === null || _d === void 0 ? void 0 : _d.deleteCarImage(id));
                 setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
             }
             setCars(currentCars => editingCarId
@@ -1456,6 +1636,9 @@ function GeelyQuotationApp() {
             status: quoteStatus,
             notes: quoteNotes,
             customerName, customerPhone, carColor,
+            selectedColorId,
+            selectedColorName: carColor,
+            selectedColorImagePath: (selectedCarColor === null || selectedCarColor === void 0 ? void 0 : selectedCarColor.imagePath) || (selectedColorId === '__local__' ? '' : resolvedCarImage),
             carId: selectedCarId,
             carName: (car === null || car === void 0 ? void 0 : car.name) || '',
             carEngineType: (car === null || car === void 0 ? void 0 : car.engineType) || 'gasoline',
@@ -1496,17 +1679,26 @@ function GeelyQuotationApp() {
         showToast('Đã lưu báo giá vào lịch sử.');
     };
     const handleLoadQuotation = record => {
-        var _a;
+        var _a, _b, _c, _d, _e;
         setCurrentQuoteId(record.id || createQuoteId());
         setQuoteStatus(record.status || 'draft');
         setQuoteNotes(record.notes || '');
         setCustomerName(record.customerName || '');
         setCustomerPhone(record.customerPhone || '');
-        setCarColor(record.carColor || '');
-        if (record.carId && cars.some(item => item.id === record.carId))
-            setSelectedCarId(record.carId);
+        const recordCar = cars.find(item => item.id === record.carId);
+        if (recordCar) {
+            setSelectedCarId(recordCar.id);
+            const matchingColor = ((_a = recordCar.colors) === null || _a === void 0 ? void 0 : _a.find(color => color.id === record.selectedColorId))
+                || ((_b = recordCar.colors) === null || _b === void 0 ? void 0 : _b.find(color => color.name === (record.selectedColorName || record.carColor)));
+            const nextColorId = (matchingColor === null || matchingColor === void 0 ? void 0 : matchingColor.id) || recordCar.defaultColorId || ((_d = (_c = recordCar.colors) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.id) || (carImageMap[recordCar.id] ? '__local__' : '');
+            setSelectedColorId(nextColorId);
+            setCarColor((matchingColor === null || matchingColor === void 0 ? void 0 : matchingColor.name) || record.selectedColorName || record.carColor || (nextColorId === '__local__' ? 'Ảnh riêng' : ''));
+        }
+        else {
+            setCarColor(record.selectedColorName || record.carColor || '');
+        }
         const preferredLocationId = record.selectedLocationId;
-        setSelectedLocationId(registrationFees.locations.some(item => item.id === preferredLocationId) ? preferredLocationId : (((_a = registrationFees.locations[0]) === null || _a === void 0 ? void 0 : _a.id) || ''));
+        setSelectedLocationId(registrationFees.locations.some(item => item.id === preferredLocationId) ? preferredLocationId : (((_e = registrationFees.locations[0]) === null || _e === void 0 ? void 0 : _e.id) || ''));
         setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
         setDiscount(record.discount ? formatNumber(record.discount) : '');
         setIncludePhysicalInsurance(record.includePhysicalInsurance !== false);
@@ -1572,100 +1764,111 @@ function GeelyQuotationApp() {
         printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${currentQuoteId}</title><link rel="stylesheet" href="${appCssUrl}"><link rel="stylesheet" href="${exportCssUrl}"><style>@page{size:A4;margin:8mm}body{margin:0;background:white}.print-wrap{width:194mm;margin:0 auto}.print-wrap>#quote-capture-area{width:100%!important;transform:none!important;padding:8mm!important;box-sizing:border-box!important}@media print{button{display:none!important}}</style></head><body><div class="print-wrap">${clone.outerHTML}</div><script>window.onload=()=>setTimeout(()=>window.print(),700)<\/script></body></html>`);
         printWindow.document.close();
     };
-    const renderInputForm = () => (React.createElement("div", { className: "space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20" },
-        React.createElement("div", { className: "grid grid-cols-2 gap-3" },
-            React.createElement("div", null,
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "T\u00EAn kh\u00E1ch h\u00E0ng"),
-                React.createElement("input", { type: "text", value: customerName, onChange: (e) => setCustomerName(e.target.value), placeholder: "VD: Anh Tu\u1EA5n", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" })),
-            React.createElement("div", null,
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i"),
-                React.createElement("input", { type: "tel", value: customerPhone, onChange: (e) => setCustomerPhone(e.target.value), placeholder: "VD: 090xxxxxxx", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }))),
-        React.createElement("div", { className: "grid grid-cols-3 gap-3" },
-            React.createElement("div", { className: "col-span-2" },
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "D\u00F2ng xe Geely"),
-                React.createElement("select", { value: selectedCarId, onChange: (e) => setSelectedCarId(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-900 text-sm" }, cars.map(c => React.createElement("option", { key: c.id, value: c.id },
-                    c.name,
-                    " - ",
-                    formatVND(c.price))))),
-            React.createElement("div", { className: "col-span-1" },
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "M\u00E0u s\u1EAFc"),
-                React.createElement("input", { type: "text", value: carColor, onChange: (e) => setCarColor(e.target.value), placeholder: "VD: Tr\u1EAFng", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }))),
-        React.createElement("div", null,
-            React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mb-1" }, "N\u01A1i \u0111\u0103ng k\u00FD"),
-            React.createElement("select", { value: selectedLocationId, onChange: (e) => setSelectedLocationId(e.target.value), className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }, registrationFees.locations.map(l => React.createElement("option", { key: l.id, value: l.id }, l.name))),
-            car && location && calculations && (React.createElement("div", { className: "mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-900" },
-                React.createElement("div", { className: "flex items-center justify-between gap-3" },
-                    React.createElement("span", null, "Lo\u1EA1i \u0111\u1ED9ng c\u01A1"),
-                    React.createElement("b", null, ENGINE_TYPES[calculations.engineType])),
-                React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
-                    React.createElement("span", null, "Tr\u01B0\u1EDBc b\u1EA1 t\u1EF1 \u0111\u1ED9ng"),
-                    React.createElement("b", null,
-                        formatPercentValue(calculations.taxRate),
-                        "%")),
-                React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
-                    React.createElement("span", null, "Ph\u00ED bi\u1EC3n s\u1ED1"),
-                    React.createElement("b", null, formatVND(calculations.plateFee))),
-                React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
-                    React.createElement("span", null, "Ng\u00E0y \u00E1p d\u1EE5ng"),
-                    React.createElement("b", null, calculations.effectiveDate ? new Date(`${calculations.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt'))))),
-        React.createElement("div", { className: "grid grid-cols-2 gap-3" },
-            React.createElement("div", null,
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Lo\u1EA1i Bi\u1EC3n (Ph\u00ED \u0110B)"),
-                React.createElement("select", { value: plateColor, onChange: (e) => setPlateColor(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium" },
-                    React.createElement("option", { value: "white" },
-                        "Tr\u1EAFng (",
-                        formatVND(registrationFees.roadFeeMonthlyWhite),
-                        "/th\u00E1ng)"),
-                    React.createElement("option", { value: "yellow" },
-                        "V\u00E0ng (",
-                        formatVND(registrationFees.roadFeeMonthlyYellow),
-                        "/th\u00E1ng)"))),
-            React.createElement("div", null,
-                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian n\u1ED9p \u0110B"),
-                React.createElement("select", { value: roadFeeYears, onChange: (e) => setRoadFeeYears(Number(e.target.value)), className: "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium" },
-                    React.createElement("option", { value: 1 }, "1 n\u0103m"),
-                    React.createElement("option", { value: 2 }, "2 n\u0103m"),
-                    React.createElement("option", { value: 3 }, "3 n\u0103m")))),
-        React.createElement("div", { className: "space-y-3" },
-            React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mb-1" }, "Khuy\u1EBFn m\u00E3i (Ch\u1ECDn nhi\u1EC1u)"),
-            promotions.length > 0 && (React.createElement("div", { className: "grid grid-cols-1 gap-2 p-3 bg-red-50 border border-red-100 rounded-lg max-h-48 overflow-y-auto" }, promotions.map(p => (React.createElement("label", { key: p.id, className: "flex items-start space-x-3 cursor-pointer p-2 hover:bg-white rounded border border-transparent hover:border-red-200" },
-                React.createElement("input", { type: "checkbox", checked: selectedPromoIds.includes(p.id), onChange: (e) => { e.target.checked ? setSelectedPromoIds([...selectedPromoIds, p.id]) : setSelectedPromoIds(selectedPromoIds.filter(id => id !== p.id)); }, className: "mt-1 w-4 h-4 text-red-600 rounded" }),
-                React.createElement("span", { className: "text-sm font-medium text-gray-800" },
-                    React.createElement("b", null,
-                        PROMOTION_TYPES[p.type] || 'Khuyến mãi',
-                        ":"),
-                    " ",
-                    p.name,
-                    " ",
-                    p.deductFromPrice && p.value > 0 ? `(-${formatVND(p.value)})` : (p.value > 0 ? `(Giá trị ${formatVND(p.value)})` : ''))))))),
-            React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mt-3 mb-1" }, "Gi\u1EA3m gi\u00E1 ti\u1EC1n m\u1EB7t th\u00EAm (VN\u0110)"),
-            React.createElement("input", { type: "text", value: discount, onChange: handleDiscountChange, placeholder: "\u0110\u1EC3 tr\u1ED1ng \u0111\u1EC3 \u0111i\u1EC1n s\u1ED1 ti\u1EC1n gi\u1EA3m...", className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700" })),
-        React.createElement("div", { className: "pt-2 space-y-3 border-t border-gray-100" },
-            React.createElement("div", { className: "flex items-center justify-between" },
-                React.createElement("label", { className: "flex items-center space-x-3 cursor-pointer flex-1" },
-                    React.createElement("input", { type: "checkbox", checked: includePhysicalInsurance, onChange: (e) => setIncludePhysicalInsurance(e.target.checked), className: "w-5 h-5 text-blue-600 rounded" }),
-                    React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m BH v\u1EADt ch\u1EA5t")),
-                includePhysicalInsurance && (React.createElement("div", { className: "flex items-center space-x-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200" },
-                    React.createElement("input", { type: "number", step: "0.1", value: physicalInsuranceRate, onChange: (e) => setPhysicalInsuranceRate(Number(e.target.value)), className: "w-14 bg-transparent text-sm text-center outline-none font-bold text-blue-600" }),
-                    React.createElement("span", { className: "text-xs font-semibold text-gray-500" }, "%")))),
-            React.createElement("label", { className: "flex items-center space-x-3 cursor-pointer" },
-                React.createElement("input", { type: "checkbox", checked: includeServiceFee, onChange: (e) => setIncludeServiceFee(e.target.checked), className: "w-5 h-5 text-blue-600 rounded" }),
-                React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m Ph\u00ED d\u1ECBch v\u1EE5 \u0111\u0103ng k\u00FD"))),
-        React.createElement("div", { className: "pt-3 border-t border-gray-100 space-y-2" },
-            React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+    const renderInputForm = () => {
+        var _a, _b;
+        return (React.createElement("div", { className: "space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 mb-20" },
+            React.createElement("div", { className: "grid grid-cols-2 gap-3" },
                 React.createElement("div", null,
-                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "Tr\u1EA1ng th\u00E1i b\u00E1o gi\u00E1"),
-                    React.createElement("select", { value: quoteStatus, onChange: e => setQuoteStatus(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" },
-                        React.createElement("option", { value: "draft" }, "B\u1EA3n nh\u00E1p"),
-                        React.createElement("option", { value: "sent" }, "\u0110\u00E3 g\u1EEDi kh\u00E1ch"),
-                        React.createElement("option", { value: "followup" }, "\u0110ang theo d\u00F5i"),
-                        React.createElement("option", { value: "test_drive" }, "H\u1EB9n l\u00E1i th\u1EED"),
-                        React.createElement("option", { value: "deposited" }, "\u0110\u00E3 \u0111\u1EB7t c\u1ECDc"),
-                        React.createElement("option", { value: "lost" }, "Kh\u00F4ng th\u00E0nh c\u00F4ng"))),
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "T\u00EAn kh\u00E1ch h\u00E0ng"),
+                    React.createElement("input", { type: "text", value: customerName, onChange: (e) => setCustomerName(e.target.value), placeholder: "VD: Anh Tu\u1EA5n", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" })),
                 React.createElement("div", null,
-                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "M\u00E3 b\u00E1o gi\u00E1"),
-                    React.createElement("div", { className: "px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs font-black text-blue-800 truncate" }, currentQuoteId))),
-            React.createElement("textarea", { value: quoteNotes, onChange: e => setQuoteNotes(e.target.value), placeholder: "Ghi ch\u00FA ch\u0103m s\u00F3c kh\u00E1ch h\u00E0ng...", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm min-h-20" }))));
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i"),
+                    React.createElement("input", { type: "tel", value: customerPhone, onChange: (e) => setCustomerPhone(e.target.value), placeholder: "VD: 090xxxxxxx", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }))),
+            React.createElement("div", { className: "grid grid-cols-3 gap-3" },
+                React.createElement("div", { className: "col-span-2" },
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "D\u00F2ng xe Geely"),
+                    React.createElement("select", { value: selectedCarId, onChange: (e) => handleCarSelection(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-900 text-sm" }, cars.map(c => React.createElement("option", { key: c.id, value: c.id },
+                        c.name,
+                        " - ",
+                        formatVND(c.price))))),
+                React.createElement("div", { className: "col-span-1" },
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "M\u00E0u s\u1EAFc"),
+                    (((_a = car === null || car === void 0 ? void 0 : car.colors) === null || _a === void 0 ? void 0 : _a.length) || carImageMap[car === null || car === void 0 ? void 0 : car.id]) ? (React.createElement("select", { value: selectedColorId, onChange: (e) => handleColorSelection(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold" },
+                        ((car === null || car === void 0 ? void 0 : car.colors) || []).map(color => React.createElement("option", { key: color.id, value: color.id }, color.name)),
+                        carImageMap[car === null || car === void 0 ? void 0 : car.id] && React.createElement("option", { value: "__local__" }, "\u1EA2nh ri\u00EAng tr\u00EAn m\u00E1y"))) : (React.createElement("input", { type: "text", value: carColor, onChange: (e) => setCarColor(e.target.value), placeholder: "VD: Tr\u1EAFng", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" })))),
+            ((_b = car === null || car === void 0 ? void 0 : car.colors) === null || _b === void 0 ? void 0 : _b.length) > 0 && (React.createElement("div", null,
+                React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-2" }, "Ch\u1ECDn nhanh m\u00E0u xe"),
+                React.createElement("div", { className: "flex gap-2 overflow-x-auto pb-2" }, car.colors.map(color => (React.createElement("button", { key: color.id, type: "button", onClick: () => handleColorSelection(color.id), className: `shrink-0 w-24 rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}` },
+                    React.createElement("div", { className: "h-14 rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center" },
+                        React.createElement("img", { src: color.imagePath, alt: `${car.name} ${color.name}`, className: "w-full h-full object-contain p-1", onError: e => { e.currentTarget.style.opacity = '0.15'; } })),
+                    React.createElement("div", { className: `mt-1 text-[10px] font-bold truncate ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}` }, color.name))))))),
+            React.createElement("div", null,
+                React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mb-1" }, "N\u01A1i \u0111\u0103ng k\u00FD"),
+                React.createElement("select", { value: selectedLocationId, onChange: (e) => setSelectedLocationId(e.target.value), className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" }, registrationFees.locations.map(l => React.createElement("option", { key: l.id, value: l.id }, l.name))),
+                car && location && calculations && (React.createElement("div", { className: "mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-900" },
+                    React.createElement("div", { className: "flex items-center justify-between gap-3" },
+                        React.createElement("span", null, "Lo\u1EA1i \u0111\u1ED9ng c\u01A1"),
+                        React.createElement("b", null, ENGINE_TYPES[calculations.engineType])),
+                    React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
+                        React.createElement("span", null, "Tr\u01B0\u1EDBc b\u1EA1 t\u1EF1 \u0111\u1ED9ng"),
+                        React.createElement("b", null,
+                            formatPercentValue(calculations.taxRate),
+                            "%")),
+                    React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
+                        React.createElement("span", null, "Ph\u00ED bi\u1EC3n s\u1ED1"),
+                        React.createElement("b", null, formatVND(calculations.plateFee))),
+                    React.createElement("div", { className: "flex items-center justify-between gap-3 mt-1" },
+                        React.createElement("span", null, "Ng\u00E0y \u00E1p d\u1EE5ng"),
+                        React.createElement("b", null, calculations.effectiveDate ? new Date(`${calculations.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt'))))),
+            React.createElement("div", { className: "grid grid-cols-2 gap-3" },
+                React.createElement("div", null,
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Lo\u1EA1i Bi\u1EC3n (Ph\u00ED \u0110B)"),
+                    React.createElement("select", { value: plateColor, onChange: (e) => setPlateColor(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium" },
+                        React.createElement("option", { value: "white" },
+                            "Tr\u1EAFng (",
+                            formatVND(registrationFees.roadFeeMonthlyWhite),
+                            "/th\u00E1ng)"),
+                        React.createElement("option", { value: "yellow" },
+                            "V\u00E0ng (",
+                            formatVND(registrationFees.roadFeeMonthlyYellow),
+                            "/th\u00E1ng)"))),
+                React.createElement("div", null,
+                    React.createElement("label", { className: "block text-xs font-semibold text-gray-700 mb-1" }, "Th\u1EDDi gian n\u1ED9p \u0110B"),
+                    React.createElement("select", { value: roadFeeYears, onChange: (e) => setRoadFeeYears(Number(e.target.value)), className: "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium" },
+                        React.createElement("option", { value: 1 }, "1 n\u0103m"),
+                        React.createElement("option", { value: 2 }, "2 n\u0103m"),
+                        React.createElement("option", { value: 3 }, "3 n\u0103m")))),
+            React.createElement("div", { className: "space-y-3" },
+                React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mb-1" }, "Khuy\u1EBFn m\u00E3i (Ch\u1ECDn nhi\u1EC1u)"),
+                promotions.length > 0 && (React.createElement("div", { className: "grid grid-cols-1 gap-2 p-3 bg-red-50 border border-red-100 rounded-lg max-h-48 overflow-y-auto" }, promotions.map(p => (React.createElement("label", { key: p.id, className: "flex items-start space-x-3 cursor-pointer p-2 hover:bg-white rounded border border-transparent hover:border-red-200" },
+                    React.createElement("input", { type: "checkbox", checked: selectedPromoIds.includes(p.id), onChange: (e) => { e.target.checked ? setSelectedPromoIds([...selectedPromoIds, p.id]) : setSelectedPromoIds(selectedPromoIds.filter(id => id !== p.id)); }, className: "mt-1 w-4 h-4 text-red-600 rounded" }),
+                    React.createElement("span", { className: "text-sm font-medium text-gray-800" },
+                        React.createElement("b", null,
+                            PROMOTION_TYPES[p.type] || 'Khuyến mãi',
+                            ":"),
+                        " ",
+                        p.name,
+                        " ",
+                        p.deductFromPrice && p.value > 0 ? `(-${formatVND(p.value)})` : (p.value > 0 ? `(Giá trị ${formatVND(p.value)})` : ''))))))),
+                React.createElement("label", { className: "block text-sm font-semibold text-gray-700 mt-3 mb-1" }, "Gi\u1EA3m gi\u00E1 ti\u1EC1n m\u1EB7t th\u00EAm (VN\u0110)"),
+                React.createElement("input", { type: "text", value: discount, onChange: handleDiscountChange, placeholder: "\u0110\u1EC3 tr\u1ED1ng \u0111\u1EC3 \u0111i\u1EC1n s\u1ED1 ti\u1EC1n gi\u1EA3m...", className: "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700" })),
+            React.createElement("div", { className: "pt-2 space-y-3 border-t border-gray-100" },
+                React.createElement("div", { className: "flex items-center justify-between" },
+                    React.createElement("label", { className: "flex items-center space-x-3 cursor-pointer flex-1" },
+                        React.createElement("input", { type: "checkbox", checked: includePhysicalInsurance, onChange: (e) => setIncludePhysicalInsurance(e.target.checked), className: "w-5 h-5 text-blue-600 rounded" }),
+                        React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m BH v\u1EADt ch\u1EA5t")),
+                    includePhysicalInsurance && (React.createElement("div", { className: "flex items-center space-x-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200" },
+                        React.createElement("input", { type: "number", step: "0.1", value: physicalInsuranceRate, onChange: (e) => setPhysicalInsuranceRate(Number(e.target.value)), className: "w-14 bg-transparent text-sm text-center outline-none font-bold text-blue-600" }),
+                        React.createElement("span", { className: "text-xs font-semibold text-gray-500" }, "%")))),
+                React.createElement("label", { className: "flex items-center space-x-3 cursor-pointer" },
+                    React.createElement("input", { type: "checkbox", checked: includeServiceFee, onChange: (e) => setIncludeServiceFee(e.target.checked), className: "w-5 h-5 text-blue-600 rounded" }),
+                    React.createElement("span", { className: "text-sm font-medium text-gray-700" }, "K\u00E8m Ph\u00ED d\u1ECBch v\u1EE5 \u0111\u0103ng k\u00FD"))),
+            React.createElement("div", { className: "pt-3 border-t border-gray-100 space-y-2" },
+                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                    React.createElement("div", null,
+                        React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "Tr\u1EA1ng th\u00E1i b\u00E1o gi\u00E1"),
+                        React.createElement("select", { value: quoteStatus, onChange: e => setQuoteStatus(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" },
+                            React.createElement("option", { value: "draft" }, "B\u1EA3n nh\u00E1p"),
+                            React.createElement("option", { value: "sent" }, "\u0110\u00E3 g\u1EEDi kh\u00E1ch"),
+                            React.createElement("option", { value: "followup" }, "\u0110ang theo d\u00F5i"),
+                            React.createElement("option", { value: "test_drive" }, "H\u1EB9n l\u00E1i th\u1EED"),
+                            React.createElement("option", { value: "deposited" }, "\u0110\u00E3 \u0111\u1EB7t c\u1ECDc"),
+                            React.createElement("option", { value: "lost" }, "Kh\u00F4ng th\u00E0nh c\u00F4ng"))),
+                    React.createElement("div", null,
+                        React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "M\u00E3 b\u00E1o gi\u00E1"),
+                        React.createElement("div", { className: "px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs font-black text-blue-800 truncate" }, currentQuoteId))),
+                React.createElement("textarea", { value: quoteNotes, onChange: e => setQuoteNotes(e.target.value), placeholder: "Ghi ch\u00FA ch\u0103m s\u00F3c kh\u00E1ch h\u00E0ng...", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm min-h-20" }))));
+    };
     const renderBankLoan = () => {
         if (!loanCalculations)
             return null;
@@ -1726,200 +1929,226 @@ function GeelyQuotationApp() {
                     React.createElement("p", { className: "text-[10px] text-orange-500 mt-1" }, "* T\u00EDnh tr\u00EAn d\u01B0 n\u1EE3 th\u1EF1c t\u1EBF c\u00F2n l\u1EA1i sau khi h\u1EBFt \u01B0u \u0111\u00E3i")))),
             React.createElement("button", { onClick: handleExportExcel, className: "w-full mt-4 py-3 bg-green-100 text-green-700 border-2 border-green-600 rounded-xl font-bold text-sm hover:bg-green-600 hover:text-white transition-colors" }, "T\u1EA3i B\u1EA3ng L\u00E3i Xu\u1ED1ng Excel (CSV)")));
     };
-    const renderSettings = () => (React.createElement("div", { className: "space-y-4 pb-20" },
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
-                React.createElement("div", null,
-                    React.createElement("h3", { className: "font-black text-gray-800" }, "\u2601\uFE0F \u0110\u1ED3ng B\u1ED9 Firebase"),
-                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 ri\u00EAng t\u1EEBng xe, khuy\u1EBFn m\u00E3i, c\u00E0i \u0111\u1EB7t v\u00E0 l\u1ECBch s\u1EED b\u00E1o gi\u00E1.")),
-                React.createElement("span", { className: `shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
-                        ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
-                            ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
-                                'bg-gray-100 text-gray-600'}` }, syncStatus.code === 'synced' ? 'ĐÃ ĐỒNG BỘ' :
-                    syncStatus.code === 'offline' ? 'NGOẠI TUYẾN' :
-                        ['pending', 'queued'].includes(syncStatus.code) ? 'ĐANG CHỜ' :
-                            syncStatus.code === 'working' ? 'ĐANG XỬ LÝ' :
-                                syncStatus.code === 'error' ? 'CÓ LỖI' :
-                                    syncUser ? 'CHƯA THIẾT LẬP' : 'CHƯA ĐĂNG NHẬP')),
-            React.createElement("div", { className: "p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3" },
-                React.createElement("p", { className: "text-sm font-semibold text-slate-700" }, syncStatus.message || firebaseState.message),
-                syncStatus.updatedAtMs > 0 && (React.createElement("p", { className: "text-[11px] text-slate-500 mt-1" },
-                    "C\u1EADp nh\u1EADt g\u1EA7n nh\u1EA5t: ",
-                    formatSyncTime(syncStatus.updatedAtMs))),
-                !firebaseState.online && React.createElement("p", { className: "text-[11px] font-bold text-orange-600 mt-1" }, "Thi\u1EBFt b\u1ECB \u0111ang kh\u00F4ng c\u00F3 m\u1EA1ng."),
-                firebaseState.sdk === 'error' && (React.createElement("p", { className: "text-[11px] text-red-600 mt-1" }, firebaseState.error || 'Không tải được thư viện Firebase.'))),
-            !syncUser ? (React.createElement("div", { className: "space-y-2" },
-                React.createElement("button", { type: "button", onClick: handleFirebaseSignIn, disabled: firebaseState.sdk === 'loading', className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm disabled:opacity-50" }, firebaseState.sdk === 'loading' ? 'Đang tải Firebase...' : 'Đăng nhập bằng Google'),
-                firebaseState.sdk === 'error' && (React.createElement("button", { type: "button", onClick: () => { var _a, _b; return (_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.retry) === null || _b === void 0 ? void 0 : _b.call(_a).catch(() => { }); }, className: "w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm" }, "Th\u1EED t\u1EA3i l\u1EA1i Firebase")),
-                React.createElement("p", { className: "text-[11px] text-gray-500 text-center" }, "H\u00E3y \u0111\u0103ng nh\u1EADp c\u00F9ng m\u1ED9t t\u00E0i kho\u1EA3n Google tr\u00EAn \u0111i\u1EC7n tho\u1EA1i v\u00E0 m\u00E1y t\u00EDnh."))) : (React.createElement("div", { className: "space-y-3" },
-                React.createElement("div", { className: "flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl" },
-                    React.createElement("div", { className: "min-w-0" },
-                        React.createElement("p", { className: "font-bold text-blue-900 truncate" }, syncUser.displayName || 'Tài khoản Google'),
-                        React.createElement("p", { className: "text-xs text-blue-700 truncate" }, syncUser.email)),
-                    React.createElement("button", { type: "button", onClick: handleFirebaseSignOut, className: "shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs" }, "\u0110\u0103ng xu\u1EA5t")),
-                syncStatus.code === 'choice_needed' && (React.createElement("div", { className: "space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl" },
-                    React.createElement("p", { className: "text-xs font-bold text-yellow-900" }, "Hai n\u01A1i \u0111ang c\u00F3 d\u1EEF li\u1EC7u. H\u00E3y ch\u1ECDn b\u1EA3n ch\u00EDnh cho l\u1EA7n thi\u1EBFt l\u1EADp \u0111\u1EA7u ti\u00EAn:"),
-                    React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u thi\u1EBFt b\u1ECB n\u00E0y l\u00EAn Firebase"),
-                    React.createElement("button", { type: "button", onClick: handleDownloadCloudToDevice, className: "w-full py-2.5 bg-white text-yellow-800 border-2 border-yellow-500 rounded-lg font-bold text-sm" }, "T\u1EA3i d\u1EEF li\u1EC7u Firebase v\u1EC1 thi\u1EBFt b\u1ECB n\u00E0y"))),
-                syncStatus.code === 'cloud_empty' && (React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u hi\u1EC7n t\u1EA1i l\u00EAn Firebase")),
-                !['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (React.createElement("button", { type: "button", onClick: handleSyncNow, className: "w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm" }, "\u0110\u1ED3ng b\u1ED9 ngay")))),
-            React.createElement("div", { className: "mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed" },
-                React.createElement("b", null, "\u1EA2nh chu\u1EA9n \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 b\u1EB1ng \u0111\u01B0\u1EDDng d\u1EABn GitHub."),
-                " \u1EA2nh b\u1EA1n ch\u1ECDn t\u1EEB thi\u1EBFt b\u1ECB \u0111\u01B0\u1EE3c l\u01B0u ri\u00EAng trong IndexedDB v\u00E0 s\u1EBD \u01B0u ti\u00EAn hi\u1EC3n th\u1ECB tr\u00EAn thi\u1EBFt b\u1ECB \u0111\u00F3.")),
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDC68\u200D\uD83D\uDCBC Th\u00F4ng Tin B\u00E1n H\u00E0ng (In tr\u00EAn B\u00E1o gi\u00E1)"),
-            React.createElement("input", { type: "text", placeholder: "T\u00EAn (VD: Tu\u1EA5n Geely)", value: salesInfo.name, onChange: e => setSalesInfo({ ...salesInfo, name: e.target.value }), className: "w-full px-3 py-2 mb-2 bg-gray-50 border rounded-lg text-sm" }),
-            React.createElement("input", { type: "tel", placeholder: "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i", value: salesInfo.phone, onChange: e => setSalesInfo({ ...salesInfo, phone: e.target.value }), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" })),
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDEE0 C\u00E0i \u0110\u1EB7t Ph\u00ED D\u1ECBch V\u1EE5 \u0110\u0103ng K\u00FD"),
-            React.createElement("div", { className: "flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden" },
-                React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(serviceFeeAmount), onChange: e => setServiceFeeAmount(parseMoney(e.target.value)), className: "w-full px-3 py-2 outline-none text-sm font-medium text-blue-600 bg-transparent" }),
-                React.createElement("span", { className: "px-3 text-gray-500 font-semibold border-l text-sm bg-white" }, "VN\u0110"))),
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
-                React.createElement("div", null,
-                    React.createElement("h3", { className: "font-black text-gray-800" }, "\uD83E\uDDFE Ph\u00ED \u0111\u0103ng k\u00FD & khu v\u1EF1c"),
-                    React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u1EE8ng d\u1EE5ng t\u1EF1 ch\u1ECDn t\u1EF7 l\u1EC7 tr\u01B0\u1EDBc b\u1EA1 theo lo\u1EA1i \u0111\u1ED9ng c\u01A1 c\u1EE7a xe.")),
-                React.createElement("button", { onClick: handleRestoreDefaultFees, className: "shrink-0 px-2.5 py-1.5 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-black" }, "Kh\u00F4i ph\u1EE5c m\u1EB7c \u0111\u1ECBnh")),
-            React.createElement("div", { className: "grid grid-cols-2 gap-2 mb-3" },
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "Ng\u00E0y \u00E1p d\u1EE5ng chung",
-                    React.createElement("input", { type: "date", value: registrationFees.effectiveDate || '', onChange: e => updateRegistrationFee('effectiveDate', e.target.value), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" })),
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "Ph\u00ED \u0111\u0103ng ki\u1EC3m",
-                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.inspectionFee), onChange: e => updateRegistrationFee('inspectionFee', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "\u0110\u01B0\u1EDDng b\u1ED9 bi\u1EC3n tr\u1EAFng/th\u00E1ng",
-                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.roadFeeMonthlyWhite), onChange: e => updateRegistrationFee('roadFeeMonthlyWhite', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "\u0110\u01B0\u1EDDng b\u1ED9 bi\u1EC3n v\u00E0ng/th\u00E1ng",
-                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.roadFeeMonthlyYellow), onChange: e => updateRegistrationFee('roadFeeMonthlyYellow', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "TNDS xe 5 ch\u1ED7",
-                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.civilInsurance5Seats), onChange: e => updateRegistrationFee('civilInsurance5Seats', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
-                React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                    "TNDS xe 7 ch\u1ED7",
-                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.civilInsurance7Seats), onChange: e => updateRegistrationFee('civilInsurance7Seats', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" }))),
-            React.createElement("div", { className: "border-t border-gray-100 pt-3" },
-                React.createElement("div", { className: "flex items-center justify-between mb-2" },
-                    React.createElement("h4", { className: "text-sm font-black text-gray-700" }, "Khu v\u1EF1c \u0111\u0103ng k\u00FD"),
-                    React.createElement("span", { className: "text-[10px] font-bold text-gray-500" },
-                        registrationFees.locations.length,
-                        " khu v\u1EF1c")),
-                React.createElement("div", { className: "space-y-2 max-h-80 overflow-y-auto pr-1" }, registrationFees.locations.map(area => (React.createElement("div", { key: area.id, className: `p-3 rounded-xl border ${editingLocationId === area.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
-                    React.createElement("div", { className: "flex items-start justify-between gap-2" },
-                        React.createElement("div", { className: "min-w-0 flex-1" },
-                            React.createElement("div", { className: "font-black text-sm text-gray-800 truncate" }, area.name),
-                            React.createElement("div", { className: "text-xs text-blue-700 font-bold mt-0.5" },
-                                "Bi\u1EC3n s\u1ED1: ",
-                                formatVND(area.plateFee)),
-                            React.createElement("div", { className: "grid grid-cols-4 gap-1 mt-2" }, Object.entries(ENGINE_TYPES).map(([type, label]) => { var _a; return React.createElement("div", { key: type, className: "bg-white border border-gray-200 rounded-md p-1 text-center" },
-                                React.createElement("div", { className: "text-[8px] uppercase font-black text-gray-400 truncate" }, label),
-                                React.createElement("div", { className: "text-[11px] font-black text-gray-700" },
-                                    formatPercentValue((_a = area.taxRates) === null || _a === void 0 ? void 0 : _a[type]),
-                                    "%")); })),
-                            React.createElement("div", { className: "text-[10px] text-gray-500 mt-1.5" },
-                                "\u00C1p d\u1EE5ng: ",
-                                area.effectiveDate ? new Date(`${area.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt')),
-                        React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
-                            React.createElement("button", { onClick: () => handleStartEditLocation(area), className: "px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold" }, "S\u1EEDa"),
-                            React.createElement("button", { onClick: () => handleDeleteLocation(area.id), className: "px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold" }, "X\u00F3a")))))))),
-            React.createElement("div", { id: "registration-area-editor", className: `mt-4 pt-4 border-t space-y-3 scroll-mt-24 ${editingLocationId ? 'border-blue-300' : 'border-gray-200'}` },
-                React.createElement("div", { className: "flex items-center justify-between" },
-                    React.createElement("h4", { className: `font-black text-sm uppercase ${editingLocationId ? 'text-blue-700' : 'text-gray-700'}` }, editingLocationId ? 'Chỉnh sửa khu vực' : 'Thêm khu vực mới'),
-                    editingLocationId && React.createElement("span", { className: "text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full" }, "\u0110ANG S\u1EECA")),
-                React.createElement("input", { type: "text", value: newLocationName, onChange: e => setNewLocationName(e.target.value), placeholder: "T\u00EAn khu v\u1EF1c (VD: H\u1EA3i Ph\u00F2ng)", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" }),
-                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+    const renderSettings = () => {
+        var _a, _b;
+        return (React.createElement("div", { className: "space-y-4 pb-20" },
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
+                    React.createElement("div", null,
+                        React.createElement("h3", { className: "font-black text-gray-800" }, "\u2601\uFE0F \u0110\u1ED3ng B\u1ED9 Firebase"),
+                        React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 ri\u00EAng t\u1EEBng xe, khuy\u1EBFn m\u00E3i, c\u00E0i \u0111\u1EB7t v\u00E0 l\u1ECBch s\u1EED b\u00E1o gi\u00E1.")),
+                    React.createElement("span", { className: `shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
+                            ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
+                                ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'}` }, syncStatus.code === 'synced' ? 'ĐÃ ĐỒNG BỘ' :
+                        syncStatus.code === 'offline' ? 'NGOẠI TUYẾN' :
+                            ['pending', 'queued'].includes(syncStatus.code) ? 'ĐANG CHỜ' :
+                                syncStatus.code === 'working' ? 'ĐANG XỬ LÝ' :
+                                    syncStatus.code === 'error' ? 'CÓ LỖI' :
+                                        syncUser ? 'CHƯA THIẾT LẬP' : 'CHƯA ĐĂNG NHẬP')),
+                React.createElement("div", { className: "p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3" },
+                    React.createElement("p", { className: "text-sm font-semibold text-slate-700" }, syncStatus.message || firebaseState.message),
+                    syncStatus.updatedAtMs > 0 && (React.createElement("p", { className: "text-[11px] text-slate-500 mt-1" },
+                        "C\u1EADp nh\u1EADt g\u1EA7n nh\u1EA5t: ",
+                        formatSyncTime(syncStatus.updatedAtMs))),
+                    !firebaseState.online && React.createElement("p", { className: "text-[11px] font-bold text-orange-600 mt-1" }, "Thi\u1EBFt b\u1ECB \u0111ang kh\u00F4ng c\u00F3 m\u1EA1ng."),
+                    firebaseState.sdk === 'error' && (React.createElement("p", { className: "text-[11px] text-red-600 mt-1" }, firebaseState.error || 'Không tải được thư viện Firebase.'))),
+                !syncUser ? (React.createElement("div", { className: "space-y-2" },
+                    React.createElement("button", { type: "button", onClick: handleFirebaseSignIn, disabled: firebaseState.sdk === 'loading', className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm disabled:opacity-50" }, firebaseState.sdk === 'loading' ? 'Đang tải Firebase...' : 'Đăng nhập bằng Google'),
+                    firebaseState.sdk === 'error' && (React.createElement("button", { type: "button", onClick: () => { var _a, _b; return (_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.retry) === null || _b === void 0 ? void 0 : _b.call(_a).catch(() => { }); }, className: "w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm" }, "Th\u1EED t\u1EA3i l\u1EA1i Firebase")),
+                    React.createElement("p", { className: "text-[11px] text-gray-500 text-center" }, "H\u00E3y \u0111\u0103ng nh\u1EADp c\u00F9ng m\u1ED9t t\u00E0i kho\u1EA3n Google tr\u00EAn \u0111i\u1EC7n tho\u1EA1i v\u00E0 m\u00E1y t\u00EDnh."))) : (React.createElement("div", { className: "space-y-3" },
+                    React.createElement("div", { className: "flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl" },
+                        React.createElement("div", { className: "min-w-0" },
+                            React.createElement("p", { className: "font-bold text-blue-900 truncate" }, syncUser.displayName || 'Tài khoản Google'),
+                            React.createElement("p", { className: "text-xs text-blue-700 truncate" }, syncUser.email)),
+                        React.createElement("button", { type: "button", onClick: handleFirebaseSignOut, className: "shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs" }, "\u0110\u0103ng xu\u1EA5t")),
+                    syncStatus.code === 'choice_needed' && (React.createElement("div", { className: "space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl" },
+                        React.createElement("p", { className: "text-xs font-bold text-yellow-900" }, "Hai n\u01A1i \u0111ang c\u00F3 d\u1EEF li\u1EC7u. H\u00E3y ch\u1ECDn b\u1EA3n ch\u00EDnh cho l\u1EA7n thi\u1EBFt l\u1EADp \u0111\u1EA7u ti\u00EAn:"),
+                        React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u thi\u1EBFt b\u1ECB n\u00E0y l\u00EAn Firebase"),
+                        React.createElement("button", { type: "button", onClick: handleDownloadCloudToDevice, className: "w-full py-2.5 bg-white text-yellow-800 border-2 border-yellow-500 rounded-lg font-bold text-sm" }, "T\u1EA3i d\u1EEF li\u1EC7u Firebase v\u1EC1 thi\u1EBFt b\u1ECB n\u00E0y"))),
+                    syncStatus.code === 'cloud_empty' && (React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u hi\u1EC7n t\u1EA1i l\u00EAn Firebase")),
+                    !['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (React.createElement("button", { type: "button", onClick: handleSyncNow, className: "w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm" }, "\u0110\u1ED3ng b\u1ED9 ngay")))),
+                React.createElement("div", { className: "mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed" },
+                    React.createElement("b", null, "\u1EA2nh chu\u1EA9n \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 b\u1EB1ng \u0111\u01B0\u1EDDng d\u1EABn GitHub."),
+                    " \u1EA2nh b\u1EA1n ch\u1ECDn t\u1EEB thi\u1EBFt b\u1ECB \u0111\u01B0\u1EE3c l\u01B0u ri\u00EAng trong IndexedDB v\u00E0 s\u1EBD \u01B0u ti\u00EAn hi\u1EC3n th\u1ECB tr\u00EAn thi\u1EBFt b\u1ECB \u0111\u00F3.")),
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDC68\u200D\uD83D\uDCBC Th\u00F4ng Tin B\u00E1n H\u00E0ng (In tr\u00EAn B\u00E1o gi\u00E1)"),
+                React.createElement("input", { type: "text", placeholder: "T\u00EAn (VD: Tu\u1EA5n Geely)", value: salesInfo.name, onChange: e => setSalesInfo({ ...salesInfo, name: e.target.value }), className: "w-full px-3 py-2 mb-2 bg-gray-50 border rounded-lg text-sm" }),
+                React.createElement("input", { type: "tel", placeholder: "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i", value: salesInfo.phone, onChange: e => setSalesInfo({ ...salesInfo, phone: e.target.value }), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" })),
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDEE0 C\u00E0i \u0110\u1EB7t Ph\u00ED D\u1ECBch V\u1EE5 \u0110\u0103ng K\u00FD"),
+                React.createElement("div", { className: "flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden" },
+                    React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(serviceFeeAmount), onChange: e => setServiceFeeAmount(parseMoney(e.target.value)), className: "w-full px-3 py-2 outline-none text-sm font-medium text-blue-600 bg-transparent" }),
+                    React.createElement("span", { className: "px-3 text-gray-500 font-semibold border-l text-sm bg-white" }, "VN\u0110"))),
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
+                    React.createElement("div", null,
+                        React.createElement("h3", { className: "font-black text-gray-800" }, "\uD83E\uDDFE Ph\u00ED \u0111\u0103ng k\u00FD & khu v\u1EF1c"),
+                        React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u1EE8ng d\u1EE5ng t\u1EF1 ch\u1ECDn t\u1EF7 l\u1EC7 tr\u01B0\u1EDBc b\u1EA1 theo lo\u1EA1i \u0111\u1ED9ng c\u01A1 c\u1EE7a xe.")),
+                    React.createElement("button", { onClick: handleRestoreDefaultFees, className: "shrink-0 px-2.5 py-1.5 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-black" }, "Kh\u00F4i ph\u1EE5c m\u1EB7c \u0111\u1ECBnh")),
+                React.createElement("div", { className: "grid grid-cols-2 gap-2 mb-3" },
                     React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                        "Ph\u00ED bi\u1EC3n s\u1ED1",
-                        React.createElement("input", { type: "text", inputMode: "numeric", value: newLocationPlateFee, onChange: e => formatNumberInput(e, setNewLocationPlateFee), placeholder: "1.000.000", className: "mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                        "Ng\u00E0y \u00E1p d\u1EE5ng chung",
+                        React.createElement("input", { type: "date", value: registrationFees.effectiveDate || '', onChange: e => updateRegistrationFee('effectiveDate', e.target.value), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" })),
                     React.createElement("label", { className: "text-xs font-bold text-gray-600" },
-                        "Ng\u00E0y \u00E1p d\u1EE5ng",
-                        React.createElement("input", { type: "date", value: newLocationEffectiveDate || '', onChange: e => setNewLocationEffectiveDate(e.target.value), className: "mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" }))),
-                React.createElement("div", null,
-                    React.createElement("p", { className: "text-xs font-black text-gray-600 mb-2" }, "T\u1EF7 l\u1EC7 tr\u01B0\u1EDBc b\u1EA1 theo lo\u1EA1i \u0111\u1ED9ng c\u01A1 (%)"),
-                    React.createElement("div", { className: "grid grid-cols-2 gap-2" }, Object.entries(ENGINE_TYPES).map(([type, label]) => React.createElement("label", { key: type, className: "text-xs font-bold text-gray-600" },
-                        label,
-                        React.createElement("div", { className: "mt-1 flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden" },
-                            React.createElement("input", { type: "number", min: "0", max: "100", step: "0.1", value: formatPercentValue(newLocationTaxRates[type]), onChange: e => setNewLocationTaxRates(current => ({ ...current, [type]: Math.max(0, Number(e.target.value) || 0) / 100 })), className: "w-full px-3 py-2 outline-none bg-transparent text-sm" }),
-                            React.createElement("span", { className: "px-2 text-gray-500 font-bold" }, "%")))))),
-                React.createElement("div", { className: `grid ${editingLocationId ? 'grid-cols-2' : 'grid-cols-1'} gap-2` },
-                    editingLocationId && React.createElement("button", { onClick: resetLocationEditor, className: "py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm" }, "H\u1EE7y"),
-                    React.createElement("button", { onClick: handleSaveLocation, className: "py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, editingLocationId ? 'Lưu khu vực' : '+ Thêm khu vực'))),
-            React.createElement("p", { className: "mt-3 text-[10px] text-orange-700 bg-orange-50 border border-orange-100 rounded-lg p-2 leading-relaxed" }, "C\u00E1c m\u1EE9c \u0111ang hi\u1EC3n th\u1ECB l\u00E0 c\u1EA5u h\u00ECnh v\u1EADn h\u00E0nh c\u1EE7a \u1EE9ng d\u1EE5ng. H\u00E3y c\u1EADp nh\u1EADt theo ch\u00EDnh s\u00E1ch th\u1EF1c t\u1EBF tr\u01B0\u1EDBc khi g\u1EEDi b\u00E1o gi\u00E1 cho kh\u00E1ch.")),
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("h3", { className: "font-bold text-gray-800 mb-1" }, "\uD83D\uDE98 Qu\u1EA3n L\u00FD D\u00F2ng Xe & H\u00ECnh \u1EA2nh"),
-            React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
-                "B\u1EA5m ",
-                React.createElement("b", null, "S\u1EEDa"),
-                " \u0111\u1EC3 c\u1EADp nh\u1EADt xe \u0111\u00E3 c\u00F3. C\u00F3 th\u1EC3 d\u00E1n link \u1EA3nh ho\u1EB7c ch\u1ECDn \u1EA3nh tr\u1EF1c ti\u1EBFp t\u1EEB \u0111i\u1EC7n tho\u1EA1i/m\u00E1y t\u00EDnh."),
-            React.createElement("div", { className: "space-y-2 mb-4 max-h-80 overflow-y-auto pr-1" }, cars.map(c => (React.createElement("div", { key: c.id, className: `p-2.5 rounded-xl border text-sm ${editingCarId === c.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
-                React.createElement("div", { className: "flex items-center gap-3" },
-                    React.createElement("div", { className: "relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center" },
-                        React.createElement(CarSilhouette, { className: "w-14 text-slate-200" }),
-                        (carImageMap[c.id] || c.imagePath) && (React.createElement("img", { src: carImageMap[c.id] || c.imagePath, crossOrigin: "anonymous", alt: c.name, className: "absolute inset-0 w-full h-full object-contain p-1 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } }))),
-                    React.createElement("div", { className: "min-w-0 flex-1" },
-                        React.createElement("div", { className: "font-bold text-gray-800 truncate" }, c.name),
-                        React.createElement("div", { className: "text-blue-600 font-semibold" }, formatVND(c.price)),
-                        React.createElement("div", { className: "text-[11px] text-gray-500 mt-0.5" },
-                            Number(c.seats) || 5,
-                            " ch\u1ED7 \u00B7 ",
-                            ENGINE_TYPES[c.engineType] || 'Xăng',
-                            " \u00B7 ",
-                            carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh'))),
-                    React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
-                        React.createElement("button", { onClick: () => handleStartEditCar(c), className: "px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "S\u1EEDa"),
-                        React.createElement("button", { onClick: () => handleDeleteCar(c.id), className: "px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold text-xs" }, "X\u00F3a"))))))),
-            React.createElement("div", { id: "car-editor", className: `pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}` },
-                React.createElement("div", { className: "flex items-center justify-between" },
-                    React.createElement("h4", { className: `font-black text-sm uppercase ${editingCarId ? 'text-blue-700' : 'text-gray-700'}` }, editingCarId ? 'Chỉnh sửa dòng xe' : 'Thêm dòng xe mới'),
-                    editingCarId && React.createElement("span", { className: "text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full" }, "\u0110ANG S\u1EECA")),
-                React.createElement("input", { type: "text", placeholder: "T\u00EAn xe (VD: Geely EX5)", value: newCarName, onChange: e => setNewCarName(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }),
-                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
-                    React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Gi\u00E1 ti\u1EC1n", value: newCarPrice, onChange: e => formatNumberInput(e, setNewCarPrice), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }),
-                    React.createElement("select", { value: newCarSeats, onChange: e => setNewCarSeats(Number(e.target.value)), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" },
-                        React.createElement("option", { value: 5 }, "Xe 5 ch\u1ED7"),
-                        React.createElement("option", { value: 7 }, "Xe 7 ch\u1ED7"))),
-                React.createElement("div", null,
-                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "Lo\u1EA1i \u0111\u1ED9ng c\u01A1 \u2014 d\u00F9ng \u0111\u1EC3 t\u1EF1 ch\u1ECDn m\u1EE9c tr\u01B0\u1EDBc b\u1EA1"),
-                    React.createElement("select", { value: newCarEngineType, onChange: e => setNewCarEngineType(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }, Object.entries(ENGINE_TYPES).map(([value, label]) => React.createElement("option", { key: value, value: value }, label)))),
-                React.createElement("div", null,
-                    React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "\u0110\u01B0\u1EDDng d\u1EABn \u1EA3nh chu\u1EA9n tr\u00EAn GitHub"),
-                    React.createElement("input", { type: "text", placeholder: "./assets/cars/ex2_pro.png", value: newCarImagePath, onChange: e => setNewCarImagePath(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" })),
-                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
-                    React.createElement("label", { className: `w-full py-2.5 rounded-lg font-bold text-sm text-center cursor-pointer border-2 transition-colors ${isProcessingCarImage ? 'bg-gray-100 text-gray-400 border-gray-200 pointer-events-none' : 'bg-green-50 text-green-700 border-green-500 hover:bg-green-100'}` },
-                        React.createElement("input", { type: "file", accept: "image/*", onChange: handleCarImageFileChange, className: "hidden", disabled: isProcessingCarImage }),
-                        isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh riêng trên máy'),
-                    React.createElement("button", { type: "button", onClick: () => setNewCarImage(''), disabled: !newCarImage || isProcessingCarImage, className: "w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40" }, "B\u1ECF \u1EA3nh c\u1EE5c b\u1ED9")),
-                React.createElement("p", { className: "text-[11px] text-gray-500 leading-relaxed" }, "\u0110\u01B0\u1EDDng d\u1EABn GitHub \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 tr\u00EAn m\u1ECDi thi\u1EBFt b\u1ECB. \u1EA2nh ch\u1ECDn tr\u1EF1c ti\u1EBFp \u0111\u01B0\u1EE3c n\u00E9n v\u00E0 l\u01B0u trong IndexedDB, kh\u00F4ng l\u00E0m \u0111\u1EA7y localStorage."),
-                React.createElement("div", { className: "relative w-full h-40 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center" },
-                    React.createElement(CarSilhouette, { className: "w-44 text-slate-200" }),
-                    (newCarImage || newCarImagePath) && (React.createElement("img", { src: newCarImage || newCarImagePath, crossOrigin: "anonymous", alt: "Xem tr\u01B0\u1EDBc \u1EA3nh xe", className: "absolute inset-0 w-full h-full object-contain p-3 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } })),
-                    React.createElement("span", { className: "absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border" }, newCarImage ? 'ẢNH CỤC BỘ' : 'ẢNH GITHUB')),
-                React.createElement("div", { className: `grid ${editingCarId ? 'grid-cols-2' : 'grid-cols-1'} gap-2` },
-                    editingCarId && (React.createElement("button", { onClick: resetCarEditor, className: "w-full py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm" }, "H\u1EE7y ch\u1EC9nh s\u1EEDa")),
-                    React.createElement("button", { onClick: handleSaveCar, disabled: isProcessingCarImage, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-sm disabled:opacity-50" }, editingCarId ? 'Lưu thay đổi' : '+ Thêm xe')))),
-        React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-            React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83C\uDF81 Qu\u1EA3n L\u00FD Khuy\u1EBFn M\u00E3i"),
-            React.createElement("div", { className: "space-y-2 mb-3 max-h-60 overflow-y-auto" }, promotions.map(p => (React.createElement("div", { key: p.id, className: "flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm" },
-                React.createElement("div", { className: "font-medium" },
-                    React.createElement("span", { className: "text-[10px] uppercase font-black text-blue-600" }, PROMOTION_TYPES[p.type] || 'Khuyến mãi'),
-                    React.createElement("br", null),
-                    p.name,
-                    " ",
-                    p.value > 0 ? React.createElement("span", { className: p.deductFromPrice ? "text-red-500 block text-xs font-bold" : "text-gray-500 block text-xs font-bold" },
-                        p.deductFromPrice ? '-' : 'Giá trị ',
-                        formatVND(p.value)) : null),
-                React.createElement("button", { onClick: () => handleDeletePromo(p.id), className: "text-red-500 font-bold p-2 text-xs" }, "X\u00F3a"))))),
-            React.createElement("div", { className: "pt-3 border-t space-y-2" },
-                React.createElement("input", { type: "text", placeholder: "T\u00EAn KM (VD: T\u1EB7ng th\u1EA3m s\u00E0n)", value: newPromoName, onChange: e => setNewPromoName(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }),
-                React.createElement("div", { className: "grid grid-cols-2 gap-2" },
-                    React.createElement("select", { value: newPromoType, onChange: e => setNewPromoType(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }, Object.entries(PROMOTION_TYPES).map(([value, label]) => React.createElement("option", { key: value, value: value }, label))),
-                    React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Gi\u00E1 tr\u1ECB VN\u0110", value: newPromoValue, onChange: e => formatNumberInput(e, setNewPromoValue), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" })),
-                React.createElement("label", { className: "flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-700" },
-                    React.createElement("input", { type: "checkbox", checked: newPromoDeduct, onChange: e => setNewPromoDeduct(e.target.checked), className: "w-4 h-4" }),
-                    "Tr\u1EEB tr\u1EF1c ti\u1EBFp v\u00E0o gi\u00E1 xe"),
-                React.createElement("button", { onClick: handleAddPromo, className: "w-full py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm" }, "+ Th\u00EAm Khuy\u1EBFn M\u00E3i")))));
+                        "Ph\u00ED \u0111\u0103ng ki\u1EC3m",
+                        React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.inspectionFee), onChange: e => updateRegistrationFee('inspectionFee', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                    React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                        "\u0110\u01B0\u1EDDng b\u1ED9 bi\u1EC3n tr\u1EAFng/th\u00E1ng",
+                        React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.roadFeeMonthlyWhite), onChange: e => updateRegistrationFee('roadFeeMonthlyWhite', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                    React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                        "\u0110\u01B0\u1EDDng b\u1ED9 bi\u1EC3n v\u00E0ng/th\u00E1ng",
+                        React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.roadFeeMonthlyYellow), onChange: e => updateRegistrationFee('roadFeeMonthlyYellow', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                    React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                        "TNDS xe 5 ch\u1ED7",
+                        React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.civilInsurance5Seats), onChange: e => updateRegistrationFee('civilInsurance5Seats', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                    React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                        "TNDS xe 7 ch\u1ED7",
+                        React.createElement("input", { type: "text", inputMode: "numeric", value: formatNumber(registrationFees.civilInsurance7Seats), onChange: e => updateRegistrationFee('civilInsurance7Seats', parseMoney(e.target.value)), className: "mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" }))),
+                React.createElement("div", { className: "border-t border-gray-100 pt-3" },
+                    React.createElement("div", { className: "flex items-center justify-between mb-2" },
+                        React.createElement("h4", { className: "text-sm font-black text-gray-700" }, "Khu v\u1EF1c \u0111\u0103ng k\u00FD"),
+                        React.createElement("span", { className: "text-[10px] font-bold text-gray-500" },
+                            registrationFees.locations.length,
+                            " khu v\u1EF1c")),
+                    React.createElement("div", { className: "space-y-2 max-h-80 overflow-y-auto pr-1" }, registrationFees.locations.map(area => (React.createElement("div", { key: area.id, className: `p-3 rounded-xl border ${editingLocationId === area.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
+                        React.createElement("div", { className: "flex items-start justify-between gap-2" },
+                            React.createElement("div", { className: "min-w-0 flex-1" },
+                                React.createElement("div", { className: "font-black text-sm text-gray-800 truncate" }, area.name),
+                                React.createElement("div", { className: "text-xs text-blue-700 font-bold mt-0.5" },
+                                    "Bi\u1EC3n s\u1ED1: ",
+                                    formatVND(area.plateFee)),
+                                React.createElement("div", { className: "grid grid-cols-4 gap-1 mt-2" }, Object.entries(ENGINE_TYPES).map(([type, label]) => { var _a; return React.createElement("div", { key: type, className: "bg-white border border-gray-200 rounded-md p-1 text-center" },
+                                    React.createElement("div", { className: "text-[8px] uppercase font-black text-gray-400 truncate" }, label),
+                                    React.createElement("div", { className: "text-[11px] font-black text-gray-700" },
+                                        formatPercentValue((_a = area.taxRates) === null || _a === void 0 ? void 0 : _a[type]),
+                                        "%")); })),
+                                React.createElement("div", { className: "text-[10px] text-gray-500 mt-1.5" },
+                                    "\u00C1p d\u1EE5ng: ",
+                                    area.effectiveDate ? new Date(`${area.effectiveDate}T00:00:00`).toLocaleDateString('vi-VN') : 'Chưa đặt')),
+                            React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
+                                React.createElement("button", { onClick: () => handleStartEditLocation(area), className: "px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold" }, "S\u1EEDa"),
+                                React.createElement("button", { onClick: () => handleDeleteLocation(area.id), className: "px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold" }, "X\u00F3a")))))))),
+                React.createElement("div", { id: "registration-area-editor", className: `mt-4 pt-4 border-t space-y-3 scroll-mt-24 ${editingLocationId ? 'border-blue-300' : 'border-gray-200'}` },
+                    React.createElement("div", { className: "flex items-center justify-between" },
+                        React.createElement("h4", { className: `font-black text-sm uppercase ${editingLocationId ? 'text-blue-700' : 'text-gray-700'}` }, editingLocationId ? 'Chỉnh sửa khu vực' : 'Thêm khu vực mới'),
+                        editingLocationId && React.createElement("span", { className: "text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full" }, "\u0110ANG S\u1EECA")),
+                    React.createElement("input", { type: "text", value: newLocationName, onChange: e => setNewLocationName(e.target.value), placeholder: "T\u00EAn khu v\u1EF1c (VD: H\u1EA3i Ph\u00F2ng)", className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" }),
+                    React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                        React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                            "Ph\u00ED bi\u1EC3n s\u1ED1",
+                            React.createElement("input", { type: "text", inputMode: "numeric", value: newLocationPlateFee, onChange: e => formatNumberInput(e, setNewLocationPlateFee), placeholder: "1.000.000", className: "mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" })),
+                        React.createElement("label", { className: "text-xs font-bold text-gray-600" },
+                            "Ng\u00E0y \u00E1p d\u1EE5ng",
+                            React.createElement("input", { type: "date", value: newLocationEffectiveDate || '', onChange: e => setNewLocationEffectiveDate(e.target.value), className: "mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm" }))),
+                    React.createElement("div", null,
+                        React.createElement("p", { className: "text-xs font-black text-gray-600 mb-2" }, "T\u1EF7 l\u1EC7 tr\u01B0\u1EDBc b\u1EA1 theo lo\u1EA1i \u0111\u1ED9ng c\u01A1 (%)"),
+                        React.createElement("div", { className: "grid grid-cols-2 gap-2" }, Object.entries(ENGINE_TYPES).map(([type, label]) => React.createElement("label", { key: type, className: "text-xs font-bold text-gray-600" },
+                            label,
+                            React.createElement("div", { className: "mt-1 flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden" },
+                                React.createElement("input", { type: "number", min: "0", max: "100", step: "0.1", value: formatPercentValue(newLocationTaxRates[type]), onChange: e => setNewLocationTaxRates(current => ({ ...current, [type]: Math.max(0, Number(e.target.value) || 0) / 100 })), className: "w-full px-3 py-2 outline-none bg-transparent text-sm" }),
+                                React.createElement("span", { className: "px-2 text-gray-500 font-bold" }, "%")))))),
+                    React.createElement("div", { className: `grid ${editingLocationId ? 'grid-cols-2' : 'grid-cols-1'} gap-2` },
+                        editingLocationId && React.createElement("button", { onClick: resetLocationEditor, className: "py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm" }, "H\u1EE7y"),
+                        React.createElement("button", { onClick: handleSaveLocation, className: "py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, editingLocationId ? 'Lưu khu vực' : '+ Thêm khu vực'))),
+                React.createElement("p", { className: "mt-3 text-[10px] text-orange-700 bg-orange-50 border border-orange-100 rounded-lg p-2 leading-relaxed" }, "C\u00E1c m\u1EE9c \u0111ang hi\u1EC3n th\u1ECB l\u00E0 c\u1EA5u h\u00ECnh v\u1EADn h\u00E0nh c\u1EE7a \u1EE9ng d\u1EE5ng. H\u00E3y c\u1EADp nh\u1EADt theo ch\u00EDnh s\u00E1ch th\u1EF1c t\u1EBF tr\u01B0\u1EDBc khi g\u1EEDi b\u00E1o gi\u00E1 cho kh\u00E1ch.")),
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("h3", { className: "font-bold text-gray-800 mb-1" }, "\uD83D\uDE98 Qu\u1EA3n L\u00FD D\u00F2ng Xe & H\u00ECnh \u1EA2nh"),
+                React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
+                    "B\u1EA5m ",
+                    React.createElement("b", null, "S\u1EEDa"),
+                    " \u0111\u1EC3 c\u1EADp nh\u1EADt xe \u0111\u00E3 c\u00F3. C\u00F3 th\u1EC3 d\u00E1n link \u1EA3nh ho\u1EB7c ch\u1ECDn \u1EA3nh tr\u1EF1c ti\u1EBFp t\u1EEB \u0111i\u1EC7n tho\u1EA1i/m\u00E1y t\u00EDnh."),
+                React.createElement("div", { className: "space-y-2 mb-4 max-h-80 overflow-y-auto pr-1" }, cars.map(c => {
+                    var _a, _b, _c, _d, _e, _f, _g, _h;
+                    return (React.createElement("div", { key: c.id, className: `p-2.5 rounded-xl border text-sm ${editingCarId === c.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
+                        React.createElement("div", { className: "flex items-center gap-3" },
+                            React.createElement("div", { className: "relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center" },
+                                React.createElement(CarSilhouette, { className: "w-14 text-slate-200" }),
+                                (((_b = (_a = c.colors) === null || _a === void 0 ? void 0 : _a.find(color => color.id === c.defaultColorId)) === null || _b === void 0 ? void 0 : _b.imagePath) || ((_d = (_c = c.colors) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.imagePath) || carImageMap[c.id] || c.imagePath) && (React.createElement("img", { src: ((_f = (_e = c.colors) === null || _e === void 0 ? void 0 : _e.find(color => color.id === c.defaultColorId)) === null || _f === void 0 ? void 0 : _f.imagePath) || ((_h = (_g = c.colors) === null || _g === void 0 ? void 0 : _g[0]) === null || _h === void 0 ? void 0 : _h.imagePath) || carImageMap[c.id] || c.imagePath, crossOrigin: "anonymous", alt: c.name, className: "absolute inset-0 w-full h-full object-contain p-1 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } }))),
+                            React.createElement("div", { className: "min-w-0 flex-1" },
+                                React.createElement("div", { className: "font-bold text-gray-800 truncate" }, c.name),
+                                React.createElement("div", { className: "text-blue-600 font-semibold" }, formatVND(c.price)),
+                                React.createElement("div", { className: "text-[11px] text-gray-500 mt-0.5" },
+                                    Number(c.seats) || 5,
+                                    " ch\u1ED7 \u00B7 ",
+                                    ENGINE_TYPES[c.engineType] || 'Xăng',
+                                    " \u00B7 ",
+                                    (c.colors || []).length,
+                                    " m\u00E0u \u00B7 ",
+                                    carImageMap[c.id] ? 'Có ảnh riêng' : 'Ảnh GitHub')),
+                            React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
+                                React.createElement("button", { onClick: () => handleStartEditCar(c), className: "px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "S\u1EEDa"),
+                                React.createElement("button", { onClick: () => handleDeleteCar(c.id), className: "px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold text-xs" }, "X\u00F3a")))));
+                })),
+                React.createElement("div", { id: "car-editor", className: `pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}` },
+                    React.createElement("div", { className: "flex items-center justify-between" },
+                        React.createElement("h4", { className: `font-black text-sm uppercase ${editingCarId ? 'text-blue-700' : 'text-gray-700'}` }, editingCarId ? 'Chỉnh sửa dòng xe' : 'Thêm dòng xe mới'),
+                        editingCarId && React.createElement("span", { className: "text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full" }, "\u0110ANG S\u1EECA")),
+                    React.createElement("input", { type: "text", placeholder: "T\u00EAn xe (VD: Geely EX5)", value: newCarName, onChange: e => setNewCarName(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }),
+                    React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                        React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Gi\u00E1 ti\u1EC1n", value: newCarPrice, onChange: e => formatNumberInput(e, setNewCarPrice), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }),
+                        React.createElement("select", { value: newCarSeats, onChange: e => setNewCarSeats(Number(e.target.value)), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" },
+                            React.createElement("option", { value: 5 }, "Xe 5 ch\u1ED7"),
+                            React.createElement("option", { value: 7 }, "Xe 7 ch\u1ED7"))),
+                    React.createElement("div", null,
+                        React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "Lo\u1EA1i \u0111\u1ED9ng c\u01A1 \u2014 d\u00F9ng \u0111\u1EC3 t\u1EF1 ch\u1ECDn m\u1EE9c tr\u01B0\u1EDBc b\u1EA1"),
+                        React.createElement("select", { value: newCarEngineType, onChange: e => setNewCarEngineType(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" }, Object.entries(ENGINE_TYPES).map(([value, label]) => React.createElement("option", { key: value, value: value }, label)))),
+                    React.createElement("div", null,
+                        React.createElement("label", { className: "block text-xs font-bold text-gray-600 mb-1" }, "\u0110\u01B0\u1EDDng d\u1EABn \u1EA3nh d\u1EF1 ph\u00F2ng"),
+                        React.createElement("input", { type: "text", placeholder: "./assets/cars/Ex2/ex2-moon-white.png", value: newCarImagePath, onChange: e => setNewCarImagePath(e.target.value), className: "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" })),
+                    React.createElement("div", { className: "rounded-xl border border-blue-100 bg-blue-50 p-3 space-y-3" },
+                        React.createElement("div", { className: "flex items-center justify-between gap-3" },
+                            React.createElement("div", null,
+                                React.createElement("h5", { className: "text-xs font-black uppercase text-blue-900" }, "M\u00E0u xe & \u1EA3nh GitHub"),
+                                React.createElement("p", { className: "text-[10px] text-blue-700 mt-0.5" }, "Danh s\u00E1ch n\u00E0y \u0111\u1ED3ng b\u1ED9 qua Firebase; \u1EA3nh \u0111\u01B0\u1EE3c \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB GitHub Pages.")),
+                            React.createElement("div", { className: "flex gap-1.5 shrink-0" },
+                                DEFAULT_CAR_COLOR_GROUPS[editingCarId] && React.createElement("button", { type: "button", onClick: loadDefaultEditorColors, className: "px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold" }, "N\u1EA1p m\u00E0u chu\u1EA9n"),
+                                React.createElement("button", { type: "button", onClick: addEditorColor, className: "px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold" }, "+ Th\u00EAm m\u00E0u"))),
+                        newCarColors.length === 0 && React.createElement("div", { className: "text-xs text-gray-500 bg-white border border-dashed rounded-lg p-3 text-center" }, "Ch\u01B0a c\u00F3 m\u00E0u xe. Nh\u1EA5n \u201CTh\u00EAm m\u00E0u\u201D \u0111\u1EC3 t\u1EA1o danh s\u00E1ch."),
+                        React.createElement("div", { className: "space-y-2" }, newCarColors.map((color, index) => (React.createElement("div", { key: `${color.id}-${index}`, className: "bg-white border border-gray-200 rounded-xl p-2.5" },
+                            React.createElement("div", { className: "flex gap-2 items-center" },
+                                React.createElement("input", { type: "radio", name: "default-car-color", checked: newCarDefaultColorId === color.id, onChange: () => setNewCarDefaultColorId(color.id), title: "\u0110\u1EB7t l\u00E0m m\u00E0u m\u1EB7c \u0111\u1ECBnh", className: "w-4 h-4" }),
+                                React.createElement("input", { type: "text", value: color.name, onChange: e => updateEditorColor(index, 'name', e.target.value), placeholder: "T\u00EAn m\u00E0u", className: "flex-1 min-w-0 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" }),
+                                React.createElement("button", { type: "button", onClick: () => removeEditorColor(index), className: "px-2.5 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold" }, "X\u00F3a")),
+                            React.createElement("input", { type: "text", value: color.imagePath, onChange: e => updateEditorColor(index, 'imagePath', e.target.value), placeholder: "./assets/cars/TenThuMuc/ten-anh.png", className: "w-full mt-2 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[11px]" }),
+                            color.imagePath && React.createElement("div", { className: "mt-2 h-20 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center" },
+                                React.createElement("img", { src: color.imagePath, alt: color.name || 'Màu xe', className: "w-full h-full object-contain p-1", onError: e => { e.currentTarget.style.opacity = '0.15'; } })))))),
+                        React.createElement("p", { className: "text-[10px] text-gray-500" }, "N\u00FAt tr\u00F2n b\u00EAn tr\u00E1i d\u00F9ng \u0111\u1EC3 ch\u1ECDn m\u00E0u m\u1EB7c \u0111\u1ECBnh khi m\u1EDF d\u00F2ng xe.")),
+                    React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                        React.createElement("label", { className: `w-full py-2.5 rounded-lg font-bold text-sm text-center cursor-pointer border-2 transition-colors ${isProcessingCarImage ? 'bg-gray-100 text-gray-400 border-gray-200 pointer-events-none' : 'bg-green-50 text-green-700 border-green-500 hover:bg-green-100'}` },
+                            React.createElement("input", { type: "file", accept: "image/*", onChange: handleCarImageFileChange, className: "hidden", disabled: isProcessingCarImage }),
+                            isProcessingCarImage ? 'Đang xử lý ảnh...' : 'Chọn ảnh riêng trên máy'),
+                        React.createElement("button", { type: "button", onClick: () => setNewCarImage(''), disabled: !newCarImage || isProcessingCarImage, className: "w-full py-2.5 bg-gray-100 text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm disabled:opacity-40" }, "B\u1ECF \u1EA3nh c\u1EE5c b\u1ED9")),
+                    React.createElement("p", { className: "text-[11px] text-gray-500 leading-relaxed" }, "\u0110\u01B0\u1EDDng d\u1EABn GitHub \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 tr\u00EAn m\u1ECDi thi\u1EBFt b\u1ECB. \u1EA2nh ch\u1ECDn tr\u1EF1c ti\u1EBFp \u0111\u01B0\u1EE3c n\u00E9n v\u00E0 l\u01B0u trong IndexedDB, kh\u00F4ng l\u00E0m \u0111\u1EA7y localStorage."),
+                    React.createElement("div", { className: "relative w-full h-40 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center" },
+                        React.createElement(CarSilhouette, { className: "w-44 text-slate-200" }),
+                        (newCarImage || ((_a = newCarColors.find(color => color.id === newCarDefaultColorId)) === null || _a === void 0 ? void 0 : _a.imagePath) || newCarImagePath) && (React.createElement("img", { src: newCarImage || ((_b = newCarColors.find(color => color.id === newCarDefaultColorId)) === null || _b === void 0 ? void 0 : _b.imagePath) || newCarImagePath, crossOrigin: "anonymous", alt: "Xem tr\u01B0\u1EDBc \u1EA3nh xe", className: "absolute inset-0 w-full h-full object-contain p-3 bg-white", onError: e => { e.currentTarget.style.display = 'none'; } })),
+                        React.createElement("span", { className: "absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border" }, newCarImage ? 'ẢNH CỤC BỘ' : (newCarColors.length ? 'MÀU MẶC ĐỊNH' : 'ẢNH GITHUB'))),
+                    React.createElement("div", { className: `grid ${editingCarId ? 'grid-cols-2' : 'grid-cols-1'} gap-2` },
+                        editingCarId && (React.createElement("button", { onClick: resetCarEditor, className: "w-full py-2.5 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-bold text-sm" }, "H\u1EE7y ch\u1EC9nh s\u1EEDa")),
+                        React.createElement("button", { onClick: handleSaveCar, disabled: isProcessingCarImage, className: "w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-sm disabled:opacity-50" }, editingCarId ? 'Lưu thay đổi' : '+ Thêm xe')))),
+            React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
+                React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83C\uDF81 Qu\u1EA3n L\u00FD Khuy\u1EBFn M\u00E3i"),
+                React.createElement("div", { className: "space-y-2 mb-3 max-h-60 overflow-y-auto" }, promotions.map(p => (React.createElement("div", { key: p.id, className: "flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm" },
+                    React.createElement("div", { className: "font-medium" },
+                        React.createElement("span", { className: "text-[10px] uppercase font-black text-blue-600" }, PROMOTION_TYPES[p.type] || 'Khuyến mãi'),
+                        React.createElement("br", null),
+                        p.name,
+                        " ",
+                        p.value > 0 ? React.createElement("span", { className: p.deductFromPrice ? "text-red-500 block text-xs font-bold" : "text-gray-500 block text-xs font-bold" },
+                            p.deductFromPrice ? '-' : 'Giá trị ',
+                            formatVND(p.value)) : null),
+                    React.createElement("button", { onClick: () => handleDeletePromo(p.id), className: "text-red-500 font-bold p-2 text-xs" }, "X\u00F3a"))))),
+                React.createElement("div", { className: "pt-3 border-t space-y-2" },
+                    React.createElement("input", { type: "text", placeholder: "T\u00EAn KM (VD: T\u1EB7ng th\u1EA3m s\u00E0n)", value: newPromoName, onChange: e => setNewPromoName(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }),
+                    React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+                        React.createElement("select", { value: newPromoType, onChange: e => setNewPromoType(e.target.value), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" }, Object.entries(PROMOTION_TYPES).map(([value, label]) => React.createElement("option", { key: value, value: value }, label))),
+                        React.createElement("input", { type: "text", inputMode: "numeric", placeholder: "Gi\u00E1 tr\u1ECB VN\u0110", value: newPromoValue, onChange: e => formatNumberInput(e, setNewPromoValue), className: "w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm" })),
+                    React.createElement("label", { className: "flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-700" },
+                        React.createElement("input", { type: "checkbox", checked: newPromoDeduct, onChange: e => setNewPromoDeduct(e.target.checked), className: "w-4 h-4" }),
+                        "Tr\u1EEB tr\u1EF1c ti\u1EBFp v\u00E0o gi\u00E1 xe"),
+                    React.createElement("button", { onClick: handleAddPromo, className: "w-full py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm" }, "+ Th\u00EAm Khuy\u1EBFn M\u00E3i")))));
+    };
     const renderHistory = () => {
         const keyword = historySearch.trim().toLowerCase();
         const items = quotations.filter(item => !keyword || [item.id, item.customerName, item.customerPhone, item.carName].some(value => String(value || '').toLowerCase().includes(keyword)));
@@ -2108,7 +2337,7 @@ function GeelyQuotationApp() {
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 1.9"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.0"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),

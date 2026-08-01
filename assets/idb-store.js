@@ -56,7 +56,7 @@
   });
 
   const api = {
-    version: '1.9.0',
+    version: '2.0.0',
     async saveCarImage(carId, source) {
       if (!carId) throw new Error('Thiếu mã xe.');
       let blob = source;

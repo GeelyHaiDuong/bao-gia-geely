@@ -10,20 +10,67 @@ const { useState, useMemo, useEffect, useRef } = React;
           ev: 'Thuần điện'
         };
 
+        const CAR_COLOR_LIBRARY = {
+          ex2: [
+            { id: 'aurora-green', name: 'Xanh Bạc Hà', imagePath: './assets/cars/Ex2/ex2-aurora-green.png' },
+            { id: 'beige', name: 'Kem Vani', imagePath: './assets/cars/Ex2/ex2-beige.png' },
+            { id: 'commet-grey', name: 'Xám Than Tre', imagePath: './assets/cars/Ex2/ex2-commet-grey.png' },
+            { id: 'moon-white', name: 'Trắng Sữa', imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+            { id: 'star-silver', name: 'Bạc Ánh Sao', imagePath: './assets/cars/Ex2/ex2-star-silver.png' }
+          ],
+          ex5: [
+            { id: 'black', name: 'Đen', imagePath: './assets/cars/EX5/ex5-black.png' },
+            { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/EX5/ex5-green.png' },
+            { id: 'grey', name: 'Xám', imagePath: './assets/cars/EX5/ex5-grey.png' },
+            { id: 'silver', name: 'Bạc', imagePath: './assets/cars/EX5/ex5-silver.png' },
+            { id: 'white', name: 'Trắng', imagePath: './assets/cars/EX5/ex5-white.png' }
+          ],
+          ex5_emi: [
+            { id: 'black', name: 'Đen', imagePath: './assets/cars/EX5 EMi/ex5-black.png' },
+            { id: 'blue', name: 'Xanh Dương', imagePath: './assets/cars/EX5 EMi/ex5-blue.png' },
+            { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/EX5 EMi/ex5-green.png' },
+            { id: 'grey', name: 'Xám', imagePath: './assets/cars/EX5 EMi/ex5-grey.png' },
+            { id: 'silver', name: 'Bạc', imagePath: './assets/cars/EX5 EMi/ex5-silver.png' },
+            { id: 'white', name: 'Trắng', imagePath: './assets/cars/EX5 EMi/ex5-white.png' }
+          ],
+          coolray: [
+            { id: 'green', name: 'Xanh', imagePath: './assets/cars/Coolray/coolray-new-green.png' },
+            { id: 'black', name: 'Đen', imagePath: './assets/cars/Coolray/den.png' },
+            { id: 'red', name: 'Đỏ', imagePath: './assets/cars/Coolray/do.png' },
+            { id: 'white', name: 'Trắng', imagePath: './assets/cars/Coolray/trang.png' },
+            { id: 'grey', name: 'Xám', imagePath: './assets/cars/Coolray/xam.png' }
+          ],
+          monjaro: [
+            { id: 'black', name: 'Đen', imagePath: './assets/cars/Monjaro/monjaro-black.png' },
+            { id: 'blue', name: 'Xanh Dương', imagePath: './assets/cars/Monjaro/monjaro-blue.png' },
+            { id: 'grey', name: 'Xám', imagePath: './assets/cars/Monjaro/monjaro-grey.png' },
+            { id: 'silver', name: 'Bạc', imagePath: './assets/cars/Monjaro/monjaro-sliver.png' },
+            { id: 'white', name: 'Trắng', imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+            { id: 'xam-lomo', name: 'Xám Lomo', imagePath: './assets/cars/Monjaro/monjaro-xam-lomo.png' },
+            { id: 'green', name: 'Xanh Lá', imagePath: './assets/cars/Monjaro/monjaro-xanh-la.png' }
+          ],
+          okavango: [
+            { id: 'black', name: 'Đen', imagePath: './assets/cars/Okavango/CHernyy.png' },
+            { id: 'crystal-white', name: 'Trắng Pha Lê', imagePath: './assets/cars/Okavango/Kristalno_belyy.png' }
+          ]
+        };
+
+        const cloneColorSet = key => (CAR_COLOR_LIBRARY[key] || []).map(color => ({ ...color }));
+
         const DEFAULT_CAR_MODELS = [
-          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_pro.svg' },
-          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex2_max.svg' },
-          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_pro.svg' },
-          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, engineType: 'ev', imagePath: './assets/cars/ex5_max.svg' },
-          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_pro.svg' },
-          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, engineType: 'phev', imagePath: './assets/cars/ex5_emi_max.svg' },
-          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_premium.svg' },
-          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/monjaro_flagship.svg' },
-          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_exec_26.svg' },
-          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_prem_26.svg' },
-          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, engineType: 'gasoline', imagePath: './assets/cars/coolray_flag_26.svg' },
-          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_exec.svg' },
-          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, engineType: 'hybrid', imagePath: './assets/cars/okavango_prem.svg' },
+          { id: 'ex2_pro', name: 'Geely EX2 Pro', price: 459000000, seats: 5, engineType: 'ev', colorGroup: 'ex2', defaultColorId: 'moon-white', colors: cloneColorSet('ex2'), imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+          { id: 'ex2_max', name: 'Geely EX2 Max', price: 499000000, seats: 5, engineType: 'ev', colorGroup: 'ex2', defaultColorId: 'moon-white', colors: cloneColorSet('ex2'), imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
+          { id: 'ex5_pro', name: 'Geely EX5 Pro', price: 839000000, seats: 5, engineType: 'ev', colorGroup: 'ex5', defaultColorId: 'white', colors: cloneColorSet('ex5'), imagePath: './assets/cars/EX5/ex5-white.png' },
+          { id: 'ex5_max', name: 'Geely EX5 Max', price: 889000000, seats: 5, engineType: 'ev', colorGroup: 'ex5', defaultColorId: 'white', colors: cloneColorSet('ex5'), imagePath: './assets/cars/EX5/ex5-white.png' },
+          { id: 'ex5_emi_pro', name: 'Geely EX5 EM-i Pro', price: 789000000, seats: 5, engineType: 'phev', colorGroup: 'ex5_emi', defaultColorId: 'white', colors: cloneColorSet('ex5_emi'), imagePath: './assets/cars/EX5 EMi/ex5-white.png' },
+          { id: 'ex5_emi_max', name: 'Geely EX5 EM-i Max', price: 909000000, seats: 5, engineType: 'phev', colorGroup: 'ex5_emi', defaultColorId: 'white', colors: cloneColorSet('ex5_emi'), imagePath: './assets/cars/EX5 EMi/ex5-white.png' },
+          { id: 'monjaro_premium', name: 'Geely Monjaro Premium', price: 1149000000, seats: 5, engineType: 'gasoline', colorGroup: 'monjaro', defaultColorId: 'white', colors: cloneColorSet('monjaro'), imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+          { id: 'monjaro_flagship', name: 'Geely Monjaro Flagship', price: 1199000000, seats: 5, engineType: 'gasoline', colorGroup: 'monjaro', defaultColorId: 'white', colors: cloneColorSet('monjaro'), imagePath: './assets/cars/Monjaro/monjaro-white.png' },
+          { id: 'coolray_exec_26', name: 'Geely Coolray New 2026 Executive', price: 499000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+          { id: 'coolray_prem_26', name: 'Geely Coolray New 2026 Premium', price: 549000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+          { id: 'coolray_flag_26', name: 'Geely Coolray New 2026 Flagship', price: 599000000, seats: 5, engineType: 'gasoline', colorGroup: 'coolray', defaultColorId: 'white', colors: cloneColorSet('coolray'), imagePath: './assets/cars/Coolray/trang.png' },
+          { id: 'okavango_exec', name: 'Geely Okavango Executive', price: 739000000, seats: 7, engineType: 'hybrid', colorGroup: 'okavango', defaultColorId: 'crystal-white', colors: cloneColorSet('okavango'), imagePath: './assets/cars/Okavango/Kristalno_belyy.png' },
+          { id: 'okavango_prem', name: 'Geely Okavango Premium', price: 799000000, seats: 7, engineType: 'hybrid', colorGroup: 'okavango', defaultColorId: 'crystal-white', colors: cloneColorSet('okavango'), imagePath: './assets/cars/Okavango/Kristalno_belyy.png' },
         ];
 
         const DEFAULT_PROMOTIONS = [
@@ -88,20 +135,48 @@ const { useState, useMemo, useEffect, useRef } = React;
         };
         const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
         const DEFAULT_CAR_ENGINE_TYPES = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.engineType]));
+        const DEFAULT_CAR_COLOR_GROUPS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.colorGroup || '']));
+        const DEFAULT_CAR_DEFAULT_COLORS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.defaultColorId || '']));
+        const DEFAULT_CAR_COLORS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.colors || []]));
         const DEFAULT_PROMOTION_META = Object.fromEntries(DEFAULT_PROMOTIONS.map(item => [item.id, {
           type: item.type, deductFromPrice: item.deductFromPrice
         }]));
 
+        const slugifyColorId = (value, fallback = 'color') => {
+          const normalized = String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          return normalized || fallback;
+        };
+
+        const normalizeCarColor = (color, index = 0) => ({
+          id: String(color?.id || slugifyColorId(color?.name, `color-${index + 1}`)),
+          name: String(color?.name || `Màu ${index + 1}`),
+          imagePath: String(color?.imagePath || '')
+        });
+
         const normalizeCar = car => {
           const id = String(car?.id || `car_${Date.now()}`);
           const engineType = String(car?.engineType || DEFAULT_CAR_ENGINE_TYPES[id] || 'gasoline');
+          const fallbackColors = (DEFAULT_CAR_COLORS[id] || []).map(normalizeCarColor);
+          const providedColors = Array.isArray(car?.colors) && car.colors.length
+            ? car.colors.map(normalizeCarColor)
+            : fallbackColors;
+          const uniqueColors = providedColors.filter((color, index, list) => list.findIndex(item => item.id === color.id) === index);
+          const requestedDefault = String(car?.defaultColorId || DEFAULT_CAR_DEFAULT_COLORS[id] || '');
+          const defaultColorId = uniqueColors.some(color => color.id === requestedDefault)
+            ? requestedDefault
+            : (uniqueColors[0]?.id || '');
+          const defaultColorImage = uniqueColors.find(color => color.id === defaultColorId)?.imagePath || '';
           return {
             id,
             name: String(car?.name || ''),
             price: Number(car?.price) || 0,
             seats: Number(car?.seats) || 5,
             engineType: ENGINE_TYPES[engineType] ? engineType : 'gasoline',
-            imagePath: String(car?.imagePath || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
+            colorGroup: String(car?.colorGroup || DEFAULT_CAR_COLOR_GROUPS[id] || ''),
+            colors: uniqueColors,
+            defaultColorId,
+            imagePath: String(car?.imagePath || defaultColorImage || DEFAULT_CAR_IMAGE_PATHS[id] || ''),
             image: String(car?.image || '')
           };
         };
@@ -618,6 +693,7 @@ const normalizePhoneForZalo = (phone) => {
           const [customerName, setCustomerName] = useState('');
           const [customerPhone, setCustomerPhone] = useState('');
           const [carColor, setCarColor] = useState('');
+          const [selectedColorId, setSelectedColorId] = useState(() => cars[0]?.defaultColorId || cars[0]?.colors?.[0]?.id || '');
 
           const [selectedCarId, setSelectedCarId] = useState(cars[0]?.id || '');
           const [selectedLocationId, setSelectedLocationId] = useState(registrationFees.locations[0]?.id || '');
@@ -646,6 +722,8 @@ const normalizePhoneForZalo = (phone) => {
           const [newCarEngineType, setNewCarEngineType] = useState('gasoline');
           const [newCarImage, setNewCarImage] = useState('');
           const [newCarImagePath, setNewCarImagePath] = useState('');
+          const [newCarColors, setNewCarColors] = useState([]);
+          const [newCarDefaultColorId, setNewCarDefaultColorId] = useState('');
           const [editingCarId, setEditingCarId] = useState(null);
           const [isProcessingCarImage, setIsProcessingCarImage] = useState(false);
           
@@ -717,8 +795,55 @@ const normalizePhoneForZalo = (phone) => {
           }, [currentQuoteId]);
 
           const car = useMemo(() => cars.find(c => c.id === selectedCarId) || cars[0], [selectedCarId, cars]);
-          const resolvedCarImage = car ? (carImageMap[car.id] || car.imagePath || car.image || '') : '';
+          const selectedCarColor = useMemo(() => {
+            if (!car || selectedColorId === '__local__') return null;
+            return (car.colors || []).find(color => color.id === selectedColorId)
+              || (car.colors || []).find(color => color.id === car.defaultColorId)
+              || car.colors?.[0]
+              || null;
+          }, [car, selectedColorId]);
+          const resolvedCarImage = car
+            ? (selectedColorId === '__local__'
+              ? (carImageMap[car.id] || car.imagePath || car.image || '')
+              : (selectedCarColor?.imagePath || car.imagePath || carImageMap[car.id] || car.image || ''))
+            : '';
           const location = useMemo(() => registrationFees.locations.find(l => l.id === selectedLocationId) || registrationFees.locations[0], [selectedLocationId, registrationFees.locations]);
+
+          useEffect(() => {
+            if (!car) return;
+            if (selectedColorId === '__local__' && carImageMap[car.id]) {
+              if (!carColor) setCarColor('Ảnh riêng');
+              return;
+            }
+            const colors = Array.isArray(car.colors) ? car.colors : [];
+            const current = colors.find(color => color.id === selectedColorId);
+            const fallback = colors.find(color => color.id === car.defaultColorId) || colors[0];
+            const next = current || fallback;
+            if (next) {
+              if (selectedColorId !== next.id) setSelectedColorId(next.id);
+              if (carColor !== next.name) setCarColor(next.name);
+            } else if (selectedColorId) {
+              setSelectedColorId('');
+            }
+          }, [car?.id, car?.defaultColorId, car?.colors, selectedColorId, carImageMap]);
+
+          const handleCarSelection = carId => {
+            const nextCar = cars.find(item => item.id === carId);
+            setSelectedCarId(carId);
+            const nextColor = nextCar?.colors?.find(color => color.id === nextCar.defaultColorId) || nextCar?.colors?.[0];
+            setSelectedColorId(nextColor?.id || (carImageMap[carId] ? '__local__' : ''));
+            setCarColor(nextColor?.name || (carImageMap[carId] ? 'Ảnh riêng' : ''));
+          };
+
+          const handleColorSelection = colorId => {
+            setSelectedColorId(colorId);
+            if (colorId === '__local__') {
+              setCarColor('Ảnh riêng');
+              return;
+            }
+            const color = car?.colors?.find(item => item.id === colorId);
+            setCarColor(color?.name || '');
+          };
 
           useEffect(() => {
             if (!registrationFees.locations.length) return;
@@ -813,6 +938,9 @@ const normalizePhoneForZalo = (phone) => {
             id: String(item.id), name: String(item.name || ''), price: parseMoney(item.price),
             seats: Number(item.seats) || 5,
             engineType: ENGINE_TYPES[item.engineType] ? item.engineType : 'gasoline',
+            colorGroup: String(item.colorGroup || ''),
+            colors: (item.colors || []).map(normalizeCarColor),
+            defaultColorId: String(item.defaultColorId || ''),
             imagePath: String(item.imagePath || '')
           });
           const cloudPromo = item => ({
@@ -858,7 +986,7 @@ const normalizePhoneForZalo = (phone) => {
             if (code.includes('unauthorized-domain')) return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
             if (code.includes('popup-blocked')) return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở bằng Chrome hoặc Safari.';
             if (code.includes('popup-closed-by-user')) return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V1.9.';
+            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V2.0.';
             if (!navigator.onLine) return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
             return error?.message || 'Không thể kết nối Firebase.';
           };
@@ -933,7 +1061,7 @@ const normalizePhoneForZalo = (phone) => {
                 pendingWorkspaceRef.current = workspace;
                 const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
                 if (workspace.empty) {
-                  setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V1.9.', updatedAtMs: 0 });
+                  setSyncStatus({ code: 'cloud_empty', message: 'Tài khoản chưa có dữ liệu V2.0.', updatedAtMs: 0 });
                 } else if (!initialized) {
                   setSyncStatus({ code: 'choice_needed', message: 'Hãy chọn dữ liệu ban đầu dùng làm bản chính.', updatedAtMs: 0 });
                 } else {
@@ -1101,6 +1229,38 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarEngineType('gasoline');
             setNewCarImage('');
             setNewCarImagePath('');
+            setNewCarColors([]);
+            setNewCarDefaultColorId('');
+          };
+
+          const addEditorColor = () => {
+            const id = `color-${Date.now().toString(36)}`;
+            setNewCarColors(current => [...current, { id, name: '', imagePath: '' }]);
+            if (!newCarDefaultColorId) setNewCarDefaultColorId(id);
+          };
+
+          const loadDefaultEditorColors = () => {
+            const group = DEFAULT_CAR_COLOR_GROUPS[editingCarId];
+            if (!group || !CAR_COLOR_LIBRARY[group]) return showToast('Dòng xe này chưa có thư viện màu mặc định.');
+            const colors = cloneColorSet(group);
+            const defaultId = DEFAULT_CAR_DEFAULT_COLORS[editingCarId] || colors[0]?.id || '';
+            setNewCarColors(colors);
+            setNewCarDefaultColorId(defaultId);
+            setNewCarImagePath(colors.find(color => color.id === defaultId)?.imagePath || colors[0]?.imagePath || '');
+            showToast('Đã nạp thư viện màu chuẩn từ GitHub.');
+          };
+
+          const updateEditorColor = (index, field, value) => {
+            setNewCarColors(current => current.map((color, colorIndex) => colorIndex === index ? { ...color, [field]: value } : color));
+          };
+
+          const removeEditorColor = index => {
+            setNewCarColors(current => {
+              const removed = current[index];
+              const next = current.filter((_, colorIndex) => colorIndex !== index);
+              if (removed?.id === newCarDefaultColorId) setNewCarDefaultColorId(next[0]?.id || '');
+              return next;
+            });
           };
 
           const optimizeCarImage = (file) => new Promise((resolve, reject) => {
@@ -1176,6 +1336,8 @@ const normalizePhoneForZalo = (phone) => {
             setNewCarEngineType(ENGINE_TYPES[carToEdit.engineType] ? carToEdit.engineType : 'gasoline');
             setNewCarImage(carImageMap[carToEdit.id] || '');
             setNewCarImagePath(carToEdit.imagePath || '');
+            setNewCarColors((carToEdit.colors || []).map(color => ({ ...color })));
+            setNewCarDefaultColorId(carToEdit.defaultColorId || carToEdit.colors?.[0]?.id || '');
 
             setTimeout(() => {
               document.getElementById('car-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1187,16 +1349,29 @@ const normalizePhoneForZalo = (phone) => {
             const price = parseMoney(newCarPrice);
             if (!Number.isFinite(price) || price <= 0) return showToast('Giá xe không hợp lệ!');
             const id = editingCarId || ('car_' + Date.now());
+            const normalizedColors = newCarColors
+              .map((color, index) => normalizeCarColor({
+                ...color,
+                id: color.id || slugifyColorId(color.name, `color-${index + 1}`)
+              }, index))
+              .filter(color => color.name.trim() && color.imagePath.trim());
+            const uniqueColors = normalizedColors.filter((color, index, list) => list.findIndex(item => item.id === color.id) === index);
+            const defaultColorId = uniqueColors.some(color => color.id === newCarDefaultColorId)
+              ? newCarDefaultColorId
+              : (uniqueColors[0]?.id || '');
+            const defaultColorImage = uniqueColors.find(color => color.id === defaultColorId)?.imagePath || '';
             const carData = {
               id, name: newCarName.trim(), price, seats: Number(newCarSeats) || 5,
               engineType: ENGINE_TYPES[newCarEngineType] ? newCarEngineType : 'gasoline',
-              imagePath: newCarImagePath.trim()
+              colors: uniqueColors,
+              defaultColorId,
+              imagePath: defaultColorImage || newCarImagePath.trim()
             };
             try {
               if (newCarImage?.startsWith('data:image/')) {
                 await window.GeelyIDB?.saveCarImage(id, newCarImage);
                 setCarImageMap(current => ({ ...current, [id]: newCarImage }));
-              } else if (!newCarImage && editingCarId && !newCarImagePath) {
+              } else if (!newCarImage && editingCarId && carImageMap[id]) {
                 await window.GeelyIDB?.deleteCarImage(id);
                 setCarImageMap(current => { const next = { ...current }; delete next[id]; return next; });
               }
@@ -1441,6 +1616,9 @@ const normalizePhoneForZalo = (phone) => {
               status: quoteStatus,
               notes: quoteNotes,
               customerName, customerPhone, carColor,
+              selectedColorId,
+              selectedColorName: carColor,
+              selectedColorImagePath: selectedCarColor?.imagePath || (selectedColorId === '__local__' ? '' : resolvedCarImage),
               carId: selectedCarId,
               carName: car?.name || '',
               carEngineType: car?.engineType || 'gasoline',
@@ -1481,8 +1659,17 @@ const normalizePhoneForZalo = (phone) => {
             setQuoteNotes(record.notes || '');
             setCustomerName(record.customerName || '');
             setCustomerPhone(record.customerPhone || '');
-            setCarColor(record.carColor || '');
-            if (record.carId && cars.some(item => item.id === record.carId)) setSelectedCarId(record.carId);
+            const recordCar = cars.find(item => item.id === record.carId);
+            if (recordCar) {
+              setSelectedCarId(recordCar.id);
+              const matchingColor = recordCar.colors?.find(color => color.id === record.selectedColorId)
+                || recordCar.colors?.find(color => color.name === (record.selectedColorName || record.carColor));
+              const nextColorId = matchingColor?.id || recordCar.defaultColorId || recordCar.colors?.[0]?.id || (carImageMap[recordCar.id] ? '__local__' : '');
+              setSelectedColorId(nextColorId);
+              setCarColor(matchingColor?.name || record.selectedColorName || record.carColor || (nextColorId === '__local__' ? 'Ảnh riêng' : ''));
+            } else {
+              setCarColor(record.selectedColorName || record.carColor || '');
+            }
             const preferredLocationId = record.selectedLocationId;
             setSelectedLocationId(registrationFees.locations.some(item => item.id === preferredLocationId) ? preferredLocationId : (registrationFees.locations[0]?.id || ''));
             setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
@@ -1550,15 +1737,38 @@ const normalizePhoneForZalo = (phone) => {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Dòng xe Geely</label>
-                    <select value={selectedCarId} onChange={(e) => setSelectedCarId(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-900 text-sm">
+                    <select value={selectedCarId} onChange={(e) => handleCarSelection(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-900 text-sm">
                     {cars.map(c => <option key={c.id} value={c.id}>{c.name} - {formatVND(c.price)}</option>)}
                     </select>
                 </div>
                 <div className="col-span-1">
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Màu sắc</label>
-                    <input type="text" value={carColor} onChange={(e) => setCarColor(e.target.value)} placeholder="VD: Trắng" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    {(car?.colors?.length || carImageMap[car?.id]) ? (
+                      <select value={selectedColorId} onChange={(e) => handleColorSelection(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold">
+                        {(car?.colors || []).map(color => <option key={color.id} value={color.id}>{color.name}</option>)}
+                        {carImageMap[car?.id] && <option value="__local__">Ảnh riêng trên máy</option>}
+                      </select>
+                    ) : (
+                      <input type="text" value={carColor} onChange={(e) => setCarColor(e.target.value)} placeholder="VD: Trắng" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    )}
                 </div>
               </div>
+
+              {car?.colors?.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">Chọn nhanh màu xe</label>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {car.colors.map(color => (
+                      <button key={color.id} type="button" onClick={() => handleColorSelection(color.id)} className={`shrink-0 w-24 rounded-xl border-2 p-1.5 bg-white ${selectedColorId === color.id ? 'border-blue-600 shadow-md' : 'border-gray-200'}`}>
+                        <div className="h-14 rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center">
+                          <img src={color.imagePath} alt={`${car.name} ${color.name}`} className="w-full h-full object-contain p-1" onError={e => { e.currentTarget.style.opacity = '0.15'; }} />
+                        </div>
+                        <div className={`mt-1 text-[10px] font-bold truncate ${selectedColorId === color.id ? 'text-blue-700' : 'text-gray-600'}`}>{color.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Nơi đăng ký</label>
@@ -1906,9 +2116,9 @@ const normalizePhoneForZalo = (phone) => {
                       <div className="flex items-center gap-3">
                         <div className="relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
                           <CarSilhouette className="w-14 text-slate-200" />
-                          {(carImageMap[c.id] || c.imagePath) && (
+                          {(c.colors?.find(color => color.id === c.defaultColorId)?.imagePath || c.colors?.[0]?.imagePath || carImageMap[c.id] || c.imagePath) && (
                             <img
-                              src={carImageMap[c.id] || c.imagePath}
+                              src={c.colors?.find(color => color.id === c.defaultColorId)?.imagePath || c.colors?.[0]?.imagePath || carImageMap[c.id] || c.imagePath}
                               crossOrigin="anonymous"
                               alt={c.name}
                               className="absolute inset-0 w-full h-full object-contain p-1 bg-white"
@@ -1921,7 +2131,7 @@ const normalizePhoneForZalo = (phone) => {
                           <div className="font-bold text-gray-800 truncate">{c.name}</div>
                           <div className="text-blue-600 font-semibold">{formatVND(c.price)}</div>
                           <div className="text-[11px] text-gray-500 mt-0.5">
-                            {Number(c.seats) || 5} chỗ · {ENGINE_TYPES[c.engineType] || 'Xăng'} · {carImageMap[c.id] ? 'Ảnh cục bộ' : (c.imagePath ? 'Ảnh GitHub' : 'Chưa có ảnh')}
+                            {Number(c.seats) || 5} chỗ · {ENGINE_TYPES[c.engineType] || 'Xăng'} · {(c.colors || []).length} màu · {carImageMap[c.id] ? 'Có ảnh riêng' : 'Ảnh GitHub'}
                           </div>
                         </div>
 
@@ -1960,8 +2170,37 @@ const normalizePhoneForZalo = (phone) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">Đường dẫn ảnh chuẩn trên GitHub</label>
-                    <input type="text" placeholder="./assets/cars/ex2_pro.png" value={newCarImagePath} onChange={e => setNewCarImagePath(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Đường dẫn ảnh dự phòng</label>
+                    <input type="text" placeholder="./assets/cars/Ex2/ex2-moon-white.png" value={newCarImagePath} onChange={e => setNewCarImagePath(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h5 className="text-xs font-black uppercase text-blue-900">Màu xe & ảnh GitHub</h5>
+                        <p className="text-[10px] text-blue-700 mt-0.5">Danh sách này đồng bộ qua Firebase; ảnh được đọc trực tiếp từ GitHub Pages.</p>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        {DEFAULT_CAR_COLOR_GROUPS[editingCarId] && <button type="button" onClick={loadDefaultEditorColors} className="px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold">Nạp màu chuẩn</button>}
+                        <button type="button" onClick={addEditorColor} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold">+ Thêm màu</button>
+                      </div>
+                    </div>
+
+                    {newCarColors.length === 0 && <div className="text-xs text-gray-500 bg-white border border-dashed rounded-lg p-3 text-center">Chưa có màu xe. Nhấn “Thêm màu” để tạo danh sách.</div>}
+                    <div className="space-y-2">
+                      {newCarColors.map((color, index) => (
+                        <div key={`${color.id}-${index}`} className="bg-white border border-gray-200 rounded-xl p-2.5">
+                          <div className="flex gap-2 items-center">
+                            <input type="radio" name="default-car-color" checked={newCarDefaultColorId === color.id} onChange={() => setNewCarDefaultColorId(color.id)} title="Đặt làm màu mặc định" className="w-4 h-4" />
+                            <input type="text" value={color.name} onChange={e => updateEditorColor(index, 'name', e.target.value)} placeholder="Tên màu" className="flex-1 min-w-0 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" />
+                            <button type="button" onClick={() => removeEditorColor(index)} className="px-2.5 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold">Xóa</button>
+                          </div>
+                          <input type="text" value={color.imagePath} onChange={e => updateEditorColor(index, 'imagePath', e.target.value)} placeholder="./assets/cars/TenThuMuc/ten-anh.png" className="w-full mt-2 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[11px]" />
+                          {color.imagePath && <div className="mt-2 h-20 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center"><img src={color.imagePath} alt={color.name || 'Màu xe'} className="w-full h-full object-contain p-1" onError={e => { e.currentTarget.style.opacity = '0.15'; }} /></div>}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-500">Nút tròn bên trái dùng để chọn màu mặc định khi mở dòng xe.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -1976,10 +2215,10 @@ const normalizePhoneForZalo = (phone) => {
 
                   <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center">
                     <CarSilhouette className="w-44 text-slate-200" />
-                    {(newCarImage || newCarImagePath) && (
-                      <img src={newCarImage || newCarImagePath} crossOrigin="anonymous" alt="Xem trước ảnh xe" className="absolute inset-0 w-full h-full object-contain p-3 bg-white" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                    {(newCarImage || newCarColors.find(color => color.id === newCarDefaultColorId)?.imagePath || newCarImagePath) && (
+                      <img src={newCarImage || newCarColors.find(color => color.id === newCarDefaultColorId)?.imagePath || newCarImagePath} crossOrigin="anonymous" alt="Xem trước ảnh xe" className="absolute inset-0 w-full h-full object-contain p-3 bg-white" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     )}
-                    <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border">{newCarImage ? 'ẢNH CỤC BỘ' : 'ẢNH GITHUB'}</span>
+                    <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 text-gray-500 px-2 py-1 rounded-md border">{newCarImage ? 'ẢNH CỤC BỘ' : (newCarColors.length ? 'MÀU MẶC ĐỊNH' : 'ẢNH GITHUB')}</span>
                   </div>
 
                   <div className={`grid ${editingCarId ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
@@ -2192,7 +2431,7 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 1.9</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.0</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
