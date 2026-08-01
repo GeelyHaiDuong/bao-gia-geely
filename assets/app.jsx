@@ -739,7 +739,13 @@ const normalizePhoneForZalo = (phone) => {
           const [newLocationTaxRates, setNewLocationTaxRates] = useState({ gasoline: 0, hybrid: 0, phev: 0, ev: 0 });
 
           const [loanParams, setLoanParams] = useState({
-            downPaymentPercent: 20, loanTermYears: 5, fixedInterestRate: 8.0, fixedTermMonths: 12, floatingInterestRate: 11.5 
+            loanInputMode: 'percent',
+            loanAmount: 0,
+            downPaymentPercent: 20,
+            loanTermYears: 5,
+            fixedInterestRate: 8.0,
+            fixedTermMonths: 12,
+            floatingInterestRate: 11.5
           });
           const [isExporting, setIsExporting] = useState(false); 
 
@@ -896,14 +902,27 @@ const normalizePhoneForZalo = (phone) => {
           }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
 
           const normalizedLoanParams = useMemo(() => {
+            const loanInputMode = loanParams.loanInputMode === 'amount' ? 'amount' : 'percent';
+            const requestedLoanAmount = parseMoney(loanParams.loanAmount);
             const downPaymentPercent = Math.min(100, Math.max(0, Number(loanParams.downPaymentPercent) || 0));
             const loanTermYears = Math.min(8, Math.max(1, Number(loanParams.loanTermYears) || 1));
             const months = loanTermYears * 12;
             const fixedTermMonths = Math.min(months, Math.max(0, Number(loanParams.fixedTermMonths) || 0));
             const fixedInterestRate = Math.max(0, Number(loanParams.fixedInterestRate) || 0);
             const floatingInterestRate = Math.max(0, Number(loanParams.floatingInterestRate) || 0);
-            return { downPaymentPercent, loanTermYears, months, fixedTermMonths, fixedInterestRate, floatingInterestRate };
+            return {
+              loanInputMode,
+              requestedLoanAmount,
+              downPaymentPercent,
+              loanTermYears,
+              months,
+              fixedTermMonths,
+              fixedInterestRate,
+              floatingInterestRate
+            };
           }, [
+            loanParams.loanInputMode,
+            loanParams.loanAmount,
             loanParams.downPaymentPercent,
             loanParams.loanTermYears,
             loanParams.fixedTermMonths,
@@ -915,6 +934,8 @@ const normalizePhoneForZalo = (phone) => {
             if (!calculations) return null;
 
             const {
+              loanInputMode,
+              requestedLoanAmount,
               downPaymentPercent,
               months,
               fixedTermMonths,
@@ -922,7 +943,13 @@ const normalizePhoneForZalo = (phone) => {
               floatingInterestRate
             } = normalizedLoanParams;
 
-            const loanAmount = Math.max(0, calculations.price * (1 - downPaymentPercent / 100));
+            const maxLoanAmount = Math.max(0, calculations.price);
+            const percentBasedLoanAmount = maxLoanAmount * (1 - downPaymentPercent / 100);
+            const loanAmount = loanInputMode === 'amount'
+              ? Math.min(maxLoanAmount, Math.max(0, requestedLoanAmount))
+              : Math.min(maxLoanAmount, Math.max(0, percentBasedLoanAmount));
+            const loanPercent = maxLoanAmount > 0 ? loanAmount / maxLoanAmount * 100 : 0;
+            const effectiveDownPaymentPercent = Math.max(0, 100 - loanPercent);
             const upfrontPayment = Math.max(0, calculations.finalAmount - loanAmount);
             const monthlyPrincipal = months > 0 ? loanAmount / months : 0;
             const schedule = [];
@@ -961,7 +988,13 @@ const normalizePhoneForZalo = (phone) => {
             const averageMonthlyPayment = months > 0 ? totalBankPayment / months : 0;
 
             return {
+              loanInputMode,
+              requestedLoanAmount,
+              maxLoanAmount,
               loanAmount,
+              loanPercent,
+              effectiveDownPaymentPercent,
+              loanAmountWasClamped: loanInputMode === 'amount' && requestedLoanAmount > maxLoanAmount,
               upfrontPayment,
               monthlyPrincipal,
               months,
@@ -983,6 +1016,8 @@ const normalizePhoneForZalo = (phone) => {
           }, [
             calculations?.price,
             calculations?.finalAmount,
+            normalizedLoanParams.loanInputMode,
+            normalizedLoanParams.requestedLoanAmount,
             normalizedLoanParams.downPaymentPercent,
             normalizedLoanParams.months,
             normalizedLoanParams.fixedTermMonths,
@@ -995,6 +1030,37 @@ const normalizePhoneForZalo = (phone) => {
             setLoanParams(current => ({
               ...current,
               [key]: Number.isFinite(value) ? value : 0
+            }));
+          };
+
+          const updateLoanAmount = rawValue => {
+            const isEmpty = String(rawValue ?? '').trim() === '';
+            setLoanParams(current => ({
+              ...current,
+              loanInputMode: 'amount',
+              loanAmount: isEmpty ? '' : parseMoney(rawValue)
+            }));
+          };
+
+          const normalizeLoanAmountField = () => {
+            if (!calculations) return;
+            const enteredAmount = parseMoney(loanParams.loanAmount);
+            const maximum = Math.max(0, calculations.price);
+            const normalizedAmount = Math.min(maximum, enteredAmount);
+            setLoanParams(current => ({
+              ...current,
+              loanInputMode: 'amount',
+              loanAmount: normalizedAmount
+            }));
+            if (enteredAmount > maximum) showToast(`Số tiền vay tối đa theo giá xe là ${formatVND(maximum)}.`);
+          };
+
+          const updateDownPaymentPercent = rawValue => {
+            const value = Math.min(100, Math.max(0, Number(rawValue) || 0));
+            setLoanParams(current => ({
+              ...current,
+              loanInputMode: 'percent',
+              downPaymentPercent: value
             }));
           };
 
@@ -1295,7 +1361,11 @@ const normalizePhoneForZalo = (phone) => {
               ['LỊCH TRẢ NỢ DƯ NỢ GIẢM DẦN'],
               ['Khách hàng', customerName || 'Khách hàng'],
               ['Dòng xe', car?.name || ''],
+              ['Cách xác định khoản vay', loanCalculations.loanInputMode === 'amount' ? 'Nhập số tiền vay chính xác' : 'Tính theo tỷ lệ trả trước'],
               ['Số tiền vay', Math.round(loanCalculations.loanAmount)],
+              ['Tỷ lệ vay trên giá xe', `${loanCalculations.loanPercent.toFixed(2)}%`],
+              ['Tỷ lệ vốn tự có', `${loanCalculations.effectiveDownPaymentPercent.toFixed(2)}%`],
+              ['Vốn cần chuẩn bị và chi phí lăn bánh', Math.round(loanCalculations.upfrontPayment)],
               ['Thời gian vay', `${loanCalculations.months} tháng`],
               ['Thời gian ưu đãi', `${loanCalculations.fixedTermMonths} tháng`],
               ['Lãi suất ưu đãi', `${normalizedLoanParams.fixedInterestRate}%/năm`],
@@ -1673,7 +1743,7 @@ const normalizePhoneForZalo = (phone) => {
                 ctx.strokeStyle = '#31548b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(690, summaryY + 25); ctx.lineTo(690, summaryY + 110); ctx.stroke();
                 drawText(ctx, 'TRẢ TRƯỚC DỰ KIẾN', 1000, summaryY + 46, { size: 17, weight: 700, color: '#bfdbfe', align: 'right' });
                 drawText(ctx, formatVND(loanCalculations.upfrontPayment), 1000, summaryY + 88, { size: 28, weight: 900, color: '#ffffff', align: 'right', maxWidth: 285 });
-                drawText(ctx, `Tỷ lệ ${loanParams.downPaymentPercent}%`, 1000, summaryY + 113, { size: 16, weight: 600, color: '#bfdbfe', align: 'right' });
+                drawText(ctx, `Vay ${formatVND(loanCalculations.loanAmount)} · ${loanCalculations.loanPercent.toFixed(1)}%`, 1000, summaryY + 113, { size: 15, weight: 600, color: '#bfdbfe', align: 'right', maxWidth: 285 });
               }
 
               // Footer
@@ -1980,6 +2050,9 @@ const normalizePhoneForZalo = (phone) => {
             const lastPreferredMonth = loanCalculations.lastPreferredMonth;
             const firstFloatingMonth = loanCalculations.firstFloatingMonth;
             const finalMonth = loanCalculations.finalMonth;
+            const loanAmountInputValue = normalizedLoanParams.loanInputMode === 'amount'
+              ? (loanParams.loanAmount === '' ? '' : formatNumber(loanParams.loanAmount))
+              : formatNumber(Math.round(loanCalculations.loanAmount));
 
             const PaymentCard = ({ title, item, tone = 'blue', note = '' }) => {
               if (!item) return null;
@@ -2019,12 +2092,48 @@ const normalizePhoneForZalo = (phone) => {
                 </div>
 
                 <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <label className="block text-sm font-black text-blue-950">Số tiền khách muốn vay</label>
+                        <p className="text-[10px] text-blue-700 mt-0.5">Nhập chính xác số tiền để tránh khoản vay bị lẻ khi chọn theo phần trăm.</p>
+                      </div>
+                      <span className={`shrink-0 px-2 py-1 rounded-full text-[9px] font-black uppercase ${normalizedLoanParams.loanInputMode === 'amount' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 border border-blue-200'}`}>
+                        {normalizedLoanParams.loanInputMode === 'amount' ? 'Đang ưu tiên số tiền' : 'Đang tính theo %'}
+                      </span>
+                    </div>
+                    <div className="flex items-center bg-white border-2 border-blue-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-400">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={loanAmountInputValue}
+                        onChange={(e) => updateLoanAmount(e.target.value)}
+                        onBlur={normalizeLoanAmountField}
+                        placeholder="Ví dụ: 350.000.000"
+                        className="w-full px-3 py-3 outline-none text-lg font-black text-blue-900 bg-transparent"
+                      />
+                      <span className="px-3 py-3 bg-blue-100 text-blue-700 font-black border-l border-blue-200">VNĐ</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2 text-[11px]">
+                      <div className="rounded-lg bg-white border border-blue-100 px-2.5 py-2">
+                        <span className="text-gray-500 block">Tỷ lệ vay tương đương</span>
+                        <b className="text-blue-700">{loanCalculations.loanPercent.toFixed(2)}% giá xe</b>
+                      </div>
+                      <div className="rounded-lg bg-white border border-blue-100 px-2.5 py-2">
+                        <span className="text-gray-500 block">Tỷ lệ vốn tự có</span>
+                        <b className="text-blue-700">{loanCalculations.effectiveDownPaymentPercent.toFixed(2)}%</b>
+                      </div>
+                    </div>
+                    {loanCalculations.loanAmountWasClamped && <p className="text-[10px] text-red-600 font-semibold mt-2">Số tiền nhập vượt giá xe và đang được giới hạn ở {formatVND(loanCalculations.maxLoanAmount)}.</p>}
+                  </div>
+
                   <div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm font-semibold text-gray-700">Tỷ lệ trả trước</span>
-                      <span className="text-sm font-bold text-blue-600">{normalizedLoanParams.downPaymentPercent}%</span>
+                      <span className="text-sm font-semibold text-gray-700">Điều chỉnh nhanh theo tỷ lệ trả trước</span>
+                      <span className="text-sm font-bold text-blue-600">{loanCalculations.effectiveDownPaymentPercent.toFixed(1)}%</span>
                     </div>
-                    <input type="range" min="15" max="80" step="5" value={normalizedLoanParams.downPaymentPercent} onChange={(e) => updateLoanParam('downPaymentPercent', e.target.value)} className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
+                    <input type="range" min="0" max="100" step="1" value={loanCalculations.effectiveDownPaymentPercent} onChange={(e) => updateDownPaymentPercent(e.target.value)} className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
+                    <p className="text-[10px] text-gray-500 mt-1">Khi kéo thanh này, ứng dụng chuyển sang tính theo tỷ lệ. Chỉ cần nhập lại số tiền phía trên để ưu tiên khoản vay chính xác.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -2084,7 +2193,7 @@ const normalizePhoneForZalo = (phone) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-blue-900">Trả trước + chi phí lăn bánh</p>
+                    <p className="text-xs font-semibold text-blue-900">Vốn khách cần chuẩn bị + chi phí lăn bánh</p>
                     <p className="text-xl font-black text-blue-700 mt-1">{formatVND(loanCalculations.upfrontPayment)}</p>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
@@ -2572,11 +2681,11 @@ const normalizePhoneForZalo = (phone) => {
                       <span className="font-black text-3xl text-yellow-400 drop-shadow-md">{formatVND(calculations.finalAmount)}</span>
                   </div>
 
-                  {loanCalculations && loanParams.downPaymentPercent < 100 && (
+                  {loanCalculations && loanCalculations.loanAmount > 0 && (
                     <div className="border-l-4 border-yellow-400 bg-yellow-50/50 p-4 mb-8 rounded-r-lg">
-                        <p className="text-slate-700 mb-1">Dự kiến trả trước khi mua trả góp <span className="font-bold text-sm">({loanParams.downPaymentPercent}% giá xe + Chi phí lăn bánh)</span>:</p>
+                        <p className="text-slate-700 mb-1">Dự kiến vốn khách cần chuẩn bị <span className="font-bold text-sm">(Vay {formatVND(loanCalculations.loanAmount)} · {loanCalculations.loanPercent.toFixed(2)}% giá xe)</span>:</p>
                         <p className="font-black text-2xl text-yellow-600 mb-1">{formatVND(loanCalculations.upfrontPayment)}</p>
-                        <p className="text-xs text-slate-500 italic">Khoản trả trước có thể thay đổi tùy thuộc vào tỷ lệ xét duyệt của ngân hàng.</p>
+                        <p className="text-xs text-slate-500 italic">Bao gồm phần giá xe không vay và các chi phí lăn bánh. Khoản vay thực tế phụ thuộc phê duyệt của ngân hàng.</p>
                     </div>
                   )}
 
@@ -2609,7 +2718,7 @@ const normalizePhoneForZalo = (phone) => {
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.2</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.3</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
