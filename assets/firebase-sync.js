@@ -112,12 +112,13 @@
     settings: firestore.doc(`users/${uid}/settings/main`),
     cars: firestore.collection(`users/${uid}/cars`),
     promotions: firestore.collection(`users/${uid}/promotions`),
+    salesPolicies: firestore.collection(`users/${uid}/salesPolicies`),
     quotations: firestore.collection(`users/${uid}/quotations`),
     legacy: firestore.doc(`users/${uid}/appData/current`)
   });
 
   const api = {
-    version: '2.0.0',
+    version: '2.6.0',
     ready: initialize,
     retry: initialize,
     getState: () => ({ ...state }),
@@ -139,26 +140,28 @@
     async getWorkspace() {
       const { user, db: firestore } = await requireUser();
       const refs = getWorkspaceRefs(firestore, user.uid);
-      const [settingsSnap, carsSnap, promosSnap, quotesSnap, legacySnap] = await Promise.all([
-        refs.settings.get(), refs.cars.get(), refs.promotions.get(), refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).get(), refs.legacy.get()
+      const [settingsSnap, carsSnap, promosSnap, policiesSnap, quotesSnap, legacySnap] = await Promise.all([
+        refs.settings.get(), refs.cars.get(), refs.promotions.get(), refs.salesPolicies.get(), refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).get(), refs.legacy.get()
       ]);
       return {
         settings: settingsSnap.exists ? settingsSnap.data() : null,
         cars: carsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         promotions: promosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        salesPolicies: policiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         quotations: quotesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         legacy: legacySnap.exists ? legacySnap.data()?.data || null : null,
-        empty: !settingsSnap.exists && carsSnap.empty && promosSnap.empty && quotesSnap.empty && !legacySnap.exists
+        empty: !settingsSnap.exists && carsSnap.empty && promosSnap.empty && policiesSnap.empty && quotesSnap.empty && !legacySnap.exists
       };
     },
 
-    async bootstrapWorkspace({ settings, cars, promotions, quotations = [] }) {
+    async bootstrapWorkspace({ settings, cars, promotions, salesPolicies = [], quotations = [] }) {
       const { user, db: firestore } = await requireUser();
       const refs = getWorkspaceRefs(firestore, user.uid);
       const batch = firestore.batch();
       batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 4 }, { merge: true });
       (cars || []).forEach(car => batch.set(refs.cars.doc(String(car.id)), { ...car, id: String(car.id), ...serverMeta(user) }, { merge: true }));
       (promotions || []).forEach(promo => batch.set(refs.promotions.doc(String(promo.id)), { ...promo, id: String(promo.id), ...serverMeta(user) }, { merge: true }));
+      (salesPolicies || []).forEach(policy => batch.set(refs.salesPolicies.doc(String(policy.id)), { ...policy, id: String(policy.id), ...serverMeta(user) }, { merge: true }));
       (quotations || []).forEach(quote => batch.set(refs.quotations.doc(String(quote.id)), { ...quote, id: String(quote.id), ...serverMeta(user) }, { merge: true }));
       await batch.commit();
       return { updatedAtMs: Date.now() };
@@ -190,6 +193,15 @@
       const { user, db: firestore } = await requireUser();
       await getWorkspaceRefs(firestore, user.uid).promotions.doc(String(id)).delete();
     },
+    async saveSalesPolicy(policy) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).salesPolicies.doc(String(policy.id)).set({ ...policy, id: String(policy.id), ...serverMeta(user) }, { merge: true });
+      return { updatedAtMs: Date.now() };
+    },
+    async deleteSalesPolicy(id) {
+      const { user, db: firestore } = await requireUser();
+      await getWorkspaceRefs(firestore, user.uid).salesPolicies.doc(String(id)).delete();
+    },
     async saveQuotation(quotation) {
       const { user, db: firestore } = await requireUser();
       await getWorkspaceRefs(firestore, user.uid).quotations.doc(String(quotation.id)).set({ ...quotation, id: String(quotation.id), ...serverMeta(user) }, { merge: true });
@@ -213,6 +225,7 @@
         refs.settings.onSnapshot({ includeMetadataChanges: true }, snap => callback({ type: 'settings', ...normalizeSnapshot(snap) }), onError),
         refs.cars.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('cars', snap), onError),
         refs.promotions.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('promotions', snap), onError),
+        refs.salesPolicies.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('salesPolicies', snap), onError),
         refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('quotations', snap), onError)
       ];
       return () => unsubscribers.forEach(unsubscribe => unsubscribe?.());

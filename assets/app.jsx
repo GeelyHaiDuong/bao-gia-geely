@@ -131,7 +131,102 @@ const { useState, useMemo, useEffect, useRef } = React;
 
         const PROMOTION_TYPES = {
           cash: 'Giảm tiền mặt', registration: 'Hỗ trợ trước bạ', gift: 'Quà tặng',
-          accessory: 'Phụ kiện', insurance: 'Bảo hiểm', maintenance: 'Bảo dưỡng', service: 'Dịch vụ'
+          accessory: 'Phụ kiện', insurance: 'Bảo hiểm', maintenance: 'Bảo dưỡng', service: 'Cứu hộ / Dịch vụ',
+          charger: 'Sạc / Wallbox', loan: 'Hỗ trợ vay', other: 'Khác'
+        };
+
+        const DEFAULT_SALES_POLICIES = [];
+        const POLICY_STATUS_LABELS = {
+          active: 'Đang áp dụng', upcoming: 'Sắp áp dụng', expired: 'Hết hiệu lực', disabled: 'Tạm tắt'
+        };
+
+        const toLocalIsoDate = (date = new Date()) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const monthLabelFromIso = iso => {
+          const match = String(iso || '').match(/^(\d{4})-(\d{2})/);
+          return match ? `${match[2]}/${match[1]}` : '';
+        };
+
+        const monthBounds = monthKey => {
+          const match = String(monthKey || '').match(/^(\d{4})-(\d{2})$/);
+          if (!match) return { start: '', end: '' };
+          const year = Number(match[1]);
+          const month = Number(match[2]);
+          const lastDay = new Date(year, month, 0).getDate();
+          return { start: `${match[1]}-${match[2]}-01`, end: `${match[1]}-${match[2]}-${String(lastDay).padStart(2, '0')}` };
+        };
+
+        const shiftIsoMonth = (iso, amount = 1) => {
+          const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (!match) return iso || '';
+          const year = Number(match[1]);
+          const monthIndex = Number(match[2]) - 1;
+          const day = Number(match[3]);
+          const targetFirst = new Date(year, monthIndex + amount, 1);
+          const maxDay = new Date(targetFirst.getFullYear(), targetFirst.getMonth() + 1, 0).getDate();
+          const target = new Date(targetFirst.getFullYear(), targetFirst.getMonth(), Math.min(day, maxDay));
+          return toLocalIsoDate(target);
+        };
+
+        const policyBenefitKey = (policyId, benefitId) => `${policyId}::${benefitId}`;
+
+        const normalizePolicyBenefit = (benefit, index = 0) => {
+          const type = PROMOTION_TYPES[benefit?.type] ? benefit.type : 'gift';
+          const required = Boolean(benefit?.required);
+          return {
+            id: String(benefit?.id || `benefit_${Date.now()}_${index}`),
+            type,
+            name: String(benefit?.name || ''),
+            value: parseMoney(benefit?.value),
+            deductFromPrice: benefit?.deductFromPrice !== undefined ? Boolean(benefit.deductFromPrice) : type === 'cash',
+            defaultSelected: required || benefit?.defaultSelected !== false,
+            required,
+            choiceGroup: String(benefit?.choiceGroup || '').trim()
+          };
+        };
+
+        const normalizeSalesPolicy = policy => {
+          const currentMonth = toLocalIsoDate().slice(0, 7);
+          const bounds = monthBounds(currentMonth);
+          return {
+            id: String(policy?.id || `policy_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
+            name: String(policy?.name || `Chính sách bán hàng tháng ${monthLabelFromIso(bounds.start)}`),
+            startDate: String(policy?.startDate || bounds.start),
+            endDate: String(policy?.endDate || bounds.end),
+            enabled: policy?.enabled !== false,
+            note: String(policy?.note || ''),
+            carIds: Array.from(new Set((Array.isArray(policy?.carIds) ? policy.carIds : []).map(String))),
+            benefits: (Array.isArray(policy?.benefits) ? policy.benefits : []).map(normalizePolicyBenefit)
+          };
+        };
+
+        const createEmptySalesPolicy = () => {
+          const monthKey = toLocalIsoDate().slice(0, 7);
+          const bounds = monthBounds(monthKey);
+          return normalizeSalesPolicy({
+            id: '', name: `Chính sách bán hàng tháng ${monthLabelFromIso(bounds.start)}`,
+            startDate: bounds.start, endDate: bounds.end, enabled: true, carIds: [], benefits: [], note: ''
+          });
+        };
+
+        const getSalesPolicyStatus = (policy, dateIso = toLocalIsoDate()) => {
+          if (!policy?.enabled) return 'disabled';
+          if (policy.startDate && dateIso < policy.startDate) return 'upcoming';
+          if (policy.endDate && dateIso > policy.endDate) return 'expired';
+          return 'active';
+        };
+
+        const policyIntersectsMonth = (policy, monthKey) => {
+          const bounds = monthBounds(monthKey);
+          if (!bounds.start || !bounds.end) return true;
+          const start = policy?.startDate || '0000-01-01';
+          const end = policy?.endDate || '9999-12-31';
+          return start <= bounds.end && end >= bounds.start;
         };
         const DEFAULT_CAR_IMAGE_PATHS = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.imagePath]));
         const DEFAULT_CAR_ENGINE_TYPES = Object.fromEntries(DEFAULT_CAR_MODELS.map(item => [item.id, item.engineType]));
@@ -614,6 +709,7 @@ const normalizePhoneForZalo = (phone) => {
         function GeelyQuotationApp() {
           const [cars, setCars] = useState(() => (getSavedData('geely_cars_v8', DEFAULT_CAR_MODELS) || []).map(normalizeCar));
           const [promotions, setPromotions] = useState(() => (getSavedData('geely_promotions_v2', DEFAULT_PROMOTIONS) || []).map(normalizePromotion));
+          const [salesPolicies, setSalesPolicies] = useState(() => (getSavedData('geely_sales_policies_v1', DEFAULT_SALES_POLICIES) || []).map(normalizeSalesPolicy));
           const [salesInfo, setSalesInfo] = useState(() => getSavedData('geely_sales_info', { name: '', phone: '' }));
           const [serviceFeeAmount, setServiceFeeAmount] = useState(() => parseMoney(getSavedData('geely_service_fee', 2500000))); 
           const [physicalInsuranceRate, setPhysicalInsuranceRate] = useState(() => Number(getSavedData('geely_phys_ins_rate', 1.2)) || 0);
@@ -648,9 +744,11 @@ const normalizePhoneForZalo = (phone) => {
           const settingsHashRef = useRef('');
           const cloudCarsHashRef = useRef('');
           const cloudPromosHashRef = useRef('');
+          const cloudPoliciesHashRef = useRef('');
 
           useEffect(() => { saveData('geely_cars_v8', cars.map(({ image, ...car }) => car)); }, [cars]);
           useEffect(() => { saveData('geely_promotions_v2', promotions); }, [promotions]);
+          useEffect(() => { saveData('geely_sales_policies_v1', salesPolicies); }, [salesPolicies]);
           useEffect(() => { saveData('geely_sales_info', salesInfo); }, [salesInfo]);
           useEffect(() => { saveData('geely_service_fee', serviceFeeAmount); }, [serviceFeeAmount]);
           useEffect(() => { saveData('geely_phys_ins_rate', physicalInsuranceRate); }, [physicalInsuranceRate]);
@@ -686,9 +784,9 @@ const normalizePhoneForZalo = (phone) => {
 
           useEffect(() => {
             latestDataRef.current = {
-              cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations
+              cars, promotions, salesPolicies, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations
             };
-          }, [cars, promotions, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations]);
+          }, [cars, promotions, salesPolicies, salesInfo, serviceFeeAmount, physicalInsuranceRate, registrationFees, quotations]);
 
           const [customerName, setCustomerName] = useState('');
           const [customerPhone, setCustomerPhone] = useState('');
@@ -698,6 +796,8 @@ const normalizePhoneForZalo = (phone) => {
           const [selectedCarId, setSelectedCarId] = useState(cars[0]?.id || '');
           const [selectedLocationId, setSelectedLocationId] = useState(registrationFees.locations[0]?.id || '');
           const [selectedPromoIds, setSelectedPromoIds] = useState([]); 
+          const [selectedPolicyBenefitIds, setSelectedPolicyBenefitIds] = useState([]);
+          const [policySnapshotOverride, setPolicySnapshotOverride] = useState(null);
           const [discount, setDiscount] = useState(''); 
           const [includePhysicalInsurance, setIncludePhysicalInsurance] = useState(true);
           const [includeServiceFee, setIncludeServiceFee] = useState(true);
@@ -731,6 +831,10 @@ const normalizePhoneForZalo = (phone) => {
           const [newPromoValue, setNewPromoValue] = useState('');
           const [newPromoType, setNewPromoType] = useState('gift');
           const [newPromoDeduct, setNewPromoDeduct] = useState(false);
+
+          const [editingPolicyId, setEditingPolicyId] = useState(null);
+          const [policyDraft, setPolicyDraft] = useState(() => createEmptySalesPolicy());
+          const [policyMonthFilter, setPolicyMonthFilter] = useState(() => toLocalIsoDate().slice(0, 7));
 
           const [editingLocationId, setEditingLocationId] = useState(null);
           const [newLocationName, setNewLocationName] = useState('');
@@ -835,6 +939,8 @@ const normalizePhoneForZalo = (phone) => {
 
           const handleCarSelection = carId => {
             const nextCar = cars.find(item => item.id === carId);
+            setPolicySnapshotOverride(null);
+            setSelectedPolicyBenefitIds([]);
             setSelectedCarId(carId);
             const nextColor = nextCar?.colors?.find(color => color.id === nextCar.defaultColorId) || nextCar?.colors?.[0];
             setSelectedColorId(nextColor?.id || (carImageMap[carId] ? '__local__' : ''));
@@ -857,6 +963,89 @@ const normalizePhoneForZalo = (phone) => {
               setSelectedLocationId(registrationFees.locations[0].id);
             }
           }, [registrationFees.locations, selectedLocationId]);
+
+          const policyTodayIso = toLocalIsoDate();
+          const applicableSalesPolicies = useMemo(() => salesPolicies
+            .map(normalizeSalesPolicy)
+            .filter(policy => getSalesPolicyStatus(policy, policyTodayIso) === 'active' && policy.carIds.includes(selectedCarId))
+            .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))), [salesPolicies, selectedCarId, policyTodayIso]);
+
+          const livePolicyBenefitEntries = useMemo(() => applicableSalesPolicies.flatMap(policy =>
+            policy.benefits.map(benefit => ({
+              ...normalizePolicyBenefit(benefit),
+              policyId: policy.id,
+              policyName: policy.name,
+              policyStartDate: policy.startDate,
+              policyEndDate: policy.endDate,
+              key: policyBenefitKey(policy.id, benefit.id)
+            }))
+          ), [applicableSalesPolicies]);
+
+          const livePolicySignature = useMemo(() => JSON.stringify(applicableSalesPolicies.map(policy => ({
+            id: policy.id, startDate: policy.startDate, endDate: policy.endDate,
+            benefits: policy.benefits.map(benefit => ({ id: benefit.id, required: benefit.required, defaultSelected: benefit.defaultSelected, choiceGroup: benefit.choiceGroup }))
+          }))), [applicableSalesPolicies]);
+
+          useEffect(() => {
+            if (policySnapshotOverride) return;
+            const nextIds = [];
+            const grouped = new Set();
+            livePolicyBenefitEntries.forEach(benefit => {
+              if (!(benefit.required || benefit.defaultSelected)) return;
+              const groupKey = benefit.choiceGroup ? `${benefit.policyId}::${benefit.choiceGroup}` : '';
+              if (groupKey && grouped.has(groupKey)) return;
+              if (groupKey) grouped.add(groupKey);
+              nextIds.push(benefit.key);
+            });
+            setSelectedPolicyBenefitIds(nextIds);
+          }, [selectedCarId, livePolicySignature, Boolean(policySnapshotOverride)]);
+
+          const selectedPolicyBenefits = useMemo(() => {
+            if (policySnapshotOverride?.selectedBenefits) {
+              return policySnapshotOverride.selectedBenefits.map((benefit, index) => ({
+                ...normalizePolicyBenefit(benefit, index),
+                policyId: String(benefit.policyId || ''), policyName: String(benefit.policyName || ''),
+                policyStartDate: String(benefit.policyStartDate || ''), policyEndDate: String(benefit.policyEndDate || ''),
+                key: String(benefit.key || policyBenefitKey(benefit.policyId || 'snapshot', benefit.id || index))
+              }));
+            }
+            return livePolicyBenefitEntries.filter(benefit => selectedPolicyBenefitIds.includes(benefit.key));
+          }, [policySnapshotOverride, livePolicyBenefitEntries, selectedPolicyBenefitIds]);
+
+          const effectivePolicyNames = useMemo(() => {
+            if (policySnapshotOverride?.policies?.length) return policySnapshotOverride.policies.map(item => item.name).filter(Boolean);
+            return applicableSalesPolicies.map(item => item.name);
+          }, [policySnapshotOverride, applicableSalesPolicies]);
+
+          const handlePolicyBenefitToggle = (benefitKey, checked) => {
+            if (policySnapshotOverride) return showToast('Báo giá đang dùng chính sách đã lưu trong lịch sử. Hãy chọn “Dùng chính sách hiện tại” để thay đổi.');
+            const benefit = livePolicyBenefitEntries.find(item => item.key === benefitKey);
+            if (!benefit) return;
+            if (!checked && benefit.required) return showToast('Quyền lợi này là bắt buộc trong chính sách.');
+            if (checked && benefit.choiceGroup) {
+              const requiredSibling = livePolicyBenefitEntries.find(item => item.policyId === benefit.policyId && item.choiceGroup === benefit.choiceGroup && item.key !== benefitKey && item.required);
+              if (requiredSibling) return showToast(`Nhóm này có quyền lợi bắt buộc: ${requiredSibling.name}.`);
+            }
+            setSelectedPolicyBenefitIds(current => {
+              let next = current.filter(key => key !== benefitKey);
+              if (checked) {
+                if (benefit.choiceGroup) {
+                  const siblingKeys = livePolicyBenefitEntries
+                    .filter(item => item.policyId === benefit.policyId && item.choiceGroup === benefit.choiceGroup && item.key !== benefitKey)
+                    .map(item => item.key);
+                  next = next.filter(key => !siblingKeys.includes(key));
+                }
+                next.push(benefitKey);
+              }
+              return Array.from(new Set(next));
+            });
+          };
+
+          const handleUseCurrentSalesPolicies = () => {
+            setPolicySnapshotOverride(null);
+            setSelectedPolicyBenefitIds([]);
+            showToast('Đã chuyển sang chính sách bán hàng đang áp dụng hiện tại.');
+          };
 
           const calculations = useMemo(() => {
             if (!car || !location) return null;
@@ -884,11 +1073,16 @@ const normalizePhoneForZalo = (phone) => {
             const serviceFee = includeServiceFee ? parseMoney(serviceFeeAmount) : 0;
             
             const selectedPromotions = selectedPromoIds.map(id => promotions.find(promo => promo.id === id)).filter(Boolean);
-            const promoValue = selectedPromotions
+            const manualPromoValue = selectedPromotions
               .filter(promo => promo.deductFromPrice)
               .reduce((sum, promo) => sum + parseMoney(promo.value), 0);
             const giftPromotions = selectedPromotions.filter(promo => !promo.deductFromPrice);
+            const policyDiscountValue = selectedPolicyBenefits
+              .filter(benefit => benefit.deductFromPrice)
+              .reduce((sum, benefit) => sum + parseMoney(benefit.value), 0);
+            const policyGiftBenefits = selectedPolicyBenefits.filter(benefit => !benefit.deductFromPrice);
             const manualDiscount = parseMoney(discount);
+            const promoValue = manualPromoValue + policyDiscountValue;
             const discountAmount = promoValue + manualDiscount;
 
             const totalRollingCost = taxFee + plateFee + inspectionFee + roadFee + civilInsurance + physicalInsuranceFee + serviceFee;
@@ -897,9 +1091,11 @@ const normalizePhoneForZalo = (phone) => {
             return {
               price, taxRate, taxFee, plateFee, inspectionFee, roadFeePerMonth, roadFee, civilInsurance,
               engineType, effectiveDate: location.effectiveDate || registrationFees.effectiveDate,
-              physicalInsuranceFee, serviceFee, discountAmount, promoValue, giftPromotions, selectedPromotions, totalRollingCost, finalAmount, roadFeeYears
+              physicalInsuranceFee, serviceFee, discountAmount, promoValue, manualPromoValue, policyDiscountValue,
+              giftPromotions, policyGiftBenefits, selectedPromotions, selectedPolicyBenefits,
+              effectivePolicyNames, totalRollingCost, finalAmount, roadFeeYears
             };
-          }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
+          }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, selectedPolicyBenefits, effectivePolicyNames, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
 
           const normalizedLoanParams = useMemo(() => {
             const loanInputMode = loanParams.loanInputMode === 'amount' ? 'amount' : 'percent';
@@ -1109,6 +1305,28 @@ const normalizePhoneForZalo = (phone) => {
             id: String(item.id), name: String(item.name || ''), value: parseMoney(item.value),
             type: String(item.type || 'gift'), deductFromPrice: Boolean(item.deductFromPrice)
           });
+          const cloudSalesPolicy = item => {
+            const policy = normalizeSalesPolicy(item);
+            return {
+              id: policy.id,
+              name: policy.name,
+              startDate: policy.startDate,
+              endDate: policy.endDate,
+              enabled: policy.enabled,
+              note: policy.note,
+              carIds: policy.carIds,
+              benefits: policy.benefits.map(benefit => ({
+                id: benefit.id,
+                type: benefit.type,
+                name: benefit.name,
+                value: parseMoney(benefit.value),
+                deductFromPrice: Boolean(benefit.deductFromPrice),
+                defaultSelected: Boolean(benefit.defaultSelected),
+                required: Boolean(benefit.required),
+                choiceGroup: String(benefit.choiceGroup || '')
+              }))
+            };
+          };
 
           const applyWorkspace = workspace => {
             if (!workspace) return;
@@ -1130,6 +1348,9 @@ const normalizePhoneForZalo = (phone) => {
             }
             const cloudPromos = workspace.promotions?.length ? workspace.promotions : workspace.legacy?.promotions;
             if (Array.isArray(cloudPromos)) setPromotions(cloudPromos.map(normalizePromotion));
+            if (Array.isArray(workspace.salesPolicies) && (workspace.salesPolicies.length || salesPolicies.length === 0)) {
+              setSalesPolicies(workspace.salesPolicies.map(normalizeSalesPolicy));
+            }
             if (Array.isArray(workspace.quotations)) {
               setQuotations(workspace.quotations);
               workspace.quotations.forEach(item => window.GeelyIDB?.saveQuotation(item).catch(() => {}));
@@ -1172,7 +1393,8 @@ const normalizePhoneForZalo = (phone) => {
             try {
               setSyncStatus({ code: 'working', message: 'Đang đưa dữ liệu lên Firebase...', updatedAtMs: 0 });
               await window.GeelyFirebaseSync.bootstrapWorkspace({
-                settings: settingsPayload(), cars: cars.map(cloudCar), promotions: promotions.map(cloudPromo), quotations
+                settings: settingsPayload(), cars: cars.map(cloudCar), promotions: promotions.map(cloudPromo),
+                salesPolicies: salesPolicies.map(cloudSalesPolicy), quotations
               });
               syncReadyRef.current = true; setSyncInitialized(syncUser.uid);
               setSyncStatus({ code: navigator.onLine ? 'synced' : 'queued', message: 'Đã bật đồng bộ từng mục.', updatedAtMs: Date.now() });
@@ -1194,6 +1416,7 @@ const normalizePhoneForZalo = (phone) => {
               await window.GeelyFirebaseSync.saveSettings(settingsPayload());
               await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
               await Promise.all(promotions.map(item => window.GeelyFirebaseSync.savePromotion(cloudPromo(item))));
+              await Promise.all(salesPolicies.map(item => window.GeelyFirebaseSync.saveSalesPolicy(cloudSalesPolicy(item))));
               setSyncStatus({ code: 'synced', message: 'Đã đồng bộ thủ công.', updatedAtMs: Date.now() });
               showToast('Đồng bộ hoàn tất.');
             } catch (error) { showToast(describeFirebaseError(error)); }
@@ -1247,6 +1470,10 @@ const normalizePhoneForZalo = (phone) => {
                     const next = event.items.map(normalizePromotion);
                     setPromotions(next);
                     cloudPromosHashRef.current = JSON.stringify(next.map(cloudPromo));
+                  } else if (event.type === 'salesPolicies') {
+                    const next = event.items.map(normalizeSalesPolicy);
+                    if (next.length || !(latestDataRef.current.salesPolicies || []).length) setSalesPolicies(next);
+                    cloudPoliciesHashRef.current = JSON.stringify(next.map(cloudSalesPolicy));
                   } else if (event.type === 'quotations') {
                     setQuotations(event.items);
                     event.items.forEach(item => window.GeelyIDB?.saveQuotation(item).catch(() => {}));
@@ -1596,6 +1823,150 @@ const normalizePhoneForZalo = (phone) => {
             if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.deletePromotion(id).catch(() => {});
           };
 
+          const resetSalesPolicyEditor = () => {
+            setEditingPolicyId(null);
+            setPolicyDraft(createEmptySalesPolicy());
+          };
+
+          const startNewSalesPolicyForMonth = monthKey => {
+            const key = /^\d{4}-\d{2}$/.test(String(monthKey || '')) ? monthKey : toLocalIsoDate().slice(0, 7);
+            const bounds = monthBounds(key);
+            setEditingPolicyId(null);
+            setPolicyDraft(normalizeSalesPolicy({
+              id: '', name: `Chính sách bán hàng tháng ${monthLabelFromIso(bounds.start)}`,
+              startDate: bounds.start, endDate: bounds.end, enabled: true, carIds: [], benefits: [], note: ''
+            }));
+            window.setTimeout(() => document.getElementById('sales-policy-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+          };
+
+          const handleStartEditSalesPolicy = policy => {
+            const normalized = normalizeSalesPolicy(policy);
+            setEditingPolicyId(normalized.id);
+            setPolicyDraft({ ...normalized, carIds: [...normalized.carIds], benefits: normalized.benefits.map(item => ({ ...item })) });
+            window.setTimeout(() => document.getElementById('sales-policy-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+          };
+
+          const togglePolicyCar = carId => {
+            setPolicyDraft(current => ({
+              ...current,
+              carIds: current.carIds.includes(carId)
+                ? current.carIds.filter(id => id !== carId)
+                : [...current.carIds, carId]
+            }));
+          };
+
+          const addPolicyBenefit = () => {
+            setPolicyDraft(current => ({
+              ...current,
+              benefits: [...current.benefits, normalizePolicyBenefit({
+                id: `benefit_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+                type: 'gift', name: '', value: 0, deductFromPrice: false,
+                defaultSelected: true, required: false, choiceGroup: ''
+              }, current.benefits.length)]
+            }));
+          };
+
+          const updatePolicyBenefit = (index, field, value) => {
+            setPolicyDraft(current => ({
+              ...current,
+              benefits: current.benefits.map((benefit, benefitIndex) => {
+                if (benefitIndex !== index) return benefit;
+                const next = { ...benefit, [field]: value };
+                if (field === 'type' && value === 'cash') next.deductFromPrice = true;
+                if (field === 'required' && value) next.defaultSelected = true;
+                return next;
+              })
+            }));
+          };
+
+          const removePolicyBenefit = index => {
+            setPolicyDraft(current => ({ ...current, benefits: current.benefits.filter((_, benefitIndex) => benefitIndex !== index) }));
+          };
+
+          const handleSaveSalesPolicy = async () => {
+            const normalized = normalizeSalesPolicy({ ...policyDraft, id: editingPolicyId || `policy_${Date.now()}` });
+            if (!normalized.name.trim()) return showToast('Hãy nhập tên chính sách bán hàng.');
+            if (!normalized.startDate || !normalized.endDate) return showToast('Hãy chọn ngày bắt đầu và ngày kết thúc.');
+            if (normalized.startDate > normalized.endDate) return showToast('Ngày kết thúc phải từ ngày bắt đầu trở đi.');
+            if (!normalized.carIds.length) return showToast('Hãy chọn ít nhất một phiên bản xe áp dụng.');
+            const benefits = normalized.benefits.filter(item => item.name.trim());
+            if (!benefits.length) return showToast('Hãy thêm ít nhất một quyền lợi/chính sách.');
+            const requiredGroups = new Map();
+            benefits.filter(item => item.choiceGroup && item.required).forEach(item => requiredGroups.set(item.choiceGroup, (requiredGroups.get(item.choiceGroup) || 0) + 1));
+            if ([...requiredGroups.values()].some(count => count > 1)) return showToast('Mỗi nhóm “chọn 1” chỉ được có tối đa một quyền lợi bắt buộc.');
+            const policy = { ...normalized, benefits };
+            setSalesPolicies(current => editingPolicyId
+              ? current.map(item => item.id === policy.id ? policy : item)
+              : [policy, ...current]);
+            if (syncUser && syncReadyRef.current) {
+              try { await window.GeelyFirebaseSync.saveSalesPolicy(cloudSalesPolicy(policy)); }
+              catch (error) { showToast('Đã lưu trên máy, nhưng chưa đồng bộ chính sách lên Firebase.'); }
+            }
+            resetSalesPolicyEditor();
+            showToast(editingPolicyId ? 'Đã cập nhật chính sách bán hàng.' : 'Đã thêm chính sách bán hàng.');
+          };
+
+          const handleDeleteSalesPolicy = async id => {
+            if (!window.confirm('Xóa chính sách bán hàng này? Các báo giá đã lưu vẫn giữ snapshot chính sách cũ.')) return;
+            setSalesPolicies(current => current.filter(item => item.id !== id));
+            if (editingPolicyId === id) resetSalesPolicyEditor();
+            if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.deleteSalesPolicy(id).catch(() => {});
+            showToast('Đã xóa chính sách bán hàng.');
+          };
+
+          const handleCloneSalesPolicy = async policy => {
+            const source = normalizeSalesPolicy(policy);
+            const nextStart = shiftIsoMonth(source.startDate, 1);
+            const nextEnd = shiftIsoMonth(source.endDate, 1);
+            const sourceMonthLabel = monthLabelFromIso(source.startDate);
+            const nextMonthLabel = monthLabelFromIso(nextStart);
+            const nextName = sourceMonthLabel && source.name.includes(sourceMonthLabel)
+              ? source.name.replace(sourceMonthLabel, nextMonthLabel)
+              : `${source.name} - ${nextMonthLabel}`;
+            const clone = normalizeSalesPolicy({
+              ...source,
+              id: `policy_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+              name: nextName,
+              startDate: nextStart,
+              endDate: nextEnd,
+              benefits: source.benefits.map((benefit, index) => ({ ...benefit, id: `benefit_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 4)}` }))
+            });
+            setSalesPolicies(current => [clone, ...current]);
+            setPolicyMonthFilter(nextStart.slice(0, 7));
+            if (syncUser && syncReadyRef.current) await window.GeelyFirebaseSync.saveSalesPolicy(cloudSalesPolicy(clone)).catch(() => {});
+            showToast(`Đã nhân bản chính sách sang ${nextMonthLabel}.`);
+          };
+
+          const buildSalesPolicySnapshot = () => {
+            const policies = policySnapshotOverride?.policies?.length
+              ? policySnapshotOverride.policies
+              : applicableSalesPolicies.map(policy => ({
+                  id: policy.id, name: policy.name, startDate: policy.startDate, endDate: policy.endDate, note: policy.note || ''
+                }));
+            const selectedBenefits = selectedPolicyBenefits.map(benefit => ({
+              id: benefit.id,
+              key: benefit.key,
+              policyId: benefit.policyId,
+              policyName: benefit.policyName,
+              policyStartDate: benefit.policyStartDate,
+              policyEndDate: benefit.policyEndDate,
+              type: benefit.type,
+              name: benefit.name,
+              value: parseMoney(benefit.value),
+              deductFromPrice: Boolean(benefit.deductFromPrice),
+              defaultSelected: Boolean(benefit.defaultSelected),
+              required: Boolean(benefit.required),
+              choiceGroup: String(benefit.choiceGroup || '')
+            }));
+            if (!policies.length && !selectedBenefits.length) return null;
+            return {
+              capturedAtMs: policySnapshotOverride?.capturedAtMs || Date.now(),
+              policies: policies.map(item => ({ ...item })),
+              selectedBenefits,
+              totalDeductValue: selectedBenefits.filter(item => item.deductFromPrice).reduce((sum, item) => sum + parseMoney(item.value), 0)
+            };
+          };
+
           const handleExportImage = async () => {
             if (!calculations || !car) return showToast('Chưa có dữ liệu báo giá.');
             setIsExporting(true);
@@ -1712,6 +2083,10 @@ const normalizePhoneForZalo = (phone) => {
 
             try {
               if (document.fonts?.ready) await document.fonts.ready;
+              const policyItems = [
+                ...calculations.effectivePolicyNames.map(name => `Chương trình: ${name}`),
+                ...calculations.selectedPolicyBenefits.map(item => `${PROMOTION_TYPES[item.type] || 'Quyền lợi'}: ${item.name}${item.value > 0 ? ` (${item.deductFromPrice ? '-' : 'giá trị '}${formatVND(item.value)})` : ''}`)
+              ];
               const directItems = calculations.selectedPromotions.filter(item => item.deductFromPrice).map(item => item.name);
               if (parseMoney(discount) > 0) directItems.push(`Giảm tiền mặt bổ sung: ${formatVND(parseMoney(discount))}`);
               const giftItems = calculations.giftPromotions.map(item => `${item.name}${item.value > 0 ? ` (giá trị ${formatVND(item.value)})` : ''}`);
@@ -1725,7 +2100,7 @@ const normalizePhoneForZalo = (phone) => {
               if (includePhysicalInsurance) feeRows.push([`Bảo hiểm vật chất (${physicalInsuranceRate}%)`, formatVND(calculations.physicalInsuranceFee)]);
               if (includeServiceFee) feeRows.push(['Phí dịch vụ đăng ký', formatVND(calculations.serviceFee)]);
 
-              const estimatedHeight = 2250 + (directItems.length + giftItems.length) * 38 + (loanCalculations?.loanAmount > 0 ? 330 : 0);
+              const estimatedHeight = 2250 + (policyItems.length + directItems.length + giftItems.length) * 38 + (loanCalculations?.loanAmount > 0 ? 330 : 0);
               const canvas = document.createElement('canvas');
               canvas.width = 1080;
               canvas.height = Math.max(2350, estimatedHeight);
@@ -1776,11 +2151,14 @@ const normalizePhoneForZalo = (phone) => {
               // Vehicle value section
               y = drawSectionHeader(ctx, '1. CHI TIẾT GIÁ TRỊ XE', y);
               y = drawTableRow(ctx, 'Giá xe niêm yết', formatVND(calculations.price), y);
-              if (calculations.discountAmount > 0) {
-                y = drawTableRow(ctx, 'Giảm giá trực tiếp', `-${formatVND(calculations.discountAmount)}`, y, { fill: '#fff1f2', labelColor: '#be123c', valueColor: '#be123c', bold: true });
-                y = drawBulletBlock(ctx, 'CHI TIẾT GIẢM GIÁ', directItems, y, { fill: '#fff7f7', border: '#fecdd3', headingColor: '#be123c' });
+              if (policyItems.length) {
+                y = drawBulletBlock(ctx, 'CHÍNH SÁCH BÁN HÀNG', policyItems, y, { fill: '#eff6ff', border: '#bfdbfe', headingColor: '#1d4ed8' });
               }
-              if (giftItems.length) y = drawBulletBlock(ctx, 'QUÀ TẶNG & QUYỀN LỢI', giftItems, y, { fill: '#f0fdf4', border: '#bbf7d0', headingColor: '#15803d' });
+              if (calculations.discountAmount > 0) {
+                y = drawTableRow(ctx, 'Tổng giảm giá trực tiếp', `-${formatVND(calculations.discountAmount)}`, y, { fill: '#fff1f2', labelColor: '#be123c', valueColor: '#be123c', bold: true });
+                if (directItems.length) y = drawBulletBlock(ctx, 'ƯU ĐÃI BỔ SUNG / GIẢM THÊM', directItems, y, { fill: '#fff7f7', border: '#fecdd3', headingColor: '#be123c' });
+              }
+              if (giftItems.length) y = drawBulletBlock(ctx, 'QUÀ TẶNG BỔ SUNG', giftItems, y, { fill: '#f0fdf4', border: '#bbf7d0', headingColor: '#15803d' });
               y = drawTableRow(ctx, 'Giá xe dự kiến sau giảm trừ', formatVND(calculations.price - calculations.discountAmount), y, { fill: '#eff6ff', labelColor: '#173a85', valueColor: '#173a85', bold: true, valueSize: 24, minHeight: 68 });
               y += 18;
 
@@ -1912,6 +2290,8 @@ const normalizePhoneForZalo = (phone) => {
                 effectiveDate: calculations.effectiveDate
               } : null,
               selectedPromoIds,
+              selectedPolicyBenefitIds: [...selectedPolicyBenefitIds],
+              salesPolicySnapshot: buildSalesPolicySnapshot(),
               discount: parseMoney(discount), includePhysicalInsurance, includeServiceFee,
               plateColor, roadFeeYears, tndsOption,
               loanParams: { ...loanParams },
@@ -1952,6 +2332,14 @@ const normalizePhoneForZalo = (phone) => {
             const preferredLocationId = record.selectedLocationId;
             setSelectedLocationId(registrationFees.locations.some(item => item.id === preferredLocationId) ? preferredLocationId : (registrationFees.locations[0]?.id || ''));
             setSelectedPromoIds(Array.isArray(record.selectedPromoIds) ? record.selectedPromoIds : []);
+            const storedPolicySnapshot = record.salesPolicySnapshot && typeof record.salesPolicySnapshot === 'object'
+              ? record.salesPolicySnapshot
+              : null;
+            setPolicySnapshotOverride(storedPolicySnapshot);
+            setSelectedPolicyBenefitIds(
+              storedPolicySnapshot?.selectedBenefits?.map(item => String(item.key || policyBenefitKey(item.policyId || 'snapshot', item.id || 'benefit')))
+              || (Array.isArray(record.selectedPolicyBenefitIds) ? record.selectedPolicyBenefitIds : [])
+            );
             setDiscount(record.discount ? formatNumber(record.discount) : '');
             setIncludePhysicalInsurance(record.includePhysicalInsurance !== false);
             setIncludeServiceFee(record.includeServiceFee !== false);
@@ -1974,7 +2362,8 @@ const normalizePhoneForZalo = (phone) => {
           const handleNewQuotation = () => {
             setCurrentQuoteId(createQuoteId());
             setCustomerName(''); setCustomerPhone(''); setCarColor('');
-            setSelectedPromoIds([]); setDiscount(''); setQuoteNotes(''); setQuoteStatus('draft');
+            setSelectedPromoIds([]); setSelectedPolicyBenefitIds([]); setPolicySnapshotOverride(null);
+            setDiscount(''); setQuoteNotes(''); setQuoteStatus('draft');
             setActiveTab('input');
           };
 
@@ -2139,8 +2528,72 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 </div>
               </div>
               
+              <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <label className="block text-sm font-black text-blue-950">📅 Chính sách bán hàng</label>
+                    <p className="text-[11px] text-blue-700 mt-0.5">Tự động áp dụng theo ngày {new Date(`${policyTodayIso}T00:00:00`).toLocaleDateString('vi-VN')} và phiên bản xe đã chọn.</p>
+                  </div>
+                  {policySnapshotOverride && <span className="shrink-0 text-[9px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-800">SNAPSHOT</span>}
+                </div>
+
+                {policySnapshotOverride ? (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-xs font-black text-amber-900">Đang dùng chính sách đã lưu cùng báo giá lịch sử</p>
+                      <p className="text-[11px] text-amber-700 mt-1">Chính sách tháng hiện tại sẽ không tự thay đổi báo giá cũ.</p>
+                      <div className="mt-2 space-y-1">
+                        {(policySnapshotOverride.policies || []).map(policy => <p key={policy.id || policy.name} className="text-xs font-bold text-slate-700">• {policy.name}</p>)}
+                        {(policySnapshotOverride.selectedBenefits || []).map(benefit => (
+                          <div key={benefit.key || benefit.id} className="text-xs text-slate-600 pl-2">✓ {PROMOTION_TYPES[benefit.type] || 'Quyền lợi'}: {benefit.name}{benefit.value > 0 ? ` (${benefit.deductFromPrice ? '-' : 'giá trị '}${formatVND(benefit.value)})` : ''}</div>
+                        ))}
+                      </div>
+                    </div>
+                    <button type="button" onClick={handleUseCurrentSalesPolicies} className="w-full py-2.5 bg-white border-2 border-blue-500 text-blue-700 rounded-lg font-bold text-xs">Dùng chính sách hiện tại</button>
+                  </div>
+                ) : applicableSalesPolicies.length > 0 ? (
+                  <div className="space-y-3">
+                    {applicableSalesPolicies.map(policy => (
+                      <div key={policy.id} className="bg-white border border-blue-100 rounded-xl p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <p className="text-sm font-black text-blue-950">{policy.name}</p>
+                            <p className="text-[10px] text-gray-500">{new Date(`${policy.startDate}T00:00:00`).toLocaleDateString('vi-VN')} → {new Date(`${policy.endDate}T00:00:00`).toLocaleDateString('vi-VN')}</p>
+                          </div>
+                          <span className="text-[9px] font-black px-2 py-1 bg-green-100 text-green-700 rounded-full">ĐANG ÁP DỤNG</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {policy.benefits.map((rawBenefit, benefitIndex) => {
+                            const benefit = normalizePolicyBenefit(rawBenefit, benefitIndex);
+                            const key = policyBenefitKey(policy.id, benefit.id);
+                            const checked = selectedPolicyBenefitIds.includes(key);
+                            return (
+                              <label key={key} className={`flex items-start gap-2.5 p-2 rounded-lg border ${checked ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'} ${benefit.required ? 'cursor-default' : 'cursor-pointer'}`}>
+                                <input type="checkbox" checked={checked} onChange={e => handlePolicyBenefitToggle(key, e.target.checked)} disabled={benefit.required} className="mt-0.5 w-4 h-4 rounded text-green-600" />
+                                <span className="flex-1 min-w-0 text-xs text-gray-800">
+                                  <span className="font-black">{PROMOTION_TYPES[benefit.type] || 'Quyền lợi'}:</span> {benefit.name}
+                                  {benefit.value > 0 && <span className={`ml-1 font-bold ${benefit.deductFromPrice ? 'text-red-600' : 'text-gray-500'}`}>({benefit.deductFromPrice ? '-' : 'Giá trị '}{formatVND(benefit.value)})</span>}
+                                  <span className="flex flex-wrap gap-1 mt-1">
+                                    {benefit.required && <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">BẮT BUỘC</span>}
+                                    {!benefit.required && benefit.defaultSelected && <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">MẶC ĐỊNH</span>}
+                                    {benefit.choiceGroup && <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">CHỌN 1 · {benefit.choiceGroup}</span>}
+                                  </span>
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {policy.note && <p className="text-[10px] italic text-gray-500 mt-2">{policy.note}</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-white border border-dashed border-blue-200 rounded-xl text-xs text-gray-500 text-center">Chưa có chính sách bán hàng đang hiệu lực cho phiên bản xe này.</div>
+                )}
+              </div>
+
               <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Khuyến mãi (Chọn nhiều)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Khuyến mãi bổ sung thủ công (nếu có)</label>
                 {promotions.length > 0 && (
                   <div className="grid grid-cols-1 gap-2 p-3 bg-red-50 border border-red-100 rounded-lg max-h-48 overflow-y-auto">
                     {promotions.map(p => (
@@ -2379,13 +2832,18 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             );
           }
 
+          const visibleSalesPolicies = salesPolicies
+            .map(normalizeSalesPolicy)
+            .filter(policy => policyIntersectsMonth(policy, policyMonthFilter))
+            .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)) || a.name.localeCompare(b.name));
+
           const renderSettings = () => (
             <div className="space-y-4 pb-20">
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <h3 className="font-black text-gray-800">☁️ Đồng Bộ Firebase</h3>
-                    <p className="text-xs text-gray-500 mt-1">Đồng bộ riêng từng xe, khuyến mãi, cài đặt và lịch sử báo giá.</p>
+                    <p className="text-xs text-gray-500 mt-1">Đồng bộ từng xe, chính sách bán hàng, khuyến mãi, cài đặt và lịch sử báo giá.</p>
                   </div>
                   <span className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${
                     ['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
@@ -2670,7 +3128,100 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
               </div>
 
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-3">🎁 Quản Lý Khuyến Mãi</h3>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="font-black text-gray-800">📅 Chính Sách Bán Hàng</h3>
+                    <p className="text-xs text-gray-500 mt-1">Quản lý theo thời gian hiệu lực, áp dụng cho nhiều phiên bản xe và tự động đưa vào báo giá.</p>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-black px-2 py-1 rounded-full bg-blue-100 text-blue-700">{salesPolicies.length} CS</span>
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto] gap-2 mb-3">
+                  <label className="text-xs font-bold text-gray-600">Tháng xem chính sách
+                    <input type="month" value={policyMonthFilter} onChange={e => setPolicyMonthFilter(e.target.value)} className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
+                  </label>
+                  <button type="button" onClick={() => startNewSalesPolicyForMonth(policyMonthFilter)} className="policy-create-button px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg font-bold text-xs">+ Tạo mới</button>
+                </div>
+
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 mb-4">
+                  {visibleSalesPolicies.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-gray-500 bg-gray-50 border border-dashed rounded-xl">Chưa có chính sách trong tháng đã chọn.</div>
+                  ) : visibleSalesPolicies.map(policy => {
+                    const status = getSalesPolicyStatus(policy);
+                    const statusClass = status === 'active' ? 'bg-green-100 text-green-700' : status === 'upcoming' ? 'bg-blue-100 text-blue-700' : status === 'expired' ? 'bg-gray-100 text-gray-600' : 'bg-orange-100 text-orange-700';
+                    const carNames = policy.carIds.map(id => cars.find(carItem => carItem.id === id)?.name).filter(Boolean);
+                    return (
+                      <div key={policy.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5"><p className="font-black text-sm text-slate-900">{policy.name}</p><span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statusClass}`}>{POLICY_STATUS_LABELS[status]}</span></div>
+                            <p className="text-[10px] text-gray-500 mt-1">{new Date(`${policy.startDate}T00:00:00`).toLocaleDateString('vi-VN')} → {new Date(`${policy.endDate}T00:00:00`).toLocaleDateString('vi-VN')}</p>
+                            <p className="text-[10px] text-blue-700 mt-1 line-clamp-2">{carNames.join(' · ') || 'Chưa chọn xe'}</p>
+                            <p className="text-[10px] text-gray-600 mt-1">{policy.benefits.length} quyền lợi · {policy.benefits.filter(item => item.deductFromPrice).reduce((sum,item) => sum + parseMoney(item.value),0) > 0 ? `Giảm tối đa ${formatVND(policy.benefits.filter(item => item.deductFromPrice).reduce((sum,item) => sum + parseMoney(item.value),0))}` : 'Không có khoản giảm trực tiếp'}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5 mt-2">
+                          <button type="button" onClick={() => handleStartEditSalesPolicy(policy)} className="py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-[10px]">Sửa</button>
+                          <button type="button" onClick={() => handleCloneSalesPolicy(policy)} className="py-2 bg-white border border-green-200 text-green-700 rounded-lg font-bold text-[10px]">Nhân bản +1 tháng</button>
+                          <button type="button" onClick={() => handleDeleteSalesPolicy(policy.id)} className="py-2 bg-white border border-red-200 text-red-600 rounded-lg font-bold text-[10px]">Xóa</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div id="sales-policy-editor" className="pt-4 border-t border-gray-200 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="font-black text-blue-950">{editingPolicyId ? 'Chỉnh sửa chính sách' : 'Tạo chính sách mới'}</h4>
+                    {editingPolicyId && <button type="button" onClick={resetSalesPolicyEditor} className="text-xs font-bold text-gray-500">Hủy</button>}
+                  </div>
+                  <input type="text" value={policyDraft.name} onChange={e => setPolicyDraft(current => ({...current, name:e.target.value}))} placeholder="VD: Chính sách bán hàng tháng 08/2026" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-xs font-bold text-gray-600">Từ ngày<input type="date" value={policyDraft.startDate} onChange={e => setPolicyDraft(current => ({...current,startDate:e.target.value}))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" /></label>
+                    <label className="text-xs font-bold text-gray-600">Đến ngày<input type="date" value={policyDraft.endDate} onChange={e => setPolicyDraft(current => ({...current,endDate:e.target.value}))} className="mt-1 w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" /></label>
+                  </div>
+                  <label className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-100 rounded-lg text-xs font-bold text-green-800"><input type="checkbox" checked={policyDraft.enabled} onChange={e => setPolicyDraft(current => ({...current,enabled:e.target.checked}))} className="w-4 h-4"/>Bật chính sách này</label>
+
+                  <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                    <p className="text-xs font-black text-blue-950 mb-2">Áp dụng cho các phiên bản</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto">
+                      {cars.map(carItem => <label key={carItem.id} className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer ${policyDraft.carIds.includes(carItem.id) ? 'bg-white border-blue-300 text-blue-900' : 'bg-blue-50 border-blue-100 text-gray-600'}`}><input type="checkbox" checked={policyDraft.carIds.includes(carItem.id)} onChange={() => togglePolicyCar(carItem.id)} className="w-4 h-4"/><span className="font-semibold">{carItem.name}</span></label>)}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div><p className="text-xs font-black text-amber-950">Quyền lợi / ưu đãi</p><p className="text-[10px] text-amber-700">Cùng một “Nhóm chọn 1” sẽ loại trừ lẫn nhau khi báo giá.</p></div>
+                      <button type="button" onClick={addPolicyBenefit} className="px-3 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold">+ Quyền lợi</button>
+                    </div>
+                    {policyDraft.benefits.length === 0 && <div className="text-xs text-gray-500 bg-white border border-dashed rounded-lg p-3 text-center">Chưa có quyền lợi nào.</div>}
+                    {policyDraft.benefits.map((benefit, index) => (
+                      <div key={benefit.id || index} className="bg-white border border-amber-200 rounded-xl p-2.5 space-y-2">
+                        <div className="grid grid-cols-[120px_1fr_auto] gap-2">
+                          <select value={benefit.type} onChange={e => updatePolicyBenefit(index,'type',e.target.value)} className="px-2 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[11px]">{Object.entries(PROMOTION_TYPES).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
+                          <input type="text" value={benefit.name} onChange={e => updatePolicyBenefit(index,'name',e.target.value)} placeholder="Tên quyền lợi" className="min-w-0 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" />
+                          <button type="button" onClick={() => removePolicyBenefit(index)} className="px-2.5 py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[10px] font-bold">Xóa</button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input type="text" inputMode="numeric" value={benefit.value ? formatNumber(benefit.value) : ''} onChange={e => updatePolicyBenefit(index,'value',parseMoney(e.target.value))} placeholder="Giá trị VNĐ (nếu có)" className="px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" />
+                          <input type="text" value={benefit.choiceGroup || ''} onChange={e => updatePolicyBenefit(index,'choiceGroup',e.target.value)} placeholder="Nhóm chọn 1 (VD: sac-hoac-tien)" className="px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px] font-bold">
+                          <label className={`flex items-center gap-1.5 p-2 rounded-lg border ${benefit.deductFromPrice ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}><input type="checkbox" checked={benefit.deductFromPrice} onChange={e => updatePolicyBenefit(index,'deductFromPrice',e.target.checked)} />Trừ vào giá</label>
+                          <label className={`flex items-center gap-1.5 p-2 rounded-lg border ${benefit.defaultSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}><input type="checkbox" checked={benefit.defaultSelected} onChange={e => updatePolicyBenefit(index,'defaultSelected',e.target.checked)} disabled={benefit.required}/>Mặc định</label>
+                          <label className={`flex items-center gap-1.5 p-2 rounded-lg border ${benefit.required ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}><input type="checkbox" checked={benefit.required} onChange={e => updatePolicyBenefit(index,'required',e.target.checked)} />Bắt buộc</label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <textarea value={policyDraft.note} onChange={e => setPolicyDraft(current => ({...current,note:e.target.value}))} placeholder="Ghi chú chính sách, điều kiện áp dụng..." className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm min-h-20"></textarea>
+                  <button type="button" onClick={handleSaveSalesPolicy} className="w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm">{editingPolicyId ? 'Lưu thay đổi chính sách' : '+ Thêm chính sách bán hàng'}</button>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-3">🎁 Quản Lý Khuyến Mãi Bổ Sung</h3>
                 <div className="space-y-2 mb-3 max-h-60 overflow-y-auto">
                   {promotions.map(p => (
                     <div key={p.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg border text-sm"><div className="font-medium"><span className="text-[10px] uppercase font-black text-blue-600">{PROMOTION_TYPES[p.type] || 'Khuyến mãi'}</span><br/>{p.name} {p.value > 0 ? <span className={p.deductFromPrice ? "text-red-500 block text-xs font-bold" : "text-gray-500 block text-xs font-bold"}>{p.deductFromPrice ? '-' : 'Giá trị '}{formatVND(p.value)}</span> : null}</div><button onClick={() => handleDeletePromo(p.id)} className="text-red-500 font-bold p-2 text-xs">Xóa</button></div>
@@ -2691,7 +3242,10 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
 
           const renderHistory = () => {
             const keyword = historySearch.trim().toLowerCase();
-            const items = quotations.filter(item => !keyword || [item.id, item.customerName, item.customerPhone, item.carName].some(value => String(value || '').toLowerCase().includes(keyword)));
+            const items = quotations.filter(item => !keyword || [
+              item.id, item.customerName, item.customerPhone, item.carName,
+              ...(item.salesPolicySnapshot?.policies || []).map(policy => policy.name)
+            ].some(value => String(value || '').toLowerCase().includes(keyword)));
             const statusLabels = { draft: 'Bản nháp', sent: 'Đã gửi', followup: 'Đang theo dõi', test_drive: 'Hẹn lái thử', deposited: 'Đã đặt cọc', lost: 'Không thành công' };
             return (
               <div className="space-y-4 pb-24">
@@ -2708,6 +3262,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                       <span className="text-[10px] font-black px-2 py-1 bg-slate-100 text-slate-700 rounded-full">{statusLabels[item.status] || 'Bản nháp'}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-3 text-xs"><div className="p-2 bg-blue-50 rounded-lg"><span className="text-gray-500">Tổng thanh toán</span><div className="font-black text-blue-800">{formatVND(item.totalAmount)}</div></div><div className="p-2 bg-yellow-50 rounded-lg"><span className="text-gray-500">Cập nhật</span><div className="font-bold text-yellow-800">{new Date(item.updatedAtMs || item.createdAtMs || Date.now()).toLocaleDateString('vi-VN')}</div></div></div>
+                    {item.salesPolicySnapshot?.policies?.length > 0 && <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg"><p className="text-[10px] font-black text-blue-700 uppercase">Chính sách đã chốt</p><p className="text-xs font-semibold text-blue-900 mt-0.5 line-clamp-2">{item.salesPolicySnapshot.policies.map(policy => policy.name).join(' · ')}</p></div>}
                     {item.notes && <p className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg line-clamp-2">{item.notes}</p>}
                     <div className="grid grid-cols-3 gap-2 mt-3"><button onClick={() => handleLoadQuotation(item)} className="py-2 bg-blue-600 text-white rounded-lg font-bold text-xs">Mở lại</button><button onClick={() => { handleLoadQuotation(item); setCurrentQuoteId(createQuoteId()); }} className="py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg font-bold text-xs">Nhân bản</button><button onClick={() => handleDeleteQuotation(item.id)} className="py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg font-bold text-xs">Xóa</button></div>
                   </div>
@@ -2791,22 +3346,35 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                             <td className="p-3 text-right font-bold text-slate-800">{formatVND(calculations.price)}</td>
                           </tr>
                           
-                          {calculations.discountAmount > 0 && (
-                            <tr className="border-b border-slate-200 border-dashed bg-red-50/50">
-                              <td className="p-3 text-red-600">
-                                <span className="font-bold">Giảm giá trực tiếp</span>
+                          {calculations.selectedPolicyBenefits.length > 0 && (
+                            <tr className="border-b border-blue-200 border-dashed bg-blue-50/60">
+                              <td className="p-3 text-blue-800">
+                                <span className="font-black">Chính sách bán hàng</span>
+                                {calculations.effectivePolicyNames.length > 0 && <div className="text-[10px] font-bold text-blue-600 mt-0.5">{calculations.effectivePolicyNames.join(' · ')}</div>}
                                 <ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">
-                                  {calculations.selectedPromotions.filter(p => p.deductFromPrice).map(p => <li key={p.id}>{p.name}</li>)}
-                                  {parseMoney(discount) > 0 && <li>Giảm tiền mặt bổ sung</li>}
+                                  {calculations.selectedPolicyBenefits.map(p => <li key={p.key || p.id}><b>{PROMOTION_TYPES[p.type] || 'Quyền lợi'}:</b> {p.name}{p.value > 0 ? ` (${p.deductFromPrice ? '-' : 'giá trị '}${formatVND(p.value)})` : ''}</li>)}
                                 </ul>
                               </td>
-                              <td className="p-3 text-right font-bold text-red-600 align-top">-{formatVND(calculations.discountAmount)}</td>
+                              <td className="p-3 text-right font-bold text-blue-700 align-top">{calculations.policyDiscountValue > 0 ? `-${formatVND(calculations.policyDiscountValue)}` : 'Theo chương trình'}</td>
                             </tr>
                           )}
-                          {calculations.giftPromotions.length > 0 && (
-                            <tr className="border-b border-slate-200 border-dashed bg-green-50/50">
-                              <td className="p-3 text-green-700"><span className="font-bold">Quà tặng & quyền lợi</span><ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">{calculations.giftPromotions.map(p => <li key={p.id}>{p.name}{p.value > 0 ? ` (giá trị ${formatVND(p.value)})` : ''}</li>)}</ul></td>
-                              <td className="p-3 text-right font-bold text-green-700 align-top">Không trừ giá</td>
+                          {(calculations.selectedPromotions.length > 0 || parseMoney(discount) > 0) && (
+                            <tr className="border-b border-slate-200 border-dashed bg-red-50/50">
+                              <td className="p-3 text-red-600">
+                                <span className="font-bold">Ưu đãi bổ sung / giảm thêm</span>
+                                <ul className="text-xs mt-1.5 list-disc pl-4 space-y-0.5 font-medium text-slate-600">
+                                  {calculations.selectedPromotions.filter(p => p.deductFromPrice).map(p => <li key={p.id}>{p.name}</li>)}
+                                  {calculations.giftPromotions.map(p => <li key={p.id}>{p.name}{p.value > 0 ? ` (giá trị ${formatVND(p.value)})` : ''}</li>)}
+                                  {parseMoney(discount) > 0 && <li>Giảm tiền mặt bổ sung: {formatVND(parseMoney(discount))}</li>}
+                                </ul>
+                              </td>
+                              <td className="p-3 text-right font-bold text-red-600 align-top">{calculations.manualPromoValue + parseMoney(discount) > 0 ? `-${formatVND(calculations.manualPromoValue + parseMoney(discount))}` : 'Không trừ giá'}</td>
+                            </tr>
+                          )}
+                          {calculations.discountAmount > 0 && (
+                            <tr className="border-b border-red-200 bg-red-50">
+                              <td className="p-3 font-black text-red-700">Tổng giảm giá trực tiếp</td>
+                              <td className="p-3 text-right font-black text-red-700">-{formatVND(calculations.discountAmount)}</td>
                             </tr>
                           )}
                           
@@ -2868,7 +3436,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.5</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.6</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
