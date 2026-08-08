@@ -3,6 +3,7 @@
 
   const FIREBASE_VERSION = '12.16.0';
   const SHARED_WORKSPACE_ID = 'geely-hai-duong';
+  const SHARED_DATA_ADMIN_EMAIL = 'tunga8hq@gmail.com';
   const FIREBASE_CONFIG = {
     apiKey: 'AIzaSyCPzPGpWp6ZBueswWZnHT1eFoaZSZJV9rw',
     authDomain: 'bao-gia-geely-hai-duong.firebaseapp.com',
@@ -27,12 +28,25 @@
   let db = null;
   let initPromise = null;
 
+  const isAdminUser = user => Boolean(
+    user && String(user.email || '').trim().toLowerCase() === SHARED_DATA_ADMIN_EMAIL
+  );
+
   const publicUser = user => user ? {
     uid: user.uid,
     email: user.email || '',
     displayName: user.displayName || '',
-    photoURL: user.photoURL || ''
+    photoURL: user.photoURL || '',
+    isAdmin: isAdminUser(user),
+    role: isAdminUser(user) ? 'admin' : 'staff'
   } : null;
+
+  const assertSharedAdmin = user => {
+    if (isAdminUser(user)) return;
+    const error = new Error('Tài khoản này chỉ được xem dữ liệu xe dùng chung. Chỉ Admin mới được thêm, sửa hoặc xóa xe.');
+    error.code = 'permission-denied';
+    throw error;
+  };
 
   const emit = () => {
     const snapshot = { ...state };
@@ -131,6 +145,7 @@
   };
 
   const seedSharedCarsIfEmpty = async (firestore, user, cars = []) => {
+    if (!isAdminUser(user)) return { seeded: false, reason: 'admin-required' };
     const refs = getWorkspaceRefs(firestore, user.uid);
     const sourceCars = (Array.isArray(cars) ? cars : []).filter(item => item && item.id);
     if (!sourceCars.length) return { seeded: false, reason: 'no-source' };
@@ -160,7 +175,8 @@
   };
 
   const api = {
-    version: '2.7.0',
+    version: '2.8.0',
+    adminEmail: SHARED_DATA_ADMIN_EMAIL,
     ready: initialize,
     retry: initialize,
     getState: () => ({ ...state }),
@@ -191,7 +207,7 @@
       let migratedSharedCars = false;
 
       // Tự chuyển dữ liệu xe V2.6 của tài khoản đầu tiên sang kho xe dùng chung.
-      if (sharedCarsSnap.empty && !personalCarsSnap.empty) {
+      if (sharedCarsSnap.empty && !personalCarsSnap.empty && isAdminUser(user)) {
         const source = personalCarsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const result = await seedSharedCarsIfEmpty(firestore, user, source);
         migratedSharedCars = Boolean(result.seeded);
@@ -228,8 +244,8 @@
       (quotations || []).forEach(quote => batch.set(refs.quotations.doc(String(quote.id)), { ...quote, id: String(quote.id), ...serverMeta(user) }, { merge: true }));
       await batch.commit();
 
-      // Danh sách xe chỉ được khởi tạo nếu kho dùng chung chưa tồn tại.
-      await seedSharedCarsIfEmpty(firestore, user, cars || []);
+      // Danh sách xe dùng chung chỉ Admin được quyền khởi tạo.
+      if (isAdminUser(user)) await seedSharedCarsIfEmpty(firestore, user, cars || []);
       return { updatedAtMs: Date.now() };
     },
 
@@ -241,6 +257,7 @@
     },
     async saveCar(car) {
       const { user, db: firestore } = await requireUser();
+      assertSharedAdmin(user);
       const refs = getWorkspaceRefs(firestore, user.uid);
       const ref = refs.sharedCars.doc(String(car.id));
       const clean = cleanSharedCar(car);
@@ -250,6 +267,7 @@
     },
     async deleteCar(id) {
       const { user, db: firestore } = await requireUser();
+      assertSharedAdmin(user);
       await getWorkspaceRefs(firestore, user.uid).sharedCars.doc(String(id)).delete();
     },
     async savePromotion(promo) {

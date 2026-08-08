@@ -2,6 +2,8 @@
 const React = window.React;
 const ReactDOM = window.ReactDOM;
 const { useState, useMemo, useEffect, useRef } = React;
+const SHARED_DATA_ADMIN_EMAIL = 'tunga8hq@gmail.com';
+
 const ENGINE_TYPES = {
     gasoline: 'Xăng',
     hybrid: 'Hybrid',
@@ -670,6 +672,7 @@ function GeelyQuotationApp() {
         });
     });
     const [syncUser, setSyncUser] = useState(null);
+    const isSharedDataAdmin = Boolean(syncUser && String(syncUser.email || '').trim().toLowerCase() === SHARED_DATA_ADMIN_EMAIL);
     const [syncStatus, setSyncStatus] = useState({
         code: 'signed_out',
         message: 'Đăng nhập Google để đồng bộ dữ liệu.',
@@ -1292,7 +1295,7 @@ function GeelyQuotationApp() {
         if (code.includes('popup-closed-by-user'))
             return 'Bạn đã đóng cửa sổ đăng nhập Google.';
         if (code.includes('permission-denied'))
-            return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V2.0.';
+            return isSharedDataAdmin ? 'Firestore từ chối quyền Admin. Hãy kiểm tra Firestore Rules V2.8.' : 'Tài khoản này chỉ có quyền xem danh sách xe dùng chung; chỉ Admin được thêm, sửa hoặc xóa xe.';
         if (!navigator.onLine)
             return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
         return (error === null || error === void 0 ? void 0 : error.message) || 'Không thể kết nối Firebase.';
@@ -1351,7 +1354,8 @@ function GeelyQuotationApp() {
             return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
         try {
             await window.GeelyFirebaseSync.saveSettings(settingsPayload());
-            await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
+            if (isSharedDataAdmin)
+                await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
             await Promise.all(promotions.map(item => window.GeelyFirebaseSync.savePromotion(cloudPromo(item))));
             await Promise.all(salesPolicies.map(item => window.GeelyFirebaseSync.saveSalesPolicy(cloudSalesPolicy(item))));
             setSyncStatus({ code: 'synced', message: 'Đã đồng bộ thủ công.', updatedAtMs: Date.now() });
@@ -1386,7 +1390,7 @@ function GeelyQuotationApp() {
                 let workspace = await window.GeelyFirebaseSync.getWorkspace();
                 if (cancelled)
                     return;
-                if (workspace.sharedCarsEmpty && cars.length) {
+                if (workspace.sharedCarsEmpty && cars.length && isSharedDataAdmin) {
                     try {
                         await window.GeelyFirebaseSync.seedSharedCars(cars.map(cloudCar));
                         workspace = await window.GeelyFirebaseSync.getWorkspace();
@@ -1707,6 +1711,8 @@ function GeelyQuotationApp() {
     };
     const handleStartEditCar = (carToEdit) => {
         var _a, _b;
+        if (!isSharedDataAdmin)
+            return showToast('Chỉ tài khoản Admin được sửa danh sách xe dùng chung.');
         setEditingCarId(carToEdit.id);
         setNewCarName(carToEdit.name || '');
         setNewCarPrice(formatNumber(carToEdit.price));
@@ -1723,6 +1729,8 @@ function GeelyQuotationApp() {
     };
     const handleSaveCar = async () => {
         var _a, _b, _c, _d;
+        if (!isSharedDataAdmin)
+            return showToast('Chỉ tài khoản Admin được thêm hoặc sửa xe.');
         if (!newCarName.trim() || !newCarPrice)
             return showToast('Nhập tên và giá xe!');
         const price = parseMoney(newCarPrice);
@@ -1770,6 +1778,8 @@ function GeelyQuotationApp() {
     };
     const handleDeleteCar = async (id) => {
         var _a;
+        if (!isSharedDataAdmin)
+            return showToast('Chỉ tài khoản Admin được xóa xe.');
         if (cars.length <= 1)
             return showToast('Phải giữ ít nhất 1 xe!');
         const updated = cars.filter(c => c.id !== id);
@@ -2820,7 +2830,8 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     React.createElement("div", { className: "flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl" },
                         React.createElement("div", { className: "min-w-0" },
                             React.createElement("p", { className: "font-bold text-blue-900 truncate" }, syncUser.displayName || 'Tài khoản Google'),
-                            React.createElement("p", { className: "text-xs text-blue-700 truncate" }, syncUser.email)),
+                            React.createElement("p", { className: "text-xs text-blue-700 truncate" }, syncUser.email),
+                            React.createElement("span", { className: `inline-block mt-1 text-[9px] font-black px-2 py-0.5 rounded-full ${isSharedDataAdmin ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}` }, isSharedDataAdmin ? 'ADMIN · QUẢN LÝ XE' : 'NHÂN VIÊN · CHỈ XEM XE')),
                         React.createElement("button", { type: "button", onClick: handleFirebaseSignOut, className: "shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs" }, "\u0110\u0103ng xu\u1EA5t")),
                     syncStatus.code === 'choice_needed' && (React.createElement("div", { className: "space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl" },
                         React.createElement("p", { className: "text-xs font-bold text-yellow-900" }, "Hai n\u01A1i \u0111ang c\u00F3 d\u1EEF li\u1EC7u. H\u00E3y ch\u1ECDn b\u1EA3n ch\u00EDnh cho l\u1EA7n thi\u1EBFt l\u1EADp \u0111\u1EA7u ti\u00EAn:"),
@@ -2913,13 +2924,10 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                         React.createElement("button", { onClick: handleSaveLocation, className: "py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm" }, editingLocationId ? 'Lưu khu vực' : '+ Thêm khu vực'))),
                 React.createElement("p", { className: "mt-3 text-[10px] text-orange-700 bg-orange-50 border border-orange-100 rounded-lg p-2 leading-relaxed" }, "C\u00E1c m\u1EE9c \u0111ang hi\u1EC3n th\u1ECB l\u00E0 c\u1EA5u h\u00ECnh v\u1EADn h\u00E0nh c\u1EE7a \u1EE9ng d\u1EE5ng. H\u00E3y c\u1EADp nh\u1EADt theo ch\u00EDnh s\u00E1ch th\u1EF1c t\u1EBF tr\u01B0\u1EDBc khi g\u1EEDi b\u00E1o gi\u00E1 cho kh\u00E1ch.")),
             React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-                React.createElement("h3", { className: "font-bold text-gray-800 mb-1" }, "\uD83D\uDE98 Qu\u1EA3n L\u00FD D\u00F2ng Xe & H\u00ECnh \u1EA2nh"),
-                React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
-                    "Bấm ",
-                    React.createElement("b", null, "Sửa"),
-                    " để cập nhật xe. ",
-                    React.createElement("b", null, "Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản."),
-                    " Ảnh chọn trực tiếp từ thiết bị vẫn chỉ lưu trên thiết bị đó."),
+                React.createElement("div", { className: "flex items-center justify-between gap-2 mb-1" },
+                    React.createElement("h3", { className: "font-bold text-gray-800" }, "\uD83D\uDE98 Qu\u1EA3n L\u00FD D\u00F2ng Xe & H\u00ECnh \u1EA2nh"),
+                    React.createElement("span", { className: `text-[9px] font-black px-2 py-1 rounded-full ${isSharedDataAdmin ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}` }, isSharedDataAdmin ? 'ADMIN' : 'CHỈ XEM')),
+                React.createElement("p", { className: "text-xs text-gray-500 mb-3" }, isSharedDataAdmin ? 'Bạn có quyền thêm/sửa/xóa. Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản.' : `Danh sách xe đang ở chế độ chỉ đọc. Chỉ Admin ${SHARED_DATA_ADMIN_EMAIL} được thay đổi dữ liệu xe dùng chung.`),
                 React.createElement("div", { className: "space-y-2 mb-4 max-h-80 overflow-y-auto pr-1" }, cars.map(c => {
                     var _a, _b, _c, _d, _e, _f, _g, _h;
                     return (React.createElement("div", { key: c.id, className: `p-2.5 rounded-xl border text-sm ${editingCarId === c.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
@@ -2939,10 +2947,10 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                                     " m\u00E0u \u00B7 ",
                                     carImageMap[c.id] ? 'Có ảnh riêng' : 'Ảnh GitHub')),
                             React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" },
-                                React.createElement("button", { onClick: () => handleStartEditCar(c), className: "px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs" }, "S\u1EEDa"),
-                                React.createElement("button", { onClick: () => handleDeleteCar(c.id), className: "px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold text-xs" }, "X\u00F3a")))));
+                                React.createElement("button", { disabled: !isSharedDataAdmin, onClick: () => handleStartEditCar(c), className: `px-3 py-1.5 rounded-lg font-bold text-xs ${isSharedDataAdmin ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}` }, "S\u1EEDa"),
+                                React.createElement("button", { disabled: !isSharedDataAdmin, onClick: () => handleDeleteCar(c.id), className: `px-3 py-1.5 border rounded-lg font-bold text-xs ${isSharedDataAdmin ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}` }, "X\u00F3a")))));
                 })),
-                React.createElement("div", { id: "car-editor", className: `pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}` },
+                React.createElement("div", { id: "car-editor", className: `${!isSharedDataAdmin ? 'hidden' : ''} pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}` },
                     React.createElement("div", { className: "flex items-center justify-between" },
                         React.createElement("h4", { className: `font-black text-sm uppercase ${editingCarId ? 'text-blue-700' : 'text-gray-700'}` }, editingCarId ? 'Chỉnh sửa dòng xe' : 'Thêm dòng xe mới'),
                         editingCarId && React.createElement("span", { className: "text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full" }, "\u0110ANG S\u1EECA")),
@@ -2962,7 +2970,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                         React.createElement("div", { className: "flex items-center justify-between gap-3" },
                             React.createElement("div", null,
                                 React.createElement("h5", { className: "text-xs font-black uppercase text-blue-900" }, "M\u00E0u xe & \u1EA3nh GitHub"),
-                                React.createElement("p", { className: "text-[10px] text-blue-700 mt-0.5" }, "Danh sách màu này là dữ liệu dùng chung V2.7; ảnh được đọc trực tiếp từ GitHub Pages.")),
+                                React.createElement("p", { className: "text-[10px] text-blue-700 mt-0.5" }, "Danh sách màu này là dữ liệu dùng chung V2.8; chỉ Admin được chỉnh sửa và ảnh được đọc trực tiếp từ GitHub Pages.")),
                             React.createElement("div", { className: "flex gap-1.5 shrink-0" },
                                 DEFAULT_CAR_COLOR_GROUPS[editingCarId] && React.createElement("button", { type: "button", onClick: loadDefaultEditorColors, className: "px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold" }, "N\u1EA1p m\u00E0u chu\u1EA9n"),
                                 React.createElement("button", { type: "button", onClick: addEditorColor, className: "px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold" }, "+ Th\u00EAm m\u00E0u"))),
@@ -3310,7 +3318,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.7"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.8"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),

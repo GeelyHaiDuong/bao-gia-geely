@@ -3,7 +3,9 @@ const React = window.React;
 const ReactDOM = window.ReactDOM;
 const { useState, useMemo, useEffect, useRef } = React;
 
-        const ENGINE_TYPES = {
+        const SHARED_DATA_ADMIN_EMAIL = 'tunga8hq@gmail.com';
+
+const ENGINE_TYPES = {
           gasoline: 'Xăng',
           hybrid: 'Hybrid',
           phev: 'PHEV',
@@ -731,6 +733,7 @@ const normalizePhoneForZalo = (phone) => {
             }
           ));
           const [syncUser, setSyncUser] = useState(null);
+          const isSharedDataAdmin = Boolean(syncUser && String(syncUser.email || '').trim().toLowerCase() === SHARED_DATA_ADMIN_EMAIL);
           const [syncStatus, setSyncStatus] = useState({
             code: 'signed_out',
             message: 'Đăng nhập Google để đồng bộ dữ liệu.',
@@ -1370,7 +1373,7 @@ const normalizePhoneForZalo = (phone) => {
             if (code.includes('unauthorized-domain')) return 'Tên miền GitHub chưa được cấp quyền trong Firebase Authentication.';
             if (code.includes('popup-blocked')) return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy mở bằng Chrome hoặc Safari.';
             if (code.includes('popup-closed-by-user')) return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-            if (code.includes('permission-denied')) return 'Firestore từ chối truy cập. Hãy cập nhật Security Rules cho cấu trúc V2.0.';
+            if (code.includes('permission-denied')) return isSharedDataAdmin ? 'Firestore từ chối quyền Admin. Hãy kiểm tra Firestore Rules V2.8.' : 'Tài khoản này chỉ có quyền xem danh sách xe dùng chung; chỉ Admin được thêm, sửa hoặc xóa xe.';
             if (!navigator.onLine) return 'Thiết bị đang ngoại tuyến. Dữ liệu cục bộ vẫn được giữ.';
             return error?.message || 'Không thể kết nối Firebase.';
           };
@@ -1415,7 +1418,7 @@ const normalizePhoneForZalo = (phone) => {
             if (!syncUser || !syncReadyRef.current) return showToast('Hãy hoàn tất lựa chọn dữ liệu ban đầu trước.');
             try {
               await window.GeelyFirebaseSync.saveSettings(settingsPayload());
-              await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
+              if (isSharedDataAdmin) await Promise.all(cars.map(item => window.GeelyFirebaseSync.saveCar(cloudCar(item))));
               await Promise.all(promotions.map(item => window.GeelyFirebaseSync.savePromotion(cloudPromo(item))));
               await Promise.all(salesPolicies.map(item => window.GeelyFirebaseSync.saveSalesPolicy(cloudSalesPolicy(item))));
               setSyncStatus({ code: 'synced', message: 'Đã đồng bộ thủ công.', updatedAtMs: Date.now() });
@@ -1444,7 +1447,7 @@ const normalizePhoneForZalo = (phone) => {
               try {
                 let workspace = await window.GeelyFirebaseSync.getWorkspace();
                 if (cancelled) return;
-                if (workspace.sharedCarsEmpty && cars.length) {
+                if (workspace.sharedCarsEmpty && cars.length && isSharedDataAdmin) {
                   try {
                     await window.GeelyFirebaseSync.seedSharedCars(cars.map(cloudCar));
                     workspace = await window.GeelyFirebaseSync.getWorkspace();
@@ -1747,6 +1750,7 @@ const normalizePhoneForZalo = (phone) => {
           };
 
           const handleStartEditCar = (carToEdit) => {
+            if (!isSharedDataAdmin) return showToast('Chỉ tài khoản Admin được sửa danh sách xe dùng chung.');
             setEditingCarId(carToEdit.id);
             setNewCarName(carToEdit.name || '');
             setNewCarPrice(formatNumber(carToEdit.price));
@@ -1763,6 +1767,7 @@ const normalizePhoneForZalo = (phone) => {
           };
 
           const handleSaveCar = async () => {
+            if (!isSharedDataAdmin) return showToast('Chỉ tài khoản Admin được thêm hoặc sửa xe.');
             if (!newCarName.trim() || !newCarPrice) return showToast('Nhập tên và giá xe!');
             const price = parseMoney(newCarPrice);
             if (!Number.isFinite(price) || price <= 0) return showToast('Giá xe không hợp lệ!');
@@ -1803,6 +1808,7 @@ const normalizePhoneForZalo = (phone) => {
           };
 
           const handleDeleteCar = async (id) => {
+            if (!isSharedDataAdmin) return showToast('Chỉ tài khoản Admin được xóa xe.');
             if(cars.length <= 1) return showToast('Phải giữ ít nhất 1 xe!');
             const updated = cars.filter(c => c.id !== id);
             setCars(updated);
@@ -2901,6 +2907,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                       <div className="min-w-0">
                         <p className="font-bold text-blue-900 truncate">{syncUser.displayName || 'Tài khoản Google'}</p>
                         <p className="text-xs text-blue-700 truncate">{syncUser.email}</p>
+                        <span className={`inline-block mt-1 text-[9px] font-black px-2 py-0.5 rounded-full ${isSharedDataAdmin ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{isSharedDataAdmin ? 'ADMIN · QUẢN LÝ XE' : 'NHÂN VIÊN · CHỈ XEM XE'}</span>
                       </div>
                       <button type="button" onClick={handleFirebaseSignOut} className="shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg font-bold text-xs">Đăng xuất</button>
                     </div>
@@ -3011,8 +3018,8 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
               </div>
               
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-1">🚘 Quản Lý Dòng Xe & Hình Ảnh</h3>
-                <p className="text-xs text-gray-500 mb-3">Bấm <b>Sửa</b> để cập nhật xe đã có. <b>Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản.</b> Ảnh chọn trực tiếp từ thiết bị vẫn chỉ lưu trên thiết bị đó.</p>
+                <div className="flex items-center justify-between gap-2 mb-1"><h3 className="font-bold text-gray-800">🚘 Quản Lý Dòng Xe & Hình Ảnh</h3><span className={`text-[9px] font-black px-2 py-1 rounded-full ${isSharedDataAdmin ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{isSharedDataAdmin ? 'ADMIN' : 'CHỈ XEM'}</span></div>
+                <p className="text-xs text-gray-500 mb-3">{isSharedDataAdmin ? <>Bạn có quyền thêm/sửa/xóa. <b>Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản.</b></> : <>Danh sách xe đang ở chế độ chỉ đọc. <b>Chỉ tài khoản Admin {SHARED_DATA_ADMIN_EMAIL}</b> được thay đổi dữ liệu xe dùng chung.</>} Ảnh chọn trực tiếp từ thiết bị vẫn chỉ lưu trên thiết bị đó.</p>
 
                 <div className="space-y-2 mb-4 max-h-80 overflow-y-auto pr-1">
                   {cars.map(c => (
@@ -3040,15 +3047,15 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                         </div>
 
                         <div className="flex flex-col gap-1.5 shrink-0">
-                          <button onClick={() => handleStartEditCar(c)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs">Sửa</button>
-                          <button onClick={() => handleDeleteCar(c.id)} className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold text-xs">Xóa</button>
+                          <button disabled={!isSharedDataAdmin} onClick={() => handleStartEditCar(c)} className={`px-3 py-1.5 rounded-lg font-bold text-xs ${isSharedDataAdmin ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>Sửa</button>
+                          <button disabled={!isSharedDataAdmin} onClick={() => handleDeleteCar(c.id)} className={`px-3 py-1.5 border rounded-lg font-bold text-xs ${isSharedDataAdmin ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}`}>Xóa</button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div id="car-editor" className={`pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}`}>
+                <div id="car-editor" className={`${!isSharedDataAdmin ? 'hidden' : ''} pt-4 border-t space-y-3 scroll-mt-24 ${editingCarId ? 'border-blue-300' : 'border-gray-200'}`}>
                   <div className="flex items-center justify-between">
                     <h4 className={`font-black text-sm uppercase ${editingCarId ? 'text-blue-700' : 'text-gray-700'}`}>
                       {editingCarId ? 'Chỉnh sửa dòng xe' : 'Thêm dòng xe mới'}
@@ -3082,7 +3089,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <h5 className="text-xs font-black uppercase text-blue-900">Màu xe & ảnh GitHub</h5>
-                        <p className="text-[10px] text-blue-700 mt-0.5">Danh sách màu này là dữ liệu dùng chung V2.7; ảnh được đọc trực tiếp từ GitHub Pages.</p>
+                        <p className="text-[10px] text-blue-700 mt-0.5">Danh sách màu này là dữ liệu dùng chung V2.8; chỉ Admin được chỉnh sửa và ảnh được đọc trực tiếp từ GitHub Pages.</p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         {DEFAULT_CAR_COLOR_GROUPS[editingCarId] && <button type="button" onClick={loadDefaultEditorColors} className="px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold">Nạp màu chuẩn</button>}
@@ -3445,7 +3452,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.7</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.8</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">
