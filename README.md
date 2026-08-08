@@ -1,72 +1,47 @@
-# Báo Giá Geely Hải Dương — PWA V2.0
+# Báo Giá Geely Hải Dương – PWA V2.7
 
-Ứng dụng PWA tạo báo giá lăn bánh, tính vay, lưu lịch sử khách hàng, xuất ảnh Zalo/PDF A4 và đồng bộ dữ liệu giữa điện thoại với máy tính.
+## Điểm mới V2.7
 
-## Nâng cấp V2.0 — Chọn màu và đổi ảnh tự động
+V2.7 tách dữ liệu Firebase thành 2 phạm vi:
 
-1. Mỗi dòng xe có danh sách màu riêng.
-2. Khi chọn màu, ảnh xe trên báo giá đổi ngay sang đúng ảnh trong GitHub Pages.
-3. Có bộ chọn màu dạng danh sách và ảnh thu nhỏ tại tab **Nhập TT**.
-4. Tên màu và ảnh được lưu cùng lịch sử báo giá.
-5. Danh sách màu, màu mặc định và đường dẫn ảnh được đồng bộ qua Firebase.
-6. Ảnh PNG được đọc trực tiếp từ `assets/cars/...`, không cần Firebase Storage.
-7. Ảnh riêng chọn từ thiết bị vẫn lưu trong IndexedDB và có thể chọn bằng mục **Ảnh riêng trên máy**.
-8. Trong **Cài đặt → Quản lý dòng xe**, có thể thêm, sửa, xóa màu, đổi đường dẫn ảnh và chọn màu mặc định.
-9. Với xe mặc định, nút **Nạp màu chuẩn** khôi phục thư viện màu GitHub.
-10. Service Worker cache ảnh màu để dùng lại khi ngoại tuyến.
+### Dùng chung giữa mọi tài khoản đăng nhập
+- Danh sách dòng/phiên bản xe.
+- Giá xe.
+- Số chỗ và loại động cơ gắn với xe (cần cho phép tính lăn bánh).
+- Danh sách màu xe.
+- Màu mặc định.
+- Đường dẫn ảnh màu trên GitHub Pages.
 
-## Thư viện ảnh GitHub được ánh xạ
+Các dữ liệu này nằm tại:
 
-```text
-assets/cars/
-├── Ex2/
-├── EX5/
-├── EX5 EMi/
-├── Coolray/
-├── Monjaro/
-└── Okavango/
-```
+`shared/geely-hai-duong/cars/{carId}`
 
-Tên thư mục và tên file phân biệt chữ hoa/chữ thường. Không đổi tên các thư mục hoặc file nếu chưa cập nhật lại đường dẫn trong ứng dụng.
+### Riêng theo từng tài khoản
+- Thông tin tư vấn viên.
+- Phí dịch vụ, phí đăng ký và các cài đặt cá nhân.
+- Khuyến mãi.
+- Chính sách bán hàng theo tháng.
+- Lịch sử báo giá.
+- Thiết lập/vận hành báo giá khác.
 
-## Cách chọn màu
+Các dữ liệu này tiếp tục nằm dưới `users/{uid}/...`.
 
-1. Mở tab **Nhập TT**.
-2. Chọn dòng xe.
-3. Chọn màu từ danh sách hoặc bấm ảnh thu nhỏ.
-4. Mở tab **Báo Giá** để kiểm tra đúng màu xe.
-5. Lưu lịch sử hoặc xuất ảnh/PDF như bình thường.
+## Migration V2.6 → V2.7
 
-## Quản lý màu xe
+Khi tài khoản đầu tiên mở V2.7:
+1. Ứng dụng ưu tiên lấy danh sách xe dùng chung nếu đã có.
+2. Nếu chưa có, ứng dụng tự chuyển danh sách xe V2.6 của tài khoản đó sang kho dùng chung.
+3. Nếu tài khoản chưa có dữ liệu xe trên Firebase nhưng thiết bị đang có danh sách xe cục bộ, V2.7 sẽ dùng danh sách trên thiết bị để khởi tạo kho xe dùng chung.
+4. Các tài khoản khác sau đó sẽ tự nhận danh sách xe/giá/màu/ảnh dùng chung.
 
-Vào **Cài đặt → Quản lý dòng xe & hình ảnh → Sửa**:
+## Màu Hồng EX2
 
-- Nhấn **Nạp màu chuẩn** để dùng lại bộ ảnh GitHub mặc định.
-- Nhấn **+ Thêm màu** để thêm màu mới.
-- Điền tên màu và đường dẫn tương đối, ví dụ:
+Thư viện màu chuẩn V2.7 đã có:
 
-```text
-./assets/cars/Ex2/ex2-moon-white.png
-```
+`./assets/cars/Ex2/ex2-pink.png` → `Hồng Kẹo Bông`
 
-- Chọn nút tròn bên trái để đặt màu mặc định.
-- Nhấn **Lưu thay đổi**.
+Nếu xe EX2 hiện tại trên Firebase chưa có màu này, vào **Cài đặt → Quản lý dòng xe → Sửa EX2 → Nạp màu chuẩn → Lưu**. Làm cho EX2 Pro và EX2 Max nếu cần. Sau khi lưu, các tài khoản khác sẽ nhận màu mới tự động.
 
-## Firebase
+## Lưu ý ảnh
 
-Các trường sau được đồng bộ trong từng tài liệu xe:
-
-```text
-colorGroup
-colors[]
-  ├── id
-  ├── name
-  └── imagePath
-defaultColorId
-```
-
-Không có dữ liệu ảnh nhị phân được gửi lên Firestore. Firestore Rules của V1.9 vẫn sử dụng được cho V2.0.
-
-## Dùng ngoại tuyến
-
-Ảnh màu được cache trong lần cập nhật/mở có mạng. Nếu một ảnh chưa kịp tải, ứng dụng vẫn cài được và sẽ cache ảnh đó khi người dùng mở màu tương ứng.
+Ảnh chuẩn chỉ đồng bộ **đường dẫn GitHub**, không tải byte ảnh lên Firestore. Ảnh cá nhân chọn trực tiếp từ máy vẫn được giữ riêng trong IndexedDB của thiết bị.

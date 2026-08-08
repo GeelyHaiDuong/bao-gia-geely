@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Báo Giá Geely Hải Dương",
   "short_name": "Báo Giá Geely",
-  "description": "Tạo báo giá Geely theo dòng xe và màu xe, tự động áp dụng chính sách bán hàng, phí đăng ký, tính khoản vay và đồng bộ dữ liệu.",
+  "description": "Tạo báo giá Geely; đồng bộ dùng chung danh sách xe, giá, màu và ảnh giữa nhiều tài khoản, trong khi dữ liệu bán hàng còn lại là riêng tư theo từng người.",
   "lang": "vi-VN",
   "start_url": "./",
   "scope": "./",
