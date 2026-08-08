@@ -14,6 +14,7 @@ const { useState, useMemo, useEffect, useRef } = React;
           ex2: [
             { id: 'aurora-green', name: 'Xanh Bạc Hà', imagePath: './assets/cars/Ex2/ex2-aurora-green.png' },
             { id: 'beige', name: 'Kem Vani', imagePath: './assets/cars/Ex2/ex2-beige.png' },
+            { id: 'pink', name: 'Hồng Kẹo Bông', imagePath: './assets/cars/Ex2/ex2-pink.png' },
             { id: 'commet-grey', name: 'Xám Than Tre', imagePath: './assets/cars/Ex2/ex2-commet-grey.png' },
             { id: 'moon-white', name: 'Trắng Sữa', imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
             { id: 'star-silver', name: 'Bạc Ánh Sao', imagePath: './assets/cars/Ex2/ex2-star-silver.png' }
@@ -1441,8 +1442,16 @@ const normalizePhoneForZalo = (phone) => {
             setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
             (async () => {
               try {
-                const workspace = await window.GeelyFirebaseSync.getWorkspace();
+                let workspace = await window.GeelyFirebaseSync.getWorkspace();
                 if (cancelled) return;
+                if (workspace.sharedCarsEmpty && cars.length) {
+                  try {
+                    await window.GeelyFirebaseSync.seedSharedCars(cars.map(cloudCar));
+                    workspace = await window.GeelyFirebaseSync.getWorkspace();
+                  } catch (seedError) {
+                    console.warn('Chưa thể khởi tạo danh sách xe dùng chung:', seedError);
+                  }
+                }
                 pendingWorkspaceRef.current = workspace;
                 const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
                 if (workspace.empty) {
@@ -2843,7 +2852,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <h3 className="font-black text-gray-800">☁️ Đồng Bộ Firebase</h3>
-                    <p className="text-xs text-gray-500 mt-1">Đồng bộ từng xe, chính sách bán hàng, khuyến mãi, cài đặt và lịch sử báo giá.</p>
+                    <p className="text-xs text-gray-500 mt-1">Danh sách xe, giá xe, màu + ảnh GitHub dùng chung cho mọi tài khoản. Chính sách, khuyến mãi, phí, thông tin nhân viên và lịch sử vẫn riêng từng tài khoản.</p>
                   </div>
                   <span className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${
                     ['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
@@ -2884,7 +2893,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     {firebaseState.sdk === 'error' && (
                       <button type="button" onClick={() => window.GeelyFirebaseSync?.retry?.().catch(() => {})} className="w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm">Thử tải lại Firebase</button>
                     )}
-                    <p className="text-[11px] text-gray-500 text-center">Hãy đăng nhập cùng một tài khoản Google trên điện thoại và máy tính.</p>
+                    <p className="text-[11px] text-gray-500 text-center">Mỗi nhân viên có thể đăng nhập Google riêng; danh sách xe dùng chung vẫn tự đồng bộ giữa các tài khoản.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -2915,7 +2924,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 )}
 
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed">
-                  <b>Ảnh chuẩn được đồng bộ bằng đường dẫn GitHub.</b> Ảnh bạn chọn từ thiết bị được lưu riêng trong IndexedDB và sẽ ưu tiên hiển thị trên thiết bị đó.
+                  <b>Tên xe, giá xe, màu và đường dẫn ảnh GitHub là dữ liệu dùng chung giữa các tài khoản.</b> Ảnh bạn chọn từ thiết bị được lưu riêng trong IndexedDB và sẽ ưu tiên hiển thị trên thiết bị đó.
                 </div>
               </div>
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -3003,7 +3012,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
               
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-800 mb-1">🚘 Quản Lý Dòng Xe & Hình Ảnh</h3>
-                <p className="text-xs text-gray-500 mb-3">Bấm <b>Sửa</b> để cập nhật xe đã có. Có thể dán link ảnh hoặc chọn ảnh trực tiếp từ điện thoại/máy tính.</p>
+                <p className="text-xs text-gray-500 mb-3">Bấm <b>Sửa</b> để cập nhật xe đã có. <b>Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản.</b> Ảnh chọn trực tiếp từ thiết bị vẫn chỉ lưu trên thiết bị đó.</p>
 
                 <div className="space-y-2 mb-4 max-h-80 overflow-y-auto pr-1">
                   {cars.map(c => (
@@ -3073,7 +3082,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <h5 className="text-xs font-black uppercase text-blue-900">Màu xe & ảnh GitHub</h5>
-                        <p className="text-[10px] text-blue-700 mt-0.5">Danh sách này đồng bộ qua Firebase; ảnh được đọc trực tiếp từ GitHub Pages.</p>
+                        <p className="text-[10px] text-blue-700 mt-0.5">Danh sách màu này là dữ liệu dùng chung V2.7; ảnh được đọc trực tiếp từ GitHub Pages.</p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         {DEFAULT_CAR_COLOR_GROUPS[editingCarId] && <button type="button" onClick={loadDefaultEditorColors} className="px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold">Nạp màu chuẩn</button>}
@@ -3436,7 +3445,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             <div className="min-h-screen font-sans pb-safe">
               <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-center">
                 <GeelyLogo className="w-20 h-8 text-gray-900" color="currentColor" />
-                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.6</span></div>
+                <div className="text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase">Báo Giá <span className="text-[9px] align-top text-blue-600">PWA 2.7</span></div>
               </div>
               
               <div className="max-w-xl mx-auto p-4">

@@ -2,6 +2,7 @@
   'use strict';
 
   const FIREBASE_VERSION = '12.16.0';
+  const SHARED_WORKSPACE_ID = 'geely-hai-duong';
   const FIREBASE_CONFIG = {
     apiKey: 'AIzaSyCPzPGpWp6ZBueswWZnHT1eFoaZSZJV9rw',
     authDomain: 'bao-gia-geely-hai-duong.firebaseapp.com',
@@ -109,16 +110,57 @@
   });
 
   const getWorkspaceRefs = (firestore, uid) => ({
+    // Dữ liệu cá nhân: chỉ chủ tài khoản đọc/ghi.
     settings: firestore.doc(`users/${uid}/settings/main`),
-    cars: firestore.collection(`users/${uid}/cars`),
     promotions: firestore.collection(`users/${uid}/promotions`),
     salesPolicies: firestore.collection(`users/${uid}/salesPolicies`),
     quotations: firestore.collection(`users/${uid}/quotations`),
-    legacy: firestore.doc(`users/${uid}/appData/current`)
+    legacy: firestore.doc(`users/${uid}/appData/current`),
+    legacyPersonalCars: firestore.collection(`users/${uid}/cars`),
+
+    // V2.7: danh sách xe + giá + màu/đường dẫn ảnh dùng chung cho mọi tài khoản đăng nhập.
+    sharedRoot: firestore.doc(`shared/${SHARED_WORKSPACE_ID}`),
+    sharedCars: firestore.collection(`shared/${SHARED_WORKSPACE_ID}/cars`)
   });
 
+  const cleanSharedCar = car => {
+    const clean = { ...car };
+    delete clean.image;
+    delete clean.localImage;
+    return clean;
+  };
+
+  const seedSharedCarsIfEmpty = async (firestore, user, cars = []) => {
+    const refs = getWorkspaceRefs(firestore, user.uid);
+    const sourceCars = (Array.isArray(cars) ? cars : []).filter(item => item && item.id);
+    if (!sourceCars.length) return { seeded: false, reason: 'no-source' };
+
+    const existing = await refs.sharedCars.limit(1).get();
+    if (!existing.empty) return { seeded: false, reason: 'already-exists' };
+
+    let seeded = false;
+    await firestore.runTransaction(async transaction => {
+      const metaSnap = await transaction.get(refs.sharedRoot);
+      if (metaSnap.exists && metaSnap.data()?.carsInitialized) return;
+      sourceCars.slice(0, 450).forEach(car => {
+        const id = String(car.id);
+        transaction.set(refs.sharedCars.doc(id), {
+          ...cleanSharedCar(car), id, ...serverMeta(user), sharedSchemaVersion: 1
+        }, { merge: true });
+      });
+      transaction.set(refs.sharedRoot, {
+        carsInitialized: true,
+        carsInitializedAtMs: Date.now(),
+        schemaVersion: 5,
+        ...serverMeta(user)
+      }, { merge: true });
+      seeded = true;
+    });
+    return { seeded, reason: seeded ? 'seeded' : 'claimed-by-other-client' };
+  };
+
   const api = {
-    version: '2.6.0',
+    version: '2.7.0',
     ready: initialize,
     retry: initialize,
     getState: () => ({ ...state }),
@@ -140,49 +182,75 @@
     async getWorkspace() {
       const { user, db: firestore } = await requireUser();
       const refs = getWorkspaceRefs(firestore, user.uid);
-      const [settingsSnap, carsSnap, promosSnap, policiesSnap, quotesSnap, legacySnap] = await Promise.all([
-        refs.settings.get(), refs.cars.get(), refs.promotions.get(), refs.salesPolicies.get(), refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).get(), refs.legacy.get()
+      const [settingsSnap, personalCarsSnap, promosSnap, policiesSnap, quotesSnap, legacySnap] = await Promise.all([
+        refs.settings.get(), refs.legacyPersonalCars.get(), refs.promotions.get(), refs.salesPolicies.get(),
+        refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).get(), refs.legacy.get()
       ]);
+
+      let sharedCarsSnap = await refs.sharedCars.get();
+      let migratedSharedCars = false;
+
+      // Tự chuyển dữ liệu xe V2.6 của tài khoản đầu tiên sang kho xe dùng chung.
+      if (sharedCarsSnap.empty && !personalCarsSnap.empty) {
+        const source = personalCarsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const result = await seedSharedCarsIfEmpty(firestore, user, source);
+        migratedSharedCars = Boolean(result.seeded);
+        sharedCarsSnap = await refs.sharedCars.get();
+      }
+
       return {
         settings: settingsSnap.exists ? settingsSnap.data() : null,
-        cars: carsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        cars: sharedCarsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         promotions: promosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         salesPolicies: policiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         quotations: quotesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         legacy: legacySnap.exists ? legacySnap.data()?.data || null : null,
-        empty: !settingsSnap.exists && carsSnap.empty && promosSnap.empty && policiesSnap.empty && quotesSnap.empty && !legacySnap.exists
+        sharedCarsEmpty: sharedCarsSnap.empty,
+        migratedSharedCars,
+        empty: !settingsSnap.exists && sharedCarsSnap.empty && promosSnap.empty && policiesSnap.empty && quotesSnap.empty && !legacySnap.exists
       };
+    },
+
+    async seedSharedCars(cars) {
+      const { user, db: firestore } = await requireUser();
+      return seedSharedCarsIfEmpty(firestore, user, cars);
     },
 
     async bootstrapWorkspace({ settings, cars, promotions, salesPolicies = [], quotations = [] }) {
       const { user, db: firestore } = await requireUser();
       const refs = getWorkspaceRefs(firestore, user.uid);
       const batch = firestore.batch();
-      batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 4 }, { merge: true });
-      (cars || []).forEach(car => batch.set(refs.cars.doc(String(car.id)), { ...car, id: String(car.id), ...serverMeta(user) }, { merge: true }));
+
+      // Chỉ các phần dưới đây là dữ liệu riêng của tài khoản.
+      batch.set(refs.settings, { ...settings, ...serverMeta(user), schemaVersion: 5 }, { merge: true });
       (promotions || []).forEach(promo => batch.set(refs.promotions.doc(String(promo.id)), { ...promo, id: String(promo.id), ...serverMeta(user) }, { merge: true }));
       (salesPolicies || []).forEach(policy => batch.set(refs.salesPolicies.doc(String(policy.id)), { ...policy, id: String(policy.id), ...serverMeta(user) }, { merge: true }));
       (quotations || []).forEach(quote => batch.set(refs.quotations.doc(String(quote.id)), { ...quote, id: String(quote.id), ...serverMeta(user) }, { merge: true }));
       await batch.commit();
+
+      // Danh sách xe chỉ được khởi tạo nếu kho dùng chung chưa tồn tại.
+      await seedSharedCarsIfEmpty(firestore, user, cars || []);
       return { updatedAtMs: Date.now() };
     },
 
     async saveSettings(settings) {
       const { user, db: firestore } = await requireUser();
       const ref = getWorkspaceRefs(firestore, user.uid).settings;
-      await ref.set({ ...settings, ...serverMeta(user), schemaVersion: 4 }, { merge: true });
+      await ref.set({ ...settings, ...serverMeta(user), schemaVersion: 5 }, { merge: true });
       return { updatedAtMs: Date.now() };
     },
     async saveCar(car) {
       const { user, db: firestore } = await requireUser();
-      const ref = getWorkspaceRefs(firestore, user.uid).cars.doc(String(car.id));
-      const clean = { ...car }; delete clean.image; delete clean.localImage;
-      await ref.set({ ...clean, id: String(car.id), ...serverMeta(user) }, { merge: true });
+      const refs = getWorkspaceRefs(firestore, user.uid);
+      const ref = refs.sharedCars.doc(String(car.id));
+      const clean = cleanSharedCar(car);
+      await ref.set({ ...clean, id: String(car.id), ...serverMeta(user), sharedSchemaVersion: 1 }, { merge: true });
+      await refs.sharedRoot.set({ carsInitialized: true, schemaVersion: 5, ...serverMeta(user) }, { merge: true });
       return { updatedAtMs: Date.now() };
     },
     async deleteCar(id) {
       const { user, db: firestore } = await requireUser();
-      await getWorkspaceRefs(firestore, user.uid).cars.doc(String(id)).delete();
+      await getWorkspaceRefs(firestore, user.uid).sharedCars.doc(String(id)).delete();
     },
     async savePromotion(promo) {
       const { user, db: firestore } = await requireUser();
@@ -223,7 +291,7 @@
       });
       const unsubscribers = [
         refs.settings.onSnapshot({ includeMetadataChanges: true }, snap => callback({ type: 'settings', ...normalizeSnapshot(snap) }), onError),
-        refs.cars.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('cars', snap), onError),
+        refs.sharedCars.onSnapshot({ includeMetadataChanges: true }, snap => { if (!snap.empty) emitCollection('cars', snap); }, onError),
         refs.promotions.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('promotions', snap), onError),
         refs.salesPolicies.onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('salesPolicies', snap), onError),
         refs.quotations.orderBy('updatedAtMs', 'desc').limit(300).onSnapshot({ includeMetadataChanges: true }, snap => emitCollection('quotations', snap), onError)

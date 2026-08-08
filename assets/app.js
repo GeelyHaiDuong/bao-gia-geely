@@ -12,6 +12,7 @@ const CAR_COLOR_LIBRARY = {
     ex2: [
         { id: 'aurora-green', name: 'Xanh Bạc Hà', imagePath: './assets/cars/Ex2/ex2-aurora-green.png' },
         { id: 'beige', name: 'Kem Vani', imagePath: './assets/cars/Ex2/ex2-beige.png' },
+        { id: 'pink', name: 'Hồng Kẹo Bông', imagePath: './assets/cars/Ex2/ex2-pink.png' },
         { id: 'commet-grey', name: 'Xám Than Tre', imagePath: './assets/cars/Ex2/ex2-commet-grey.png' },
         { id: 'moon-white', name: 'Trắng Sữa', imagePath: './assets/cars/Ex2/ex2-moon-white.png' },
         { id: 'star-silver', name: 'Bạc Ánh Sao', imagePath: './assets/cars/Ex2/ex2-star-silver.png' }
@@ -1382,9 +1383,18 @@ function GeelyQuotationApp() {
         setSyncStatus({ code: 'working', message: 'Đang kiểm tra dữ liệu Firebase...', updatedAtMs: 0 });
         (async () => {
             try {
-                const workspace = await window.GeelyFirebaseSync.getWorkspace();
+                let workspace = await window.GeelyFirebaseSync.getWorkspace();
                 if (cancelled)
                     return;
+                if (workspace.sharedCarsEmpty && cars.length) {
+                    try {
+                        await window.GeelyFirebaseSync.seedSharedCars(cars.map(cloudCar));
+                        workspace = await window.GeelyFirebaseSync.getWorkspace();
+                    }
+                    catch (seedError) {
+                        console.warn('Chưa thể khởi tạo danh sách xe dùng chung:', seedError);
+                    }
+                }
                 pendingWorkspaceRef.current = workspace;
                 const initialized = Boolean(getSavedData(getSyncKey(syncUser.uid), false));
                 if (workspace.empty) {
@@ -2786,7 +2796,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 React.createElement("div", { className: "flex items-start justify-between gap-3 mb-3" },
                     React.createElement("div", null,
                         React.createElement("h3", { className: "font-black text-gray-800" }, "\u2601\uFE0F \u0110\u1ED3ng B\u1ED9 Firebase"),
-                        React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "\u0110\u1ED3ng b\u1ED9 t\u1EEBng xe, ch\u00EDnh s\u00E1ch b\u00E1n h\u00E0ng, khuy\u1EBFn m\u00E3i, c\u00E0i \u0111\u1EB7t v\u00E0 l\u1ECBch s\u1EED b\u00E1o gi\u00E1.")),
+                        React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "Danh sách xe, giá xe, màu + ảnh GitHub dùng chung cho mọi tài khoản. Chính sách, khuyến mãi, phí, thông tin nhân viên và lịch sử vẫn riêng từng tài khoản.")),
                     React.createElement("span", { className: `shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${['synced'].includes(syncStatus.code) ? 'bg-green-100 text-green-700' :
                             ['pending', 'queued', 'working'].includes(syncStatus.code) ? 'bg-yellow-100 text-yellow-700' :
                                 ['error'].includes(syncStatus.code) ? 'bg-red-100 text-red-700' :
@@ -2806,7 +2816,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 !syncUser ? (React.createElement("div", { className: "space-y-2" },
                     React.createElement("button", { type: "button", onClick: handleFirebaseSignIn, disabled: firebaseState.sdk === 'loading', className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-sm disabled:opacity-50" }, firebaseState.sdk === 'loading' ? 'Đang tải Firebase...' : 'Đăng nhập bằng Google'),
                     firebaseState.sdk === 'error' && (React.createElement("button", { type: "button", onClick: () => { var _a, _b; return (_b = (_a = window.GeelyFirebaseSync) === null || _a === void 0 ? void 0 : _a.retry) === null || _b === void 0 ? void 0 : _b.call(_a).catch(() => { }); }, className: "w-full py-2.5 bg-white text-blue-700 border-2 border-blue-500 rounded-xl font-bold text-sm" }, "Th\u1EED t\u1EA3i l\u1EA1i Firebase")),
-                    React.createElement("p", { className: "text-[11px] text-gray-500 text-center" }, "H\u00E3y \u0111\u0103ng nh\u1EADp c\u00F9ng m\u1ED9t t\u00E0i kho\u1EA3n Google tr\u00EAn \u0111i\u1EC7n tho\u1EA1i v\u00E0 m\u00E1y t\u00EDnh."))) : (React.createElement("div", { className: "space-y-3" },
+                    React.createElement("p", { className: "text-[11px] text-gray-500 text-center" }, "Mỗi nhân viên có thể đăng nhập Google riêng; danh sách xe dùng chung vẫn tự đồng bộ giữa các tài khoản."))) : (React.createElement("div", { className: "space-y-3" },
                     React.createElement("div", { className: "flex items-center justify-between gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl" },
                         React.createElement("div", { className: "min-w-0" },
                             React.createElement("p", { className: "font-bold text-blue-900 truncate" }, syncUser.displayName || 'Tài khoản Google'),
@@ -2819,7 +2829,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     syncStatus.code === 'cloud_empty' && (React.createElement("button", { type: "button", onClick: handleUploadCurrentToCloud, className: "w-full py-3 bg-blue-600 text-white rounded-xl font-black text-sm" }, "\u0110\u01B0a d\u1EEF li\u1EC7u hi\u1EC7n t\u1EA1i l\u00EAn Firebase")),
                     !['choice_needed', 'cloud_empty'].includes(syncStatus.code) && (React.createElement("button", { type: "button", onClick: handleSyncNow, className: "w-full py-2.5 bg-green-50 text-green-700 border-2 border-green-500 rounded-xl font-bold text-sm" }, "\u0110\u1ED3ng b\u1ED9 ngay")))),
                 React.createElement("div", { className: "mt-3 p-3 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-800 leading-relaxed" },
-                    React.createElement("b", null, "\u1EA2nh chu\u1EA9n \u0111\u01B0\u1EE3c \u0111\u1ED3ng b\u1ED9 b\u1EB1ng \u0111\u01B0\u1EDDng d\u1EABn GitHub."),
+                    React.createElement("b", null, "Tên xe, giá xe, màu và đường dẫn ảnh GitHub là dữ liệu dùng chung giữa các tài khoản."),
                     " \u1EA2nh b\u1EA1n ch\u1ECDn t\u1EEB thi\u1EBFt b\u1ECB \u0111\u01B0\u1EE3c l\u01B0u ri\u00EAng trong IndexedDB v\u00E0 s\u1EBD \u01B0u ti\u00EAn hi\u1EC3n th\u1ECB tr\u00EAn thi\u1EBFt b\u1ECB \u0111\u00F3.")),
             React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
                 React.createElement("h3", { className: "font-bold text-gray-800 mb-3" }, "\uD83D\uDC68\u200D\uD83D\uDCBC Th\u00F4ng Tin B\u00E1n H\u00E0ng (In tr\u00EAn B\u00E1o gi\u00E1)"),
@@ -2905,9 +2915,11 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             React.createElement("div", { className: "bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
                 React.createElement("h3", { className: "font-bold text-gray-800 mb-1" }, "\uD83D\uDE98 Qu\u1EA3n L\u00FD D\u00F2ng Xe & H\u00ECnh \u1EA2nh"),
                 React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
-                    "B\u1EA5m ",
-                    React.createElement("b", null, "S\u1EEDa"),
-                    " \u0111\u1EC3 c\u1EADp nh\u1EADt xe \u0111\u00E3 c\u00F3. C\u00F3 th\u1EC3 d\u00E1n link \u1EA3nh ho\u1EB7c ch\u1ECDn \u1EA3nh tr\u1EF1c ti\u1EBFp t\u1EEB \u0111i\u1EC7n tho\u1EA1i/m\u00E1y t\u00EDnh."),
+                    "Bấm ",
+                    React.createElement("b", null, "Sửa"),
+                    " để cập nhật xe. ",
+                    React.createElement("b", null, "Tên xe, giá, màu và đường dẫn ảnh GitHub sẽ đồng bộ cho tất cả tài khoản."),
+                    " Ảnh chọn trực tiếp từ thiết bị vẫn chỉ lưu trên thiết bị đó."),
                 React.createElement("div", { className: "space-y-2 mb-4 max-h-80 overflow-y-auto pr-1" }, cars.map(c => {
                     var _a, _b, _c, _d, _e, _f, _g, _h;
                     return (React.createElement("div", { key: c.id, className: `p-2.5 rounded-xl border text-sm ${editingCarId === c.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}` },
@@ -2950,7 +2962,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                         React.createElement("div", { className: "flex items-center justify-between gap-3" },
                             React.createElement("div", null,
                                 React.createElement("h5", { className: "text-xs font-black uppercase text-blue-900" }, "M\u00E0u xe & \u1EA3nh GitHub"),
-                                React.createElement("p", { className: "text-[10px] text-blue-700 mt-0.5" }, "Danh s\u00E1ch n\u00E0y \u0111\u1ED3ng b\u1ED9 qua Firebase; \u1EA3nh \u0111\u01B0\u1EE3c \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB GitHub Pages.")),
+                                React.createElement("p", { className: "text-[10px] text-blue-700 mt-0.5" }, "Danh sách màu này là dữ liệu dùng chung V2.7; ảnh được đọc trực tiếp từ GitHub Pages.")),
                             React.createElement("div", { className: "flex gap-1.5 shrink-0" },
                                 DEFAULT_CAR_COLOR_GROUPS[editingCarId] && React.createElement("button", { type: "button", onClick: loadDefaultEditorColors, className: "px-2.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg text-[10px] font-bold" }, "N\u1EA1p m\u00E0u chu\u1EA9n"),
                                 React.createElement("button", { type: "button", onClick: addEditorColor, className: "px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold" }, "+ Th\u00EAm m\u00E0u"))),
@@ -3298,7 +3310,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
             React.createElement(GeelyLogo, { className: "w-20 h-8 text-gray-900", color: "currentColor" }),
             React.createElement("div", { className: "text-xl font-black text-gray-900 tracking-tighter ml-4 pl-4 border-l-2 border-gray-300 uppercase" },
                 "B\u00E1o Gi\u00E1 ",
-                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.6"))),
+                React.createElement("span", { className: "text-[9px] align-top text-blue-600" }, "PWA 2.7"))),
         React.createElement("div", { className: "max-w-xl mx-auto p-4" },
             React.createElement("div", { className: "grid grid-cols-5 p-1 bg-gray-200 rounded-lg shadow-inner mb-4 gap-0.5" },
                 React.createElement("button", { onClick: () => setActiveTab('input'), className: `py-2 px-0.5 text-[10px] font-bold rounded-md ${activeTab === 'input' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'}` }, "Nh\u1EADp TT"),
