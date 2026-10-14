@@ -785,6 +785,8 @@ function GeelyQuotationApp() {
     const [newLocationEffectiveDate, setNewLocationEffectiveDate] = useState(registrationFees.effectiveDate);
     const [newLocationTaxRates, setNewLocationTaxRates] = useState({ gasoline: 0, hybrid: 0, phev: 0, ev: 0 });
     const [loanParams, setLoanParams] = useState({
+        // Mặc định tính tỷ lệ vay trên giá xe đã trừ khuyến mãi trực tiếp.
+        loanPriceBasis: 'discounted',
         loanInputMode: 'percent',
         loanAmount: 0,
         downPaymentPercent: 20,
@@ -1032,6 +1034,7 @@ function GeelyQuotationApp() {
         };
     }, [car, location, registrationFees, discount, includePhysicalInsurance, includeServiceFee, selectedPromoIds, promotions, selectedPolicyBenefits, effectivePolicyNames, plateColor, roadFeeYears, tndsOption, serviceFeeAmount, physicalInsuranceRate]);
     const normalizedLoanParams = useMemo(() => {
+        const loanPriceBasis = loanParams.loanPriceBasis === 'listed' ? 'listed' : 'discounted';
         const loanInputMode = loanParams.loanInputMode === 'amount' ? 'amount' : 'percent';
         const requestedLoanAmount = parseMoney(loanParams.loanAmount);
         const downPaymentPercent = Math.min(100, Math.max(0, Number(loanParams.downPaymentPercent) || 0));
@@ -1041,6 +1044,7 @@ function GeelyQuotationApp() {
         const fixedInterestRate = Math.max(0, Number(loanParams.fixedInterestRate) || 0);
         const floatingInterestRate = Math.max(0, Number(loanParams.floatingInterestRate) || 0);
         return {
+            loanPriceBasis,
             loanInputMode,
             requestedLoanAmount,
             downPaymentPercent,
@@ -1051,6 +1055,7 @@ function GeelyQuotationApp() {
             floatingInterestRate
         };
     }, [
+        loanParams.loanPriceBasis,
         loanParams.loanInputMode,
         loanParams.loanAmount,
         loanParams.downPaymentPercent,
@@ -1062,17 +1067,20 @@ function GeelyQuotationApp() {
     const loanCalculations = useMemo(() => {
         if (!calculations)
             return null;
-        const { loanInputMode, requestedLoanAmount, downPaymentPercent, months, fixedTermMonths, fixedInterestRate, floatingInterestRate } = normalizedLoanParams;
-        const maxLoanAmount = Math.max(0, calculations.price);
-        const percentBasedLoanAmount = maxLoanAmount * (1 - downPaymentPercent / 100);
+        const { loanPriceBasis, loanInputMode, requestedLoanAmount, downPaymentPercent, months, fixedTermMonths, fixedInterestRate, floatingInterestRate } = normalizedLoanParams;
+        const discountedPrice = Math.max(0, calculations.price - calculations.discountAmount);
+        // Căn cứ áp dụng cho cả chế độ nhập số tiền và chế độ nhập tỷ lệ vay.
+        const loanBaseAmount = loanPriceBasis === 'listed' ? Math.max(0, calculations.price) : discountedPrice;
+        const maxLoanAmount = loanBaseAmount;
+        const percentBasedLoanAmount = loanBaseAmount * (1 - downPaymentPercent / 100);
         const loanAmount = loanInputMode === 'amount'
             ? Math.min(maxLoanAmount, Math.max(0, requestedLoanAmount))
             : Math.min(maxLoanAmount, Math.max(0, percentBasedLoanAmount));
-        const loanPercent = maxLoanAmount > 0 ? loanAmount / maxLoanAmount * 100 : 0;
+        const loanPercent = loanBaseAmount > 0 ? loanAmount / loanBaseAmount * 100 : 0;
         const effectiveDownPaymentPercent = Math.max(0, 100 - loanPercent);
         // Vốn khách cần chuẩn bị = tiền đối ứng thực tế + trước bạ + đăng ký/đăng kiểm.
         // Trừ giảm giá trực tiếp trước khi tính số tiền đối ứng thực trả.
-        const customerDownPayment = Math.max(0, calculations.price - calculations.discountAmount - loanAmount);
+        const customerDownPayment = Math.max(0, discountedPrice - loanAmount);
         const registrationInspectionCost = calculations.plateFee + calculations.inspectionFee
             + calculations.roadFee + calculations.civilInsurance + calculations.serviceFee;
         // Bảo hiểm thân vỏ tự chọn không tính vào chi phí đăng ký/đăng kiểm.
@@ -1110,6 +1118,10 @@ function GeelyQuotationApp() {
         const totalBankPayment = totalPrincipal + totalInterest;
         const averageMonthlyPayment = months > 0 ? totalBankPayment / months : 0;
         return {
+            loanPriceBasis,
+            loanBaseLabel: loanPriceBasis === 'listed' ? 'giá xe niêm yết' : 'giá xe sau khuyến mãi',
+            loanBaseAmount,
+            discountedPrice,
             loanInputMode,
             requestedLoanAmount,
             maxLoanAmount,
@@ -1146,6 +1158,7 @@ function GeelyQuotationApp() {
         calculations === null || calculations === void 0 ? void 0 : calculations.roadFee,
         calculations === null || calculations === void 0 ? void 0 : calculations.civilInsurance,
         calculations === null || calculations === void 0 ? void 0 : calculations.serviceFee,
+        normalizedLoanParams.loanPriceBasis,
         normalizedLoanParams.loanInputMode,
         normalizedLoanParams.requestedLoanAmount,
         normalizedLoanParams.downPaymentPercent,
@@ -1161,6 +1174,17 @@ function GeelyQuotationApp() {
             [key]: Number.isFinite(value) ? value : 0
         }));
     };
+    const updateLoanPriceBasis = nextBasis => {
+        const loanPriceBasis = nextBasis === 'listed' ? 'listed' : 'discounted';
+        // Giữ nguyên tỷ lệ vay đang hiển thị khi đổi căn cứ, tính lại số tiền vay.
+        // Nếu trước đó nhập số tiền cụ thể, chuyển sang chế độ tỷ lệ để đổi căn cứ có hiệu lực.
+        setLoanParams(current => ({
+            ...current,
+            loanPriceBasis,
+            loanInputMode: 'percent',
+            downPaymentPercent: 100 - (loanCalculations ? loanCalculations.loanPercent : 80)
+        }));
+    };
     const updateLoanAmount = rawValue => {
         const isEmpty = String(rawValue !== null && rawValue !== void 0 ? rawValue : '').trim() === '';
         setLoanParams(current => ({
@@ -1173,7 +1197,9 @@ function GeelyQuotationApp() {
         if (!calculations)
             return;
         const enteredAmount = parseMoney(loanParams.loanAmount);
-        const maximum = Math.max(0, calculations.price);
+        const maximum = normalizedLoanParams.loanPriceBasis === 'listed'
+            ? Math.max(0, calculations.price)
+            : Math.max(0, calculations.price - calculations.discountAmount);
         const normalizedAmount = Math.min(maximum, enteredAmount);
         setLoanParams(current => ({
             ...current,
@@ -1181,7 +1207,7 @@ function GeelyQuotationApp() {
             loanAmount: normalizedAmount
         }));
         if (enteredAmount > maximum)
-            showToast(`Số tiền vay tối đa theo giá xe là ${formatVND(maximum)}.`);
+            showToast(`Số tiền vay tối đa theo ${normalizedLoanParams.loanPriceBasis === 'listed' ? 'giá niêm yết' : 'giá sau khuyến mãi'} là ${formatVND(maximum)}.`);
     };
     const updateDownPaymentPercent = rawValue => {
         const value = Math.min(100, Math.max(0, Number(rawValue) || 0));
@@ -1582,8 +1608,10 @@ function GeelyQuotationApp() {
             ['Khách hàng', customerName || 'Khách hàng'],
             ['Dòng xe', (car === null || car === void 0 ? void 0 : car.name) || ''],
             ['Cách xác định khoản vay', loanCalculations.loanInputMode === 'amount' ? 'Nhập số tiền vay chính xác' : 'Tính theo tỷ lệ trả trước'],
+            ['Căn cứ tính tỷ lệ vay', loanCalculations.loanBaseLabel],
+            ['Giá làm căn cứ tính vay', Math.round(loanCalculations.loanBaseAmount)],
             ['Số tiền vay', Math.round(loanCalculations.loanAmount)],
-            ['Tỷ lệ vay trên giá xe', `${loanCalculations.loanPercent.toFixed(2)}%`],
+            ['Tỷ lệ vay trên căn cứ đã chọn', `${loanCalculations.loanPercent.toFixed(2)}%`],
             ['Tỷ lệ vốn tự có', `${loanCalculations.effectiveDownPaymentPercent.toFixed(2)}%`],
             ['Vốn khách cần chuẩn bị (đối ứng + trước bạ + đăng ký/đăng kiểm)', Math.round(loanCalculations.upfrontPayment)],
             ['Thời gian vay', `${loanCalculations.months} tháng`],
@@ -2252,6 +2280,7 @@ function GeelyQuotationApp() {
                 }
                 drawText(ctx, 'Tổng trả ngân hàng', rightX, loanY, { size: 17, weight: 700, color: '#64748b' });
                 drawText(ctx, formatVND(loanCalculations.totalBankPayment), 1004, loanY, { size: 18, weight: 850, color: '#172033', align: 'right' });
+                drawText(ctx, `Căn cứ tính tỷ lệ vay: ${loanCalculations.loanBaseLabel} (${formatVND(loanCalculations.loanBaseAmount)})`, leftX, y + loanBoxHeight - 17, { size: 15, weight: 650, color: '#64748b', maxWidth: 920 });
                 y += loanBoxHeight + 25;
             }
             // Notes and sales contact
@@ -2406,8 +2435,15 @@ function GeelyQuotationApp() {
         setPlateColor(record.plateColor || 'white');
         setRoadFeeYears(Number(record.roadFeeYears) || 1);
         setTndsOption(record.tndsOption || 'auto');
-        if (record.loanParams)
-            setLoanParams(current => ({ ...current, ...record.loanParams }));
+        if (record.loanParams) {
+            // Báo giá tạo trước khi có lựa chọn căn cứ vay sử dụng giá niêm yết.
+            // Giữ nguyên cách tính lịch sử khi mở lại thay vì đổi âm thầm sang giá sau KM.
+            setLoanParams(current => ({
+                ...current,
+                ...record.loanParams,
+                loanPriceBasis: record.loanParams.loanPriceBasis === 'discounted' ? 'discounted' : 'listed'
+            }));
+        }
         setActiveTab('preview');
         showToast('Đã mở lại báo giá.');
     };
@@ -2432,6 +2468,8 @@ function GeelyQuotationApp() {
         setDiscount('');
         setQuoteNotes('');
         setQuoteStatus('draft');
+        // Mỗi báo giá mới quay về căn cứ vay mặc định: giá sau khuyến mãi.
+        setLoanParams(current => ({ ...current, loanPriceBasis: 'discounted', loanInputMode: 'percent', loanAmount: 0, downPaymentPercent: 20 }));
         setActiveTab('input');
     };
     const handlePrintA4 = async () => {
@@ -2727,6 +2765,15 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                     React.createElement("p", { className: "text-xs text-gray-500 mt-1" }, "Ph\u01B0\u01A1ng ph\u00E1p duy nh\u1EA5t: g\u1ED1c c\u1ED1 \u0111\u1ECBnh, l\u00E3i t\u00EDnh tr\u00EAn d\u01B0 n\u1EE3 gi\u1EA3m d\u1EA7n.")),
                 React.createElement("span", { className: "px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase whitespace-nowrap" }, "D\u01B0 n\u1EE3 gi\u1EA3m d\u1EA7n")),
             React.createElement("div", { className: "space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200" },
+                React.createElement("div", { className: "rounded-xl border border-blue-200 bg-white p-3" },
+                    React.createElement("label", { htmlFor: "geely-loan-price-basis", className: "block text-sm font-black text-blue-950 mb-2" }, "Căn cứ tính tỷ lệ vay ngân hàng"),
+                    React.createElement("select", { id: "geely-loan-price-basis", value: normalizedLoanParams.loanPriceBasis, onChange: (e) => updateLoanPriceBasis(e.target.value), className: "w-full px-3 py-2.5 rounded-lg border border-blue-200 bg-blue-50 font-bold text-blue-900 text-sm" },
+                        React.createElement("option", { value: "discounted" }, "Giá xe sau khuyến mãi (mặc định)"),
+                        React.createElement("option", { value: "listed" }, "Giá xe niêm yết")),
+                    React.createElement("p", { className: "text-[11px] text-slate-600 mt-2" },
+                        "Giá làm căn cứ vay: ",
+                        React.createElement("b", { className: "text-blue-800" }, formatVND(loanCalculations.loanBaseAmount)),
+                        ". Đổi căn cứ sẽ giữ tỷ lệ vay hiện tại và tính lại khoản vay.")),
                 React.createElement("div", { className: "rounded-xl border border-blue-200 bg-blue-50/60 p-3" },
                     React.createElement("div", { className: "flex items-start justify-between gap-3 mb-2" },
                         React.createElement("div", null,
@@ -2741,16 +2788,19 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                             React.createElement("span", { className: "text-gray-500 block" }, "T\u1EF7 l\u1EC7 vay t\u01B0\u01A1ng \u0111\u01B0\u01A1ng"),
                             React.createElement("b", { className: "text-blue-700" },
                                 loanCalculations.loanPercent.toFixed(2),
-                                "% gi\u00E1 xe")),
+                                "% ",
+                                normalizedLoanParams.loanPriceBasis === 'listed' ? 'giá niêm yết' : 'giá sau KM')),
                         React.createElement("div", { className: "rounded-lg bg-white border border-blue-100 px-2.5 py-2" },
                             React.createElement("span", { className: "text-gray-500 block" }, "T\u1EF7 l\u1EC7 v\u1ED1n t\u1EF1 c\u00F3"),
                             React.createElement("b", { className: "text-blue-700" },
                                 loanCalculations.effectiveDownPaymentPercent.toFixed(2),
                                 "%"))),
                     loanCalculations.loanAmountWasClamped && React.createElement("p", { className: "text-[10px] text-red-600 font-semibold mt-2" },
-                        "S\u1ED1 ti\u1EC1n nh\u1EADp v\u01B0\u1EE3t gi\u00E1 xe v\u00E0 \u0111ang \u0111\u01B0\u1EE3c gi\u1EDBi h\u1EA1n \u1EDF ",
+                        "Số tiền nhập vượt giá làm căn cứ vay và đang được giới hạn ở ",
                         formatVND(loanCalculations.maxLoanAmount),
-                        ".")),
+                        "."),
+                    loanCalculations.loanAmount > loanCalculations.discountedPrice && React.createElement("p", { className: "text-[10px] text-orange-700 font-semibold mt-2" },
+                        "Khoản vay lớn hơn giá xe sau khuyến mãi. Vui lòng xác nhận hạn mức với ngân hàng.")),
                 React.createElement("div", null,
                     React.createElement("div", { className: "flex justify-between mb-1" },
                         React.createElement("span", { className: "text-sm font-semibold text-gray-700" }, "\u0110i\u1EC1u ch\u1EC9nh nhanh theo t\u1EF7 l\u1EC7 tr\u1EA3 tr\u01B0\u1EDBc"),
@@ -3309,10 +3359,12 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                                 formatVND(loanCalculations.loanAmount),
                                 " \u00B7 ",
                                 loanCalculations.loanPercent.toFixed(2),
-                                "% gi\u00E1 xe)"),
+                                "% ",
+                                loanCalculations.loanBaseLabel,
+                                ")"),
                             ":"),
                         React.createElement("p", { className: "font-black text-2xl text-yellow-600 mb-1" }, formatVND(loanCalculations.upfrontPayment)),
-                        React.createElement("p", { className: "text-xs text-slate-500 italic" }, "Bao g\u1ED3m ph\u1EA7n gi\u00E1 xe kh\u00F4ng vay v\u00E0 c\u00E1c chi ph\u00ED l\u0103n b\u00E1nh. Kho\u1EA3n vay th\u1EF1c t\u1EBF ph\u1EE5 thu\u1ED9c ph\u00EA duy\u1EC7t c\u1EE7a ng\u00E2n h\u00E0ng."))),
+                        React.createElement("p", { className: "text-xs text-slate-500 italic" }, "Bao gồm tiền đối ứng sau khuyến mãi, thuế trước bạ và phí đăng ký/đăng kiểm (không gồm bảo hiểm thân vỏ tự chọn). Khoản vay phụ thuộc phê duyệt của ngân hàng."))),
                     React.createElement("div", { className: "border-t-[3px] border-slate-800 pt-6 flex justify-between items-end mt-12" },
                         React.createElement("div", { className: "text-[11px] text-slate-500 italic w-3/5 pr-6 leading-relaxed" },
                             "* Ghi ch\u00FA: Chi ph\u00ED thu\u1EBF, ph\u00ED tr\u00EAn mang t\u00EDnh ch\u1EA5t tham kh\u1EA3o v\u00E0 c\u00F3 th\u1EC3 thay \u0111\u1ED5i theo quy \u0111\u1ECBnh c\u1EE7a Nh\u00E0 n\u01B0\u1EDBc t\u1EA1i th\u1EDDi \u0111i\u1EC3m xu\u1EA5t h\u00F3a \u0111\u01A1n v\u00E0 \u0111\u0103ng k\u00FD xe.",
