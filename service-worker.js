@@ -1,4 +1,4 @@
-const VERSION = 'geely-pwa-v2.8.0';
+const VERSION = 'geely-pwa-v2.8.1';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -44,7 +44,7 @@ const CAR_COLOR_IMAGES = [
 
 const CORE_ASSETS = [
   './','./index.html','./offline.html','./manifest.webmanifest',
-  './assets/app.css','./assets/export-compat.css?v=280','./assets/custom.css?v=280','./assets/app.js?v=280',
+  './assets/app.css','./assets/export-compat.css?v=280','./assets/custom.css?v=280','./assets/app.js?v=281',
   './assets/idb-store.js?v=280','./assets/firebase-sync.js?v=280',
   './assets/qrcode-browser.js','./assets/pwa.js?v=280',
   './assets/vendor/react.production.min.js','./assets/vendor/scheduler.production.min.js',

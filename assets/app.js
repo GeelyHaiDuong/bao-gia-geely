@@ -1070,7 +1070,13 @@ function GeelyQuotationApp() {
             : Math.min(maxLoanAmount, Math.max(0, percentBasedLoanAmount));
         const loanPercent = maxLoanAmount > 0 ? loanAmount / maxLoanAmount * 100 : 0;
         const effectiveDownPaymentPercent = Math.max(0, 100 - loanPercent);
-        const upfrontPayment = Math.max(0, calculations.finalAmount - loanAmount);
+        // Vốn khách cần chuẩn bị = tiền đối ứng thực tế + trước bạ + đăng ký/đăng kiểm.
+        // Trừ giảm giá trực tiếp trước khi tính số tiền đối ứng thực trả.
+        const customerDownPayment = Math.max(0, calculations.price - calculations.discountAmount - loanAmount);
+        const registrationInspectionCost = calculations.plateFee + calculations.inspectionFee
+            + calculations.roadFee + calculations.civilInsurance + calculations.serviceFee;
+        // Bảo hiểm thân vỏ tự chọn không tính vào chi phí đăng ký/đăng kiểm.
+        const upfrontPayment = customerDownPayment + calculations.taxFee + registrationInspectionCost;
         const monthlyPrincipal = months > 0 ? loanAmount / months : 0;
         const schedule = [];
         let totalInterest = 0;
@@ -1111,6 +1117,8 @@ function GeelyQuotationApp() {
             loanPercent,
             effectiveDownPaymentPercent,
             loanAmountWasClamped: loanInputMode === 'amount' && requestedLoanAmount > maxLoanAmount,
+            customerDownPayment,
+            registrationInspectionCost,
             upfrontPayment,
             monthlyPrincipal,
             months,
@@ -1131,7 +1139,13 @@ function GeelyQuotationApp() {
         };
     }, [
         calculations === null || calculations === void 0 ? void 0 : calculations.price,
-        calculations === null || calculations === void 0 ? void 0 : calculations.finalAmount,
+        calculations === null || calculations === void 0 ? void 0 : calculations.discountAmount,
+        calculations === null || calculations === void 0 ? void 0 : calculations.taxFee,
+        calculations === null || calculations === void 0 ? void 0 : calculations.plateFee,
+        calculations === null || calculations === void 0 ? void 0 : calculations.inspectionFee,
+        calculations === null || calculations === void 0 ? void 0 : calculations.roadFee,
+        calculations === null || calculations === void 0 ? void 0 : calculations.civilInsurance,
+        calculations === null || calculations === void 0 ? void 0 : calculations.serviceFee,
         normalizedLoanParams.loanInputMode,
         normalizedLoanParams.requestedLoanAmount,
         normalizedLoanParams.downPaymentPercent,
@@ -1571,7 +1585,7 @@ function GeelyQuotationApp() {
             ['Số tiền vay', Math.round(loanCalculations.loanAmount)],
             ['Tỷ lệ vay trên giá xe', `${loanCalculations.loanPercent.toFixed(2)}%`],
             ['Tỷ lệ vốn tự có', `${loanCalculations.effectiveDownPaymentPercent.toFixed(2)}%`],
-            ['Vốn cần chuẩn bị và chi phí lăn bánh', Math.round(loanCalculations.upfrontPayment)],
+            ['Vốn khách cần chuẩn bị (đối ứng + trước bạ + đăng ký/đăng kiểm)', Math.round(loanCalculations.upfrontPayment)],
             ['Thời gian vay', `${loanCalculations.months} tháng`],
             ['Thời gian ưu đãi', `${loanCalculations.fixedTermMonths} tháng`],
             ['Lãi suất ưu đãi', `${normalizedLoanParams.fixedInterestRate}%/năm`],
@@ -2770,7 +2784,7 @@ window.onafterprint=()=>setTimeout(()=>window.close(),150);
                 React.createElement("p", { className: "text-[10px] text-gray-500 italic" }, "K\u1EBFt qu\u1EA3 b\u00EAn d\u01B0\u1EDBi c\u1EADp nh\u1EADt ngay khi thay \u0111\u1ED5i t\u1EF7 l\u1EC7 tr\u1EA3 tr\u01B0\u1EDBc, k\u1EF3 h\u1EA1n, th\u1EDDi gian \u01B0u \u0111\u00E3i ho\u1EB7c l\u00E3i su\u1EA5t.")),
             React.createElement("div", { className: "grid grid-cols-2 gap-3" },
                 React.createElement("div", { className: "bg-blue-50 border border-blue-200 rounded-xl p-3" },
-                    React.createElement("p", { className: "text-xs font-semibold text-blue-900" }, "V\u1ED1n kh\u00E1ch c\u1EA7n chu\u1EA9n b\u1ECB + chi ph\u00ED l\u0103n b\u00E1nh"),
+                    React.createElement("p", { className: "text-xs font-semibold text-blue-900" }, "V\u1ED1n kh\u00E1ch c\u1EA7n chu\u1EA9n b\u1ECB"),
                     React.createElement("p", { className: "text-xl font-black text-blue-700 mt-1" }, formatVND(loanCalculations.upfrontPayment))),
                 React.createElement("div", { className: "bg-slate-50 border border-slate-200 rounded-xl p-3" },
                     React.createElement("p", { className: "text-xs font-semibold text-slate-700" }, "S\u1ED1 ti\u1EC1n vay ng\u00E2n h\u00E0ng"),
